@@ -7,6 +7,8 @@
 
 ## Vision
 
+> *Ein LLM-Agent mit Shell-Zugriff ist eine kontrollierte Waffe. Nicht die Fähigkeit ist das Problem — sondern unkontrollierte Fähigkeit. Dieses System gibt dem Agent genau so viel Macht wie er braucht, und nicht ein Byte mehr.*
+
 OpenClaw ist mächtig. Zu mächtig für eine ungesicherte Standardinstallation.
 
 Dieser Installer setzt nicht einfach eine OpenClaw-Instanz auf — er setzt eine **sichere** auf. By default. Ohne dass der Nutzer wissen muss was `exec-approvals`, Allowlists oder Security-Levels bedeuten.

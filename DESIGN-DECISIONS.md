@@ -5,6 +5,14 @@ Nicht für den Nutzer. Für uns, wenn wir in 6 Monaten fragen: "Warum haben wir 
 
 ---
 
+## Designphilosophie (Landing Page — erster Satz)
+
+> *Ein LLM-Agent mit Shell-Zugriff ist eine kontrollierte Waffe. Nicht die Fähigkeit ist das Problem — sondern unkontrollierte Fähigkeit. Dieses System gibt dem Agent genau so viel Macht wie er braucht, und nicht ein Byte mehr.*
+
+— Photon, 2026-04-05
+
+---
+
 ## DD-001: Allowlist — "Du kannst alles, aber nicht gleichzeitig"
 
 **Entscheid:** Der Installer konfiguriert `security: allowlist` mit explizit genehmigten Binaries. Kein `security: full`.
