@@ -59,6 +59,30 @@ Ein unbedarfter Nutzer in einer Messwarte eines Chemiebetriebs würde "alles auf
 
 ---
 
+## DD-005: Extended Memory — Opt-in, nicht Default
+
+**Entscheid:** Das dreischichtige Memory-System läuft immer. Semantische Vektorsuche (Mistral-Embeddings) ist Opt-in.
+
+**Standard (kein Mistral-Key):**
+- SQLite + FTS5 Volltext-Suche
+- Funktioniert, findet exakte Begriffe
+- Null Zusatzkosten
+
+**Opt-in "Extended Memory" (mit Mistral-Key):**
+- SQLite + FTS5 + Mistral `mistral-embed` (1024 dims) + sqlite-vec
+- Hybrid-Search: BM25 (0.3) + Vektor (0.7)
+- Findet semantisch verwandte Begriffe — "Unterkunft" trifft "Hotelzimmer"
+- Kostet Mistral API-Calls für jeden Embedding-Index-Aufbau
+
+**Wizard-Text:**
+> "Ohne Mistral: Volltext-Suche — findet exakt was du eingibst.  
+> Mit Mistral: semantische Suche — findet auch verwandte Begriffe.  
+> Empfehlung: Mistral-Key eingeben wenn vorhanden. Kann später aktiviert werden."
+
+**Quelle:** Photon, 2026-04-05
+
+---
+
 ## DD-004: Kern-API-Schicht ist UI-unabhängig
 
 **Entscheid:** `checks/`, `docker/`, `bootstrap/`, `security/` haben keine UI-Abhängigkeit. TUI ruft den Kern an, nicht umgekehrt.
