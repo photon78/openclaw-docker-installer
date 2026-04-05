@@ -1,87 +1,86 @@
-# Memory-Architektur — openclaw-docker-installer
+# Memory Architecture — openclaw-docker-installer
 
-> Referenz für den Installer: Was wird aufgebaut, warum, und wie.
-
----
-
-## Konzept: Dreischichtiges Memory-System
-
-Alles Markdown, kein externes Backend, kein Vektor-Datenbank-Setup nötig.
-Die Memory-Engine (SQLite + FTS5 + Mistral-Embeddings) läuft automatisch im Gateway.
+> Reference for the installer: What is built, why, and how.
 
 ---
 
-## Schicht 1: MEMORY.md — Langzeitgedächtnis
+## Concept: Three-Layer Memory System
+
+All Markdown, no external backend, no vector database setup required.
+The memory engine (SQLite + FTS5 + Mistral embeddings) runs automatically in the gateway.
+
+---
+
+## Layer 1: MEMORY.md — Long-Term Memory
 
 ```
 ~/.openclaw/workspace-coding/MEMORY.md
 ```
 
-- Max 30 Zeilen, nur stabile Fakten und Regeln
-- Wird bei jedem Session-Start vollständig in den Context geladen → jede Zeile kostet Tokens
-- Nie aufblähen — Details gehören in `memory/topics/`
-- Heartbeat darf nur kürzen wenn ≥25 Zeilen, nie ergänzen
+- Max 30 lines, only stable facts and rules
+- Fully loaded into context at every session start → each line costs tokens
+- Never inflate — details belong in `memory/topics/`
+- Heartbeat may only shorten if ≥25 lines, never add
 
-**Was der Installer anlegt:** Ein minimales Template mit Name, Rolle, Nutzer-Infos — Rest füllt der Agent selbst.
+**What the installer creates:** A minimal template with name, role, and user information — the agent fills in the rest.
 
 ---
 
-## Schicht 2: Daily Logs — Rohmaterial
+## Layer 2: Daily Logs — Raw Material
 
 ```
 ~/.openclaw/workspace-coding/memory/YYYY-MM-DD.md
 ```
 
-- Was heute passiert ist — Entscheidungen, offene Punkte
-- Format: `## HH:MM — Thema` + Stichpunkte
-- Max 5 Zeilen pro Stunde — kompakt halten
-- Today + Yesterday werden automatisch in den Context geladen → kosten Tokens bei jedem Call
-- Bei Mistral (kein Prompt-Caching): voller Preis → umso wichtiger kurz zu bleiben
+- What happened today — decisions, open points
+- Format: `## HH:MM — Topic` + bullet points
+- Max 5 lines per hour — keep compact
+- Today + Yesterday are automatically loaded into context → cost tokens with every call
+- With Mistral (no prompt caching): full price → even more important to keep short
 
-**Was der Installer anlegt:** Leeres Log für heute. Der Agent schreibt ab dem ersten Gespräch.
+**What the installer creates:** An empty log for today. The agent writes from the first conversation.
 
 ---
 
-## Schicht 3: Topics — Verdichtetes Wissen
+## Layer 3: Topics — Condensed Knowledge
 
 ```
 ~/.openclaw/workspace-coding/memory/topics/
-  _template.md      ← Template für neue Topics
-  index.md          ← Übersicht aller Topics
-  deployment.md     ← Beispiel
-  website-feedback.md
+  _template.md      ← Template for new topics
+  index.md          ← Overview of all topics
+  deployment.md     ← Example
   ...
 ```
 
-- Strukturiertes Wissen pro Thema
-- Inhalt: Kurzfassung, Status, Relevanztrigger, Kernwissen, Entscheidungen
-- Weekly Maintenance Cron verdichtet Daily Logs → Topics (Freitag 04:00)
+- Structured knowledge per topic
+- Content: Summary, status, relevance triggers, core knowledge, decisions
+- Weekly Maintenance Cron condenses Daily Logs → Topics (Friday 04:00)
 
-**Was der Installer anlegt:** `_template.md` + leeres `index.md`. Topics entstehen im Betrieb.
+**What the installer creates:** `_template.md` + empty `index.md`. Topics emerge during operation.
 
 ---
 
-## Memory Engine (automatisch durch Gateway)
+## Memory Engine (automatically via Gateway)
 
-| Komponente | Detail |
+| Component | Detail |
 |---|---|
 | Storage | SQLite + FTS5 + sqlite-vec |
-| Embeddings | Mistral (`mistral-embed`, 1024 dims) — Opt-in (siehe DD-005) |
-| Hybrid-Search | BM25 (Gewicht 0.3) + Vektor (Gewicht 0.7) |
+| Embeddings | Mistral (`mistral-embed`, 1024 dims) — Opt-in (see DD-005) |
+| Hybrid Search | BM25 (weight 0.3) + Vector (weight 0.7) |
 | Index | `~/.openclaw/memory/<agentId>.sqlite` |
-| `memory_search` | Semantische Suche über alle `.md` im Workspace |
-| `memory_get` | Gezielt Zeilen aus Treffern lesen |
+| `memory_search` | Semantic search across all `.md` files in the workspace |
+| `memory_get` | Targeted reading of lines from search results |
 
-**Ohne Mistral-Key:** Nur FTS5 Volltext-Suche — funktioniert, findet exakte Begriffe.  
-**Mit Mistral-Key (Opt-in):** Hybrid-Search — findet auch semantisch verwandte Begriffe.
+**Without Mistral Key:** Only FTS5 full-text search — works, finds exact terms.
+**With Mistral Key (Opt-in):** Hybrid search — also finds semantically related terms.
 
 ---
 
-## Cross-Agent Memory: Sub-Agent liest Main-Topics
+## Cross-Agent Memory: Sub-Agent Reads Main Topics
 
-Sub-Agents haben eigene Workspaces — sie sehen Main-Topics NICHT automatisch.
+Sub-agents have their own workspaces — they do NOT automatically see main topics.
 
-**Lösung 1: `extraPaths` in `openclaw.json`**
+**Solution 1: `extraPaths` in `openclaw.json`**
 
 ```json
 "agents": {
@@ -96,69 +95,69 @@ Sub-Agents haben eigene Workspaces — sie sehen Main-Topics NICHT automatisch.
 }
 ```
 
-Damit indiziert `coding_bot` die Main-Topics in seinen eigenen Memory-Index.
-`memory_search` findet Treffer aus beiden Quellen — eigener Workspace + Main-Topics.
+This indexes the main topics into the sub-agent's own memory index.
+`memory_search` finds matches from both sources — own workspace + main topics.
 
-**Lösung 2: Daily Digest als Flat-File-Fallback**
+**Solution 2: Daily Digest as Flat-File Fallback**
 
-`daily_digest.py` schreibt `memory/digest-latest.md` in alle Sub-Workspaces:
-- 3× täglich (03:05, 11:05, 18:05)
-- Kein LLM, kein API-Call, null Kosten
-- Atomares Schreiben via `os.replace()` (Race-Condition-sicher)
+`daily_digest.py` writes `memory/digest-latest.md` to all sub-workspaces:
+- 3× daily (03:05, 11:05, 18:05)
+- No LLM, no API call, zero cost
+- Atomic write via `os.replace()` (race-condition safe)
 
-Beide Lösungen ergänzen sich — `extraPaths` für strukturiertes Wissen, Digest für tagesaktuelles.
+Both solutions complement each other — `extraPaths` for structured knowledge, digest for daily updates.
 
 ---
 
 ## Automation
 
-| Zeit | Job | Modell | Was |
+| Time | Job | Model | What |
 |---|---|---|---|
-| Stündlich :00 | Log Writer | — | Daily Log schreiben |
-| 03:05, 11:05, 18:05 | `daily_digest.py` | kein LLM | Digest in alle Sub-Workspaces |
-| Freitag 04:00 | Weekly Maintenance | Mistral | Daily Logs → Topics verdichten |
-| Alle 2h | Heartbeat | — | MEMORY.md + Daily Log lesen, ggf. ergänzen |
+| Hourly :00 | Log Writer | — | Write daily log |
+| 03:05, 11:05, 18:05 | `daily_digest.py` | No LLM | Digest to all sub-workspaces |
+| Friday 04:00 | Weekly Maintenance | Mistral | Condense daily logs → topics |
+| Every 2h | Heartbeat | — | Read MEMORY.md + daily log, update if needed |
 
 ---
 
-## Wichtige Regeln (für AGENTS.md Template)
+## Important Rules (for AGENTS.md Template)
 
-1. `memory_search` vor jeder Antwort die auf frühere Arbeit, Entscheidungen oder Projekte referenziert
-2. Treffer → `memory_get` für die relevanten Zeilen
-3. MEMORY.md slim halten — ≤30 Zeilen, sonst wird der Bootstrap teuer
-4. Daily Logs kompakt — max 5 Zeilen/h, nur Entscheidungen und offene Punkte
-5. Nach Fortschritten: Topic-Datei updaten, nicht Daily Log aufblähen
-6. Spawned Sub-Agents (`sessions_spawn`) haben KEIN `memory_search` — nur persistente Agents mit eigener `agentId`
+1. Use `memory_search` before every response referencing prior work, decisions, or projects
+2. For hits → use `memory_get` for relevant lines
+3. Keep MEMORY.md slim — ≤30 lines, otherwise bootstrap becomes expensive
+4. Keep daily logs compact — max 5 lines/hour, only decisions and open points
+5. After progress: Update topic file, don't inflate daily log
+6. Spawned sub-agents (`sessions_spawn`) have NO `memory_search` — only persistent agents with their own `agentId`
 
 ---
 
-## Was der Installer konkret anlegt
+## What the Installer Specifically Creates
 
 ```
 ~/.openclaw/workspace/
-  MEMORY.md                    ← Template (slim, ≤10 Zeilen initial)
-  AGENTS.md                    ← Pflicht-Regeln inkl. Memory-Workflow
-  SOUL.md                      ← Vom Nutzer konfiguriert via Wizard
-  IDENTITY.md                  ← Name, Emoji, Vibe
-  USER.md                      ← Vom Wizard ausgefüllt
-  HEARTBEAT.md                 ← Heartbeat-Verhalten
-  TOOLS.md                     ← Leer, für Nutzer
+  MEMORY.md                    ← Template (slim, ≤10 lines initially)
+  AGENTS.md                    ← Mandatory rules including memory workflow
+  SOUL.md                      ← Configured by user via wizard
+  IDENTITY.md                  ← Name, emoji, vibe
+  USER.md                      ← Filled by wizard
+  HEARTBEAT.md                 ← Heartbeat behavior
+  TOOLS.md                     ← Empty, for user
   memory/
-    YYYY-MM-DD.md              ← Leeres Log für heute
-    digest-latest.md           ← Leer, wird von Digest-Cron gefüllt
+    YYYY-MM-DD.md              ← Empty log for today
+    digest-latest.md           ← Empty, filled by digest cron
     topics/
-      _template.md             ← Topic-Template
-      index.md                 ← Leer, wächst im Betrieb
+      _template.md             ← Topic template
+      index.md                 ← Empty, grows during operation
 ```
 
-Für Sub-Agents zusätzlich:
+For sub-agents additionally:
 ```
 ~/.openclaw/workspace-<name>/
-  SOUL.md                      ← Eigener Charakter
-  IDENTITY.md                  ← Eigener Name
+  SOUL.md                      ← Own character
+  IDENTITY.md                  ← Own name
   memory/
-    digest-latest.md           ← Wird von Digest-Cron befüllt
-    topics/                    ← Leer
+    digest-latest.md           ← Filled by digest cron
+    topics/                    ← Empty
   AGENTS.md    → ../workspace/AGENTS.md      (Symlink)
   USER.md      → ../workspace/USER.md        (Symlink)
   HEARTBEAT.md → ../workspace/HEARTBEAT.md   (Symlink)

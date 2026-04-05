@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned for v0.1.0
 - Interactive TUI wizard (questionary + rich)
 - `docker-compose.yml` + `.env` generation
-- `exec-approvals.json` generation (Security-Profil: Strict / Standard)
+- `exec-approvals.json` generation (Security Profile: Strict / Standard)
 - `restore_exec_approvals.py` generation
 - Workspace bootstrapping (AGENTS.md, SOUL.md, MEMORY.md templates)
 - Post-install Gateway check

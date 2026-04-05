@@ -1,103 +1,103 @@
 # Design Decisions — openclaw-docker-installer
 
-Dieses Dokument hält wichtige Designentscheide fest — warum etwas so ist wie es ist.
-Nicht für den Nutzer. Für uns, wenn wir in 6 Monaten fragen: "Warum haben wir das so gemacht?"
+This document records key design decisions — why things are the way they are.
+Not for the user. For us, when we ask in six months: "Why did we do it this way?"
 
 ---
 
-## Designphilosophie (Landing Page — erster Satz)
+## Design Philosophy (Landing Page — First Sentence)
 
-> *Ein LLM-Agent mit Shell-Zugriff ist eine kontrollierte Waffe. Nicht die Fähigkeit ist das Problem — sondern unkontrollierte Fähigkeit. Dieses System gibt dem Agent genau so viel Macht wie er braucht, und nicht ein Byte mehr.*
+> *An LLM agent with shell access is a controlled weapon. The issue isn't the capability — it's uncontrolled capability. This system gives the agent exactly as much power as it needs, and not a byte more.*
 
 — Photon, 2026-04-05
 
 ---
 
-## DD-001: Allowlist — "Du kannst alles, aber nicht gleichzeitig"
+## DD-001: Allowlist — "You can do anything, but not all at once"
 
-**Entscheid:** Der Installer konfiguriert `security: allowlist` mit explizit genehmigten Binaries. Kein `security: full`.
+**Decision:** The installer configures `security: allowlist` with explicitly approved binaries. No `security: full`.
 
-**Kernproblem:**
-Jede genehmigte Binary läuft ohne Approval. Aber `ls | grep foo` = `bash -c "ls | grep foo"` = Bash-Compound = Bash muss in der Allowlist stehen. Wer Pipes will, muss ein Python-Script schreiben das die Pipe intern kapselt — dann steht nur der Script-Pfad in der Allowlist.
+**Core Problem:**
+Every approved binary runs without approval. But `ls | grep foo` = `bash -c "ls | grep foo"` = Bash compound = Bash must be on the allowlist. If you want pipes, you must write a Python script that encapsulates the pipe internally — then only the script path is on the allowlist.
 
-**Konsequenz für den Nutzer:**
-> "Du kannst alles, aber nicht gleichzeitig."
+**Consequence for the User:**
+> *"You can do anything, but not all at once."*
 
-**Warum das Feature ist, nicht Bug:**
-- Zwingt dazu, Logik in Scripts zu kapseln statt als Inline-Chains
-- Scripts sind testbar, versionierbar, nachvollziehbar
-- Inline-Pipe-Chains sind es nicht
-- Der Nutzer sieht immer genau was genehmigt ist
+**Why This Is a Feature, Not a Bug:**
+- Forces logic to be encapsulated in scripts rather than inline chains
+- Scripts are testable, versionable, traceable
+- Inline pipe chains are not
+- The user always sees exactly what is approved
 
-**Was der Installer tut:**
-- Erklärt dieses Verhalten explizit im Wizard-Schritt "Sicherheit & Allowlist"
-- Zeigt welche Binaries vorinstalliert genehmigt sind und warum
-- Warnt wenn jemand `bash` mit Wildcard oder `security: full` aktivieren will
+**What the Installer Does:**
+- Explains this behavior explicitly in the "Security & Allowlist" wizard step
+- Shows which binaries are pre-approved and why
+- Warns if someone tries to enable `bash` with a wildcard or `security: full`
 
-**Quelle:** Photon + coding_zot, 2026-04-05
-
----
-
-## DD-002: Security by Default, nicht Security by Choice
-
-**Entscheid:** Der Installer bietet keine "Ich weiss was ich tue, alles aufmachen"-Option in der Standard-Installation.
-
-**Begründung:**
-Ein unbedarfter Nutzer in einer Messwarte eines Chemiebetriebs würde "alles aufmachen" klicken weil es bequemer ist. Das Szenario ist nicht theoretisch.
-
-**Was der Installer tut:**
-- Restriktive Defaults, keine Wildcard-Option im MVP
-- Wer mehr will, muss manuell in `exec-approvals.json` eingreifen — bewusste Entscheidung, nicht Klick
-
-**Quelle:** Photon + coding_zot, 2026-04-05
+**Source:** Photon + coding_zot, 2026-04-05
 
 ---
 
-## DD-003: TUI statt GUI
+## DD-002: Security by Default, Not Security by Choice
 
-**Entscheid:** Terminal-UI (`rich` + `questionary`), kein GUI-Framework.
+**Decision:** The installer does not offer an "I know what I'm doing, open everything" option in the standard installation.
 
-**Begründung:**
-- Läuft auf Headless Raspberry Pi ohne Display
-- Kein PyInstaller-Overhead durch Qt/Tk
-- Cross-platform robuster
-- Kern-Logik bleibt UI-unabhängig — TUI ist Überbau
+**Reasoning:**
+An inexperienced user in a chemical plant control room would click "open everything" because it's more convenient. This scenario is not theoretical.
 
-**Quelle:** Photon + coding_zot, 2026-04-05
+**What the Installer Does:**
+- Restrictive defaults, no wildcard option in the MVP
+- Those who want more must manually edit `exec-approvals.json` — a conscious decision, not a click
+
+**Source:** Photon + coding_zot, 2026-04-05
 
 ---
 
-## DD-005: Extended Memory — Opt-in, nicht Default
+## DD-003: TUI Instead of GUI
 
-**Entscheid:** Das dreischichtige Memory-System läuft immer. Semantische Vektorsuche (Mistral-Embeddings) ist Opt-in.
+**Decision:** Terminal UI (`rich` + `questionary`), no GUI framework.
 
-**Standard (kein Mistral-Key):**
-- SQLite + FTS5 Volltext-Suche
-- Funktioniert, findet exakte Begriffe
-- Null Zusatzkosten
+**Reasoning:**
+- Runs on headless Raspberry Pi without a display
+- No PyInstaller overhead from Qt/Tk
+- More robust cross-platform
+- Core logic remains UI-independent — TUI is just a layer on top
 
-**Opt-in "Extended Memory" (mit Mistral-Key):**
+**Source:** Photon + coding_zot, 2026-04-05
+
+---
+
+## DD-004: Core API Layer Is UI-Independent
+
+**Decision:** `checks/`, `docker/`, `bootstrap/`, `security/` have no UI dependencies. The TUI calls the core, not the other way around.
+
+**Reasoning:**
+- Enables future web UI, CLI-only mode, or other frontends
+- Core is testable without UI
+- Headless operation (e.g., CI/CD) possible
+
+**Source:** Photon (voice message), 2026-04-05
+
+---
+
+## DD-005: Extended Memory — Opt-in, Not Default
+
+**Decision:** The three-layer memory system always runs. Semantic vector search (Mistral embeddings) is opt-in.
+
+**Standard (No Mistral Key):**
+- SQLite + FTS5 full-text search
+- Works, finds exact terms
+- Zero additional costs
+
+**Opt-in "Extended Memory" (With Mistral Key):**
 - SQLite + FTS5 + Mistral `mistral-embed` (1024 dims) + sqlite-vec
-- Hybrid-Search: BM25 (0.3) + Vektor (0.7)
-- Findet semantisch verwandte Begriffe — "Unterkunft" trifft "Hotelzimmer"
-- Kostet Mistral API-Calls für jeden Embedding-Index-Aufbau
+- Hybrid search: BM25 (0.3) + vector (0.7)
+- Finds semantically related terms — "accommodation" matches "hotel room"
+- Costs Mistral API calls for each embedding index build
 
-**Wizard-Text:**
-> "Ohne Mistral: Volltext-Suche — findet exakt was du eingibst.  
-> Mit Mistral: semantische Suche — findet auch verwandte Begriffe.  
-> Empfehlung: Mistral-Key eingeben wenn vorhanden. Kann später aktiviert werden."
+**Wizard Text:**
+> *"Without Mistral: Full-text search — finds exactly what you enter.
+> With Mistral: Semantic search — also finds related terms.
+> Recommendation: Enter a Mistral key if available. Can be activated later."*
 
-**Quelle:** Photon, 2026-04-05
-
----
-
-## DD-004: Kern-API-Schicht ist UI-unabhängig
-
-**Entscheid:** `checks/`, `docker/`, `bootstrap/`, `security/` haben keine UI-Abhängigkeit. TUI ruft den Kern an, nicht umgekehrt.
-
-**Begründung:**
-- Ermöglicht später Web-UI, CLI-only Modus, oder andere Frontends
-- Kern ist testbar ohne UI
-- Headless-Betrieb (z.B. CI/CD) möglich
-
-**Quelle:** Photon (Sprachnachricht), 2026-04-05
+**Source:** Photon, 2026-04-05

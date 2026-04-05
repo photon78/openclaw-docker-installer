@@ -1,52 +1,52 @@
 # OpenClaw Installer — Roadmap
 
-> Stand: 2026-04-05  
-> Prinzip: Jede Version ist in sich stabil. Secure by Default. Alles Python.
+> Status: 2026-04-05
+> Principle: Every version is stable in itself. Secure by Default. All Python.
 
 ---
 
 ## v0.1.0 — "First Light" 🔦
-*Single Agent, Docker, funktioniert.*
+*Single Agent, Docker, functional.*
 
-### Infrastruktur
-- [ ] Python-Projekt-Struktur (pyproject.toml, src/, tests/)
-- [ ] CLI-Grundgerüst (typer): install / status / start / stop / uninstall
+### Infrastructure
+- [ ] Python project structure (pyproject.toml, src/, tests/)
+- [ ] CLI framework (typer): install / status / start / stop / uninstall
 - [ ] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
 
 ### Wizard
-- [ ] Interaktiver Wizard (questionary + rich)
-- [ ] Willkommen + Plattform-Erkennung
-- [ ] API-Key(s) abfragen (Anthropic, optional Mistral)
-- [ ] Channel wählen (Telegram / Discord / Signal)
-- [ ] Channel-Credentials abfragen (Bot-Token, etc.)
-- [ ] Security-Profil: Strict / Standard / Custom
+- [ ] Interactive wizard (questionary + rich)
+- [ ] Welcome + platform detection
+- [ ] Request API key(s) (Anthropic, optional Mistral)
+- [ ] Select channel (Telegram / Discord / Signal)
+- [ ] Request channel credentials (bot token, etc.)
+- [ ] Security profile: Strict / Standard / Custom
 
-### Generierung
-- [ ] docker-compose.yml (Bind Mounts, .env + scripts read-only)
-- [ ] .env (API-Keys, LLM Tiers)
+### Generation
+- [ ] docker-compose.yml (bind mounts, .env + scripts read-only)
+- [ ] .env (API keys, LLM tiers)
 - [ ] openclaw.json (bootstrapMaxChars, subagents, sessions)
-- [ ] exec-approvals.json (aus Security-Profil, per-Agent Tiers)
-- [ ] restore_exec_approvals.py (aus Wizard-Config)
-- [ ] Workspace-Bootstrapping (AGENTS.md, SOUL.md, IDENTITY.md, MEMORY.md Templates)
+- [ ] exec-approvals.json (from security profile, per-agent tiers)
+- [ ] restore_exec_approvals.py (from wizard config)
+- [ ] Workspace bootstrapping (AGENTS.md, SOUL.md, IDENTITY.md, MEMORY.md templates)
 
-### Security-Baseline
-- [ ] health_check.py bundlen
-- [ ] audit_integrity.py bundlen + Baselines setzen
-- [ ] API-Keys nur in .env, nie in Service-File
+### Security Baseline
+- [ ] Bundle health_check.py
+- [ ] Bundle audit_integrity.py + set baselines
+- [ ] API keys only in .env, never in service file
 
 ### Post-Install
 - [ ] docker-compose up via CLI
-- [ ] Gateway-Ping (Health-Check)
-- [ ] Zusammenfassung + nächste Schritte
+- [ ] Gateway ping (health check)
+- [ ] Summary + next steps
 
 ### Docs & Community
 - [ ] README.md (Vision, Quick Start, Screenshots)
 - [ ] LICENSE (MIT)
 - [ ] CHANGELOG.md (Keep a Changelog)
-- [ ] CONTRIBUTING.md (DCO, Code Style, PR-Prozess)
+- [ ] CONTRIBUTING.md (DCO, Code Style, PR process)
 - [ ] CODE_OF_CONDUCT.md (Contributor Covenant)
 - [ ] SECURITY.md (Responsible Disclosure)
-- [ ] GitHub Issue-Templates (Bug / Feature / Security Report)
+- [ ] GitHub issue templates (Bug / Feature / Security Report)
 
 ---
 
@@ -54,90 +54,90 @@
 *Multi-Agent, Extended Memory, Telegram Topics.*
 
 ### Multi-Agent
-- [ ] Wizard: "Wie viele Agents?" + Rollen definieren
-- [ ] Pro Agent: Name, Emoji, Workspace, Rechte-Tier
-- [ ] Telegram-Gruppe + Topic-Bindings generieren
-- [ ] Per-Agent Allowlist generieren
-- [ ] Symlinks automatisch anlegen
+- [ ] Wizard: "How many agents?" + define roles
+- [ ] Per agent: Name, emoji, workspace, permission tier
+- [ ] Generate Telegram group + topic bindings
+- [ ] Generate per-agent allowlist
+- [ ] Automatically create symlinks
 
 ### Extended Memory (Opt-in)
-- [ ] Wizard-Prompt: Basic vs. Extended
-- [ ] Topics-Ordner + _template.md + index.md generieren
-- [ ] daily_digest.py generieren (atomares Schreiben)
-- [ ] Cron-Jobs: Log Writer (stündlich), Weekly Maintenance (Fr)
-- [ ] extraPaths für Cross-Agent Memory
-- [ ] HEARTBEAT.md mit Guards (Zeilenlimit, Log-Kompaktheit, Digest-Alter)
+- [ ] Wizard prompt: Basic vs. Extended
+- [ ] Generate topics folder + _template.md + index.md
+- [ ] Generate daily_digest.py (atomic writing)
+- [ ] Cron jobs: Log writer (hourly), Weekly Maintenance (Fri)
+- [ ] extraPaths for cross-agent memory
+- [ ] HEARTBEAT.md with guards (line limit, log compactness, digest age)
 
 ### LLM Tiers
 - [ ] Budget / Standard / Power / Media in .env
-- [ ] openclaw.json mit ${LLM_*} Variablen
+- [ ] openclaw.json with ${LLM_*} variables
 
-### Agent-Management
-- [ ] openclaw-installer add-agent (nachträglich)
+### Agent Management
+- [ ] openclaw-installer add-agent (post-installation)
 - [ ] openclaw-installer remove-agent
 
 ---
 
 ## v0.3.0 — "Unleash the Beast" 🐧
-*Native Linux, systemd, kein Docker.*
+*Native Linux, systemd, no Docker.*
 
-### Native-Installation
-- [ ] Wizard: Native vs. Docker Auswahl
-- [ ] Node.js prüfen / installieren (fnm)
-- [ ] openclaw via npm global installieren
-- [ ] systemd User-Service generieren
-- [ ] ExecStartPost für restore_exec_approvals.py
+### Native Installation
+- [ ] Wizard: Native vs. Docker selection
+- [ ] Check/install Node.js (fnm)
+- [ ] Install openclaw via npm globally
+- [ ] Generate systemd user service
+- [ ] ExecStartPost for restore_exec_approvals.py
 - [ ] loginctl enable-linger
-- [ ] sudoers-Eintrag generieren (spezifisch, nicht wildcard)
+- [ ] Generate sudoers entry (specific, no wildcard)
 
-### System-Integration
-- [ ] FTS5-Check (Node + SQLite)
-- [ ] Crontab generieren (statt Docker-interne Crons)
-- [ ] Backup-Script generieren (daily_backup.py)
-- [ ] Morning Briefing generieren
-- [ ] openclaw-installer doctor (Diagnose)
+### System Integration
+- [ ] FTS5 check (Node + SQLite)
+- [ ] Generate crontab (instead of Docker-internal crons)
+- [ ] Generate backup script (daily_backup.py)
+- [ ] Generate morning briefing
+- [ ] openclaw-installer doctor (diagnostics)
 
 ---
 
 ## v0.4.0 — "Shape Shifter" 🔄
-*Migration, Updates, Portabilität.*
+*Migration, Updates, Portability.*
 
 - [ ] openclaw-installer migrate docker-to-native
 - [ ] openclaw-installer migrate native-to-docker
-- [ ] openclaw-installer update (Version prüfen, Backup vor Update, Post-Update Check)
+- [ ] openclaw-installer update (check version, backup before update, post-update check)
 - [ ] openclaw-installer backup / restore
-- [ ] platformdirs Integration (kein hardcoded ~/...)
+- [ ] platformdirs integration (no hardcoded ~/...)
 
 ---
 
 ## v0.5.0 — "All Platforms" 🌐
 *macOS + Windows Support.*
 
-- [ ] macOS: launchd Service (~/Library/LaunchAgents/)
-- [ ] macOS: Docker Desktop Integration
+- [ ] macOS: launchd service (~/Library/LaunchAgents/)
+- [ ] macOS: Docker Desktop integration
 - [ ] Windows: NSSM Service Manager
-- [ ] Windows: Docker Desktop Integration
-- [ ] PyInstaller Binaries (kein Python auf Host nötig)
-- [ ] Cross-Platform Tests (GitHub Actions Matrix)
+- [ ] Windows: Docker Desktop integration
+- [ ] PyInstaller binaries (no Python required on host)
+- [ ] Cross-platform tests (GitHub Actions Matrix)
 
 ---
 
-## Backlog / Langfrist
+## Backlog / Long-term
 
-- [ ] Web-UI für Wizard (Textual TUI oder Browser-based)
-- [ ] Plugin-System (Skills installieren via Wizard)
-- [ ] Auto-Discovery: vorhandene OpenClaw-Installation erkennen
-- [ ] Telemetrie (opt-in, anonymisiert): Install-Erfolgsrate
-- [ ] Community Skills Repository Integration (ClaWHub)
-- [ ] Cluster-Mode (mehrere Server)
+- [ ] Web UI for wizard (Textual TUI or browser-based)
+- [ ] Plugin system (install skills via wizard)
+- [ ] Auto-discovery: detect existing OpenClaw installation
+- [ ] Telemetry (opt-in, anonymized): installation success rate
+- [ ] Community Skills Repository integration (ClaWHub)
+- [ ] Cluster mode (multiple servers)
 
 ---
 
-## Prinzipien
+## Principles
 
-1. **Jede Version ist in sich stabil** — kein "geht nur mit v0.3"
-2. **Secure by Default** — jede Version, jedes Feature
-3. **Rückwärtskompatibel** — Config aus v0.1 funktioniert in v0.5
-4. **Wizard verhindert schlechte Entscheidungen** — Friction bei Risiko
-5. **Alles Python** — Wizard, Scripts, Skills, Tests
-6. **Docker first, Native second** — aber Native ist First-Class, kein Afterthought
+1. **Every version is stable in itself** — no "only works with v0.3"
+2. **Secure by Default** — every version, every feature
+3. **Backward compatible** — config from v0.1 works in v0.5
+4. **Wizard prevents poor decisions** — friction for risk
+5. **All Python** — wizard, scripts, skills, tests
+6. **Docker first, Native second** — but native is first-class, not an afterthought

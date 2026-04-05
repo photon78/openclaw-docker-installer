@@ -1,28 +1,28 @@
-# Security-Architektur — OpenClaw Installer
+# Security Architecture — OpenClaw Installer
 
-## Designphilosophie
+## Design Philosophy
 
-**Ein LLM-Agent mit Shell-Zugriff ist eine kontrollierte Waffe.** Nicht die Fähigkeit ist das Problem — sondern unkontrollierte Fähigkeit. Dieses System gibt dem Agent genau so viel Macht wie er braucht, und nicht ein Byte mehr.
+**An LLM agent with shell access is a controlled weapon.** The issue isn't capability — it's uncontrolled capability. This system grants the agent exactly as much power as it needs, not a byte more.
 
-Wir machen keine Illusionen: Ein Agent mit Allowlist ist **nicht** unknackbar. Aber er ist *beobachtbar*, *eingeschränkt* und *auditierbar*. Das ist der Unterschied zwischen einem offenen Scheunentor und einer Tür mit Schloss, Kamera und Alarm.
+We harbor no illusions: An agent with an allowlist is **not** unbreakable. But it is *observable*, *restricted*, and *auditable*. That's the difference between an open barn door and a door with a lock, camera, and alarm.
 
 ---
 
-## Schicht 1: Exec-Approvals (Allowlist-System)
+## Layer 1: Exec-Approvals (Allowlist System)
 
-### Architektur
+### Architecture
 
 ```
 exec-approvals.json
-├── defaults          ← gilt für ALLE Sessions (inkl. Crons, isolated)
+├── defaults          ← applies to ALL sessions (including Crons, isolated)
 ├── agents
-│   ├── main          ← Botmaster, breiteste Rechte
-│   ├── coding_bot    ← Dev-Tools, Git, Node
-│   ├── buero_bot     ← nur spezifische Script-Pfade
-│   └── formular_bot  ← nur spezifische Script-Pfade
+│   ├── main          ← Botmaster, broadest rights
+│   ├── coding_bot    ← Dev tools, Git, Node
+│   ├── buero_bot     ← only specific script paths
+│   └── formular_bot  ← only specific script paths
 ```
 
-### Prinzip: Deny-by-Default, Allowlist-Only
+### Principle: Deny-by-Default, Allowlist-Only
 
 ```json
 {
@@ -32,106 +32,106 @@ exec-approvals.json
 }
 ```
 
-- **`security: allowlist`** — nur explizit gelistete Commands erlaubt. `security: full` wird nie angeboten.
-- **`ask: on-miss`** — was nicht auf der Liste steht, fragt den User
-- **`askFallback: deny`** — wenn kein User antwortet: verweigern
+- **`security: allowlist`** — only explicitly listed commands allowed. `security: full` is never offered.
+- **`ask: on-miss`** — anything not on the list prompts the user
+- **`askFallback: deny`** — if no user responds: deny
 
-### Rechte-Tiers
+### Permission Tiers
 
-| Tier | Agents | Bare Interpreter | Was erlaubt |
-|------|--------|-----------------|-------------|
-| **Restricted** | büro_bot, formular_bot | ❌ Kein python3, kein bash | Nur benannte Script-Pfade + Read-Tools (ls, cat, grep, etc.) |
-| **Standard** | coding_bot | ✅ python3 + bash | Dev-Tools, Git, Node, SSH, aber kein systemctl, kein openclaw CLI |
-| **Elevated** | main | ✅ python3 + bash | System-Tools, Gateway-Management, aber kein rm, kein pip3, kein Root |
-| **Cron/Isolated** | defaults | ❌ Kein bash | python3 + Read-Tools + Health/Digest-Scripts |
+| Tier | Agents | Bare Interpreter | What's Allowed |
+|------|--------|-----------------|----------------|
+| **Restricted** | buero_bot, formular_bot | ❌ No python3, no bash | Only named script paths + read tools (ls, cat, grep, etc.) |
+| **Standard** | coding_bot | ✅ python3 + bash | Dev tools, Git, Node, SSH, but no systemctl, no openclaw CLI |
+| **Elevated** | main | ✅ python3 + bash | System tools, gateway management, but no rm, no pip3, no root |
+| **Cron/Isolated** | defaults | ❌ No bash | python3 + read tools + health/digest scripts |
 
-### Warum kein bare Interpreter für Restricted Agents?
+### Why No Bare Interpreter for Restricted Agents?
 
-`/usr/bin/python3` in der Allowlist bedeutet: der Agent kann **jedes** Python ausführen — `python3 -c "import os; os.system('rm -rf /')"` matcht. Für Agents die nur Skills ausführen sollen, listen wir stattdessen die konkreten Script-Pfade:
+`/usr/bin/python3` in the allowlist means: the agent can execute **any** Python — `python3 -c "import os; os.system('rm -rf /')"` matches. For agents that should only execute skills, we list the specific script paths instead:
 
 ```json
-// ❌ Zu breit
+// ❌ Too broad
 {"pattern": "/usr/bin/python3"}
 
-// ✅ Präzise
+// ✅ Precise
 {"pattern": "/home/user/.openclaw/workspace/skills/web-search/search.py"}
 {"pattern": "/home/user/.openclaw/workspace/skills/email/send_mail.py"}
 ```
 
-**Bekannte Limitierung:** Agents mit bare python3 oder bash können diese Einschränkung umgehen. Das ist ein bewusster Kompromiss — Dev-Agents *brauchen* generellen Interpreter-Zugriff. Die Sicherheit liegt hier in der Beobachtbarkeit (Integrity-Audit), nicht in der Einschränkung.
+**Known Limitation:** Agents with bare python3 or bash can bypass these restrictions. This is a conscious compromise — dev agents *need* general interpreter access. Security here lies in observability (integrity audit), not restriction.
 
 ---
 
-## Schicht 2: Restore-Mechanismus
+## Layer 2: Restore Mechanism
 
-### Das Problem
+### The Problem
 
-`openclaw gateway install` und `openclaw update` können `exec-approvals.json` mit Defaults überschreiben. Alle manuellen Anpassungen wären verloren.
+`openclaw gateway install` and `openclaw update` can overwrite `exec-approvals.json` with defaults. All manual adjustments would be lost.
 
-### Die Lösung
+### The Solution
 
 ```
 systemd ExecStartPost → restore_exec_approvals.py
 ```
 
-Nach jedem Gateway-Start:
-1. 2 Sekunden warten (Socket muss bereit sein)
-2. Komplette Allowlist aus dem Python-Script schreiben
-3. Log-Eintrag in `logs/restore-exec-approvals.log`
+After each gateway start:
+1. Wait 2 seconds (socket must be ready)
+2. Write complete allowlist from the Python script
+3. Log entry in `logs/restore-exec-approvals.log`
 
-**Die Allowlist lebt im Code, nicht in der Datei.** `exec-approvals.json` ist generiert, nicht manuell editiert. Änderungen gehören ins Restore-Script.
+**The allowlist lives in code, not in the file.** `exec-approvals.json` is generated, not manually edited. Changes belong in the restore script.
 
-### Installer-Kontext
+### Installer Context
 
-Der Wizard generiert `restore_exec_approvals.py` basierend auf:
-- Welche Agents konfiguriert wurden
-- Welches Rechte-Tier pro Agent gewählt wurde
-- Welche Skills installiert sind (→ Script-Pfade)
+The wizard generates `restore_exec_approvals.py` based on:
+- Which agents were configured
+- Which permission tier was chosen per agent
+- Which skills are installed (→ script paths)
 
 ---
 
-## Schicht 3: Integrity-Monitoring
+## Layer 3: Integrity Monitoring
 
-### `audit_integrity.py` — eigenständiges Audit-Script
+### `audit_integrity.py` — Standalone Audit Script
 
 ```bash
-python3 audit_integrity.py              # Voller Report
-python3 audit_integrity.py --silent     # Nur bei Änderungen
-python3 audit_integrity.py --json       # Maschinenlesbar
-python3 audit_integrity.py --reset      # Baselines neu setzen
+python3 audit_integrity.py              # Full report
+python3 audit_integrity.py --silent     # Only on changes
+python3 audit_integrity.py --json       # Machine-readable
+python3 audit_integrity.py --reset      # Reset baselines
 ```
 
-**Was geprüft wird:**
+**What is checked:**
 
-| Check | Methode | Erkennt |
-|-------|---------|---------|
-| exec-approvals.json | SHA256-Hash vs. Baseline | Manipulation, unerwartete Updates |
-| scripts/ Inventar | Dateiliste + individuelle Hashes | Neue Scripts, gelöschte Scripts, modifizierte Scripts |
+| Check | Method | Detects |
+|-------|--------|---------|
+| exec-approvals.json | SHA256 hash vs. baseline | Manipulation, unexpected updates |
+| scripts/ inventory | File list + individual hashes | New scripts, deleted scripts, modified scripts |
 
-**Wichtig:** Baselines werden bei erkannten Änderungen **nicht** automatisch überschrieben. Erfordert bewusstes `--reset` nach legitimen Änderungen. Ein Angreifer der die Baseline überschreibt, müsste dafür `audit_integrity.py --reset` ausführen — was im Script-Inventar wiederum auffällt.
+**Important:** Baselines are **not** automatically overwritten when changes are detected. Requires conscious `--reset` after legitimate changes.
 
-**Exit-Codes:** 0 = OK, 1 = Änderungen, 2 = kritisch (Dateien fehlen)
+**Exit codes:** 0 = OK, 1 = changes, 2 = critical (files missing)
 
-### Integration im Health-Check
+### Integration in Health Check
 
 ```
 health_check.py
 ├── Disk, Gateway, Backup          ← System
-├── Errors, Pakete, Logins         ← Security
-├── API-Keys im Service-File       ← Secret-Leak-Detection
+├── Errors, Packages, Logins       ← Security
+├── API keys in service file       ← Secret leak detection
 └── audit_integrity.py --silent    ← Integrity
 ```
 
-Läuft täglich 07:45 via Crontab. Bei Änderungen: Alert via Telegram.
+Runs daily at 07:45 via crontab. On changes: alert via Telegram.
 
 ---
 
-## Schicht 4: Secret-Management
+## Layer 4: Secret Management
 
-### Prinzip: Secrets nur in `.env`, nirgendwo sonst
+### Principle: Secrets Only in `.env`, Nowhere Else
 
 ```
-~/.openclaw/.env          ← einziger Ort für Secrets
+~/.openclaw/.env          ← only location for secrets
 ├── ANTHROPIC_API_KEY
 ├── MISTRAL_API_KEY
 ├── EMAIL_PASSWD
@@ -139,131 +139,115 @@ Läuft täglich 07:45 via Crontab. Bei Änderungen: Alert via Telegram.
 └── LLM_BUDGET / LLM_STANDARD / LLM_POWER / LLM_MEDIA
 ```
 
-- **systemd:** `EnvironmentFile=%h/.openclaw/.env` — nie `Environment=KEY=...` im Service-File
-- **Health-Check:** prüft bei jedem Lauf ob API-Keys im Service-File stehen
-- **`openclaw update`** kann Keys zurück ins Service-File schreiben → Health-Check erkennt das
-- **Workspace-Dateien:** nie Secrets committen. `.gitignore` enthält `.env`
+- **systemd:** `EnvironmentFile=%h/.openclaw/.env` — never `Environment=KEY=...` in the service file
+- **Health check:** verifies on each run whether API keys are in the service file
+- **Workspace files:** never commit secrets. `.gitignore` includes `.env`
 
-### Docker-Kontext
+### Docker Context
 
 ```yaml
 volumes:
   - ${OPENCLAW_DATA}/.env:/data/.env:ro    # ← read-only!
 ```
 
-`.env` ist read-only gemountet. Der Agent kann Secrets lesen (braucht er für API-Calls), aber nicht überschreiben.
+`.env` is mounted read-only. The agent can read secrets (needs them for API calls) but cannot overwrite them.
 
 ---
 
-## Schicht 5: Prozess-Isolation (Docker)
+## Layer 5: Process Isolation (Docker)
 
-### Bind Mounts: read-write vs. read-only
+### Bind Mounts: Read-Write vs. Read-Only
 
 ```yaml
 volumes:
-  # Read-Write (Agent braucht Schreibzugriff)
+  # Read-Write (agent needs write access)
   - ${OPENCLAW_DATA}/workspace:/data/workspace
-  - ${OPENCLAW_DATA}/workspace-coding:/data/workspace-coding
   - ${OPENCLAW_DATA}/logs:/data/logs
   - ${OPENCLAW_DATA}/memory:/data/memory
 
-  # Read-Only (Agent darf nicht ändern)
+  # Read-Only (agent must not modify)
   - ${OPENCLAW_DATA}/scripts:/data/scripts:ro
   - ${OPENCLAW_DATA}/.env:/data/.env:ro
   - ${OPENCLAW_DATA}/openclaw.json:/data/openclaw.json:ro
 ```
 
-**Warum Bind Mounts statt Named Volumes?** Backup, Migration (`openclaw-installer migrate`), manuelle Inspektion — alles funktioniert ohne Docker-Umwege.
+**Why scripts read-only?** If the agent could create a new script and it were in the allowlist, the allowlist would be worthless. Scripts are only modified by the installer or the user — never by the agent at runtime.
 
-**Warum scripts read-only?** Wenn der Agent ein neues Script anlegen könnte und es in der Allowlist steht, wäre die Allowlist wertlos. Scripts werden nur vom Installer oder vom User geändert — nie vom Agent zur Laufzeit.
+### Native Installation (Linux)
 
-### Native-Installation (Linux)
-
-Kein Container = keine Prozess-Isolation. Die Sicherheit liegt vollständig in:
-- Allowlist (was darf ausgeführt werden)
-- User-Separation (Agent läuft als dedizierter User, nicht als root)
-- Integrity-Monitoring (was hat sich verändert)
-- Approval-Mechanismus (User bestätigt unbekannte Commands)
+No container = no process isolation. Security relies entirely on:
+- Allowlist (what can be executed)
+- User separation (agent runs as a dedicated user, not as root)
+- Integrity monitoring (what has changed)
+- Approval mechanism (user confirms unknown commands)
 
 ---
 
-## Threat Model — ehrlich
+## Threat Model — Honest Assessment
 
-### Was das System verhindert
+### What the System Prevents
 
-✅ Agent führt willkürliche destructive Commands aus (`rm`, `dd`)
-✅ Agent installiert Pakete (`pip3`, `apt`)
-✅ Agent eskaliert zu Root
-✅ Agent ändert seine eigene Allowlist (Docker: scripts read-only)
-✅ Unbemerkte Allowlist-Manipulation (Integrity-Audit)
-✅ Secret-Leaks ins Service-File (Health-Check)
-✅ Allowlist-Verlust nach Gateway-Update (Restore-Script)
+✅ Agent executes arbitrary destructive commands (`rm`, `dd`)
+✅ Agent installs packages (`pip3`, `apt`)
+✅ Agent escalates to root
+✅ Agent modifies its own allowlist (Docker: scripts read-only)
+✅ Unnoticed allowlist manipulation (integrity audit)
+✅ Secret leaks into service file (health check)
+✅ Allowlist loss after gateway update (restore script)
 
-### Was das System NICHT verhindert
+### What the System Does NOT Prevent
 
-⚠️ **Agent mit bash/python3 kann Code generieren und ausführen** — die Allowlist schützt nur den Interpreter-Pfad, nicht den Inhalt. Ein Agent mit `python3` in der Allowlist kann theoretisch alles was der User kann.
+⚠️ **Agent with bash/python3 can generate and execute code** — the allowlist only protects the interpreter path, not the content.
 
-⚠️ **Agent kann alle Dateien lesen auf die der User Zugriff hat** — `read`-Tool ist immer verfügbar, unabhängig von der Allowlist. Secrets die im Filesystem liegen, sind lesbar.
+⚠️ **Agent can read all files the user has access to** — `read` tool is always available, regardless of the allowlist.
 
-⚠️ **Social Engineering** — der Agent könnte den User dazu bringen, Commands zu approven die schädlich sind. Der Approval-Mechanismus schützt nur wenn der User versteht was er approved.
+⚠️ **Social engineering** — the agent could trick the user into approving harmful commands.
 
-⚠️ **Datenexfiltration via API-Calls** — der Agent hat API-Keys und kann Daten an LLM-Provider senden. Das ist by Design (er braucht die Keys), aber ein kompromittierter Agent könnte sensible Daten in Prompts einbetten.
+⚠️ **Data exfiltration via API calls** — the agent has API keys and can send data to LLM providers.
 
-### Bewusste Kompromisse
+### Conscious Compromises
 
-| Kompromiss | Warum |
-|-----------|-------|
-| bash/python3 für Dev-Agents | Dev-Arbeit ohne Interpreter ist nicht praktikabel |
-| `read`-Tool immer verfügbar | Agent braucht Dateizugriff für seine Kernfunktion |
-| Approval-UI statt automatische Blockierung | Human-in-the-Loop > automatische Entscheidungen |
-| Secrets in `.env` lesbar für Agent | Agent braucht API-Keys für Funktionalität |
-
----
-
-## Installer-Wizard: Security-Setup
-
-```
-🔒 Security-Profil wählen:
-
-  [Strict]    Empfohlen. Allowlist für alle Agents.
-              Nur benannte Scripts, kein bare Interpreter
-              für Nicht-Dev-Agents.
-
-  [Standard]  Allowlist mit bare python3/bash für alle Agents.
-              Mehr Flexibilität, weniger Isolation.
-
-  [Custom]    Pro Agent einzeln konfigurieren.
-              Für erfahrene User.
-
-  ⚠️ "Full Access" wird bewusst nicht angeboten.
-```
-
-Bei **Strict:**
-- Wizard fragt pro Agent: "Braucht dieser Agent Programmiersprachen-Zugriff?"
-- Nein → nur Script-Pfade (Restricted Tier)
-- Ja → python3 + bash (Standard/Elevated Tier)
-- Integrity-Monitoring automatisch aktiv
-- `scripts/` read-only im Docker
-
-Bei **Standard:**
-- Alle Agents bekommen python3 + bash
-- Integrity-Monitoring aktiv
-- Warnung: "Agents mit Interpreter-Zugriff können beliebigen Code ausführen"
+| Compromise | Why |
+|-----------|-----|
+| bash/python3 for dev agents | Dev work without an interpreter is impractical |
+| `read` tool always available | Agent needs file access for its core function |
+| Approval UI instead of automatic blocking | Human-in-the-loop > automatic decisions |
+| Secrets in `.env` readable by agent | Agent needs API keys for functionality |
 
 ---
 
-## Checkliste für den Installer
+## Installer Wizard: Security Setup
 
 ```
-[ ] exec-approvals.json generiert (pro Agent, pro Tier)
-[ ] restore_exec_approvals.py generiert (aus Wizard-Config)
-[ ] systemd ExecStartPost / Docker ENTRYPOINT konfiguriert
-[ ] audit_integrity.py installiert + Baselines gesetzt
-[ ] health_check.py mit Audit-Integration
-[ ] .env angelegt (Secrets, LLM Tiers)
-[ ] .env read-only gemountet (Docker)
-[ ] scripts/ read-only gemountet (Docker)
-[ ] Service-File ohne API-Keys
-[ ] sudoers-Eintrag (nur spezifische Commands via NOPASSWD)
-[ ] Approval-Buttons aktiv (Telegram/Discord)
+🔒 Choose security profile:
+
+  [Strict]    Recommended. Allowlist for all agents.
+              Only named scripts, no bare interpreter
+              for non-dev agents.
+
+  [Standard]  Allowlist with bare python3/bash for all agents.
+              More flexibility, less isolation.
+
+  [Custom]    Configure per agent individually.
+              For experienced users.
+
+  ⚠️ "Full Access" is intentionally not offered.
+```
+
+---
+
+## Installer Checklist
+
+```
+[ ] exec-approvals.json generated (per agent, per tier)
+[ ] restore_exec_approvals.py generated (from wizard config)
+[ ] systemd ExecStartPost / Docker ENTRYPOINT configured
+[ ] audit_integrity.py installed + baselines set
+[ ] health_check.py with audit integration
+[ ] .env created (secrets, LLM tiers)
+[ ] .env mounted read-only (Docker)
+[ ] scripts/ mounted read-only (Docker)
+[ ] Service file without API keys
+[ ] sudoers entry (only specific commands via NOPASSWD)
+[ ] Approval buttons active (Telegram/Discord)
 ```
