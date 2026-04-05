@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "openclaw-docker-installer"
+version = "0.0.1"
+description = "OpenClaw in a Box – cross-platform setup wizard"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "docker",
+    "jinja2",
+    "rich",
+    "questionary",
+    "psutil",
+    "httpx",
+    "platformdirs",
+    "send2trash",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[project.scripts]
+openclaw-installer = "main:main"
