@@ -14,7 +14,7 @@ Die Memory-Engine (SQLite + FTS5 + Mistral-Embeddings) läuft automatisch im Gat
 ## Schicht 1: MEMORY.md — Langzeitgedächtnis
 
 ```
-~/.openclaw/workspace/MEMORY.md
+~/.openclaw/workspace-coding/MEMORY.md
 ```
 
 - Max 30 Zeilen, nur stabile Fakten und Regeln
@@ -29,7 +29,7 @@ Die Memory-Engine (SQLite + FTS5 + Mistral-Embeddings) läuft automatisch im Gat
 ## Schicht 2: Daily Logs — Rohmaterial
 
 ```
-~/.openclaw/workspace/memory/YYYY-MM-DD.md
+~/.openclaw/workspace-coding/memory/YYYY-MM-DD.md
 ```
 
 - Was heute passiert ist — Entscheidungen, offene Punkte
@@ -45,9 +45,12 @@ Die Memory-Engine (SQLite + FTS5 + Mistral-Embeddings) läuft automatisch im Gat
 ## Schicht 3: Topics — Verdichtetes Wissen
 
 ```
-~/.openclaw/workspace/memory/topics/
+~/.openclaw/workspace-coding/memory/topics/
   _template.md      ← Template für neue Topics
   index.md          ← Übersicht aller Topics
+  deployment.md     ← Beispiel
+  website-feedback.md
+  ...
 ```
 
 - Strukturiertes Wissen pro Thema
@@ -63,13 +66,14 @@ Die Memory-Engine (SQLite + FTS5 + Mistral-Embeddings) läuft automatisch im Gat
 | Komponente | Detail |
 |---|---|
 | Storage | SQLite + FTS5 + sqlite-vec |
-| Embeddings | Mistral (`mistral-embed`, 1024 dims) |
+| Embeddings | Mistral (`mistral-embed`, 1024 dims) — Opt-in (siehe DD-005) |
 | Hybrid-Search | BM25 (Gewicht 0.3) + Vektor (Gewicht 0.7) |
 | Index | `~/.openclaw/memory/<agentId>.sqlite` |
 | `memory_search` | Semantische Suche über alle `.md` im Workspace |
 | `memory_get` | Gezielt Zeilen aus Treffern lesen |
 
-**Voraussetzung:** Mistral API-Key nötig für Embeddings. Ohne Mistral: nur FTS5 (Volltext), keine Vektor-Suche.
+**Ohne Mistral-Key:** Nur FTS5 Volltext-Suche — funktioniert, findet exakte Begriffe.  
+**Mit Mistral-Key (Opt-in):** Hybrid-Search — findet auch semantisch verwandte Begriffe.
 
 ---
 
@@ -106,15 +110,14 @@ Beide Lösungen ergänzen sich — `extraPaths` für strukturiertes Wissen, Dige
 
 ---
 
-## Automation (Cron-Jobs)
+## Automation
 
 | Zeit | Job | Modell | Was |
 |---|---|---|---|
-| Stündlich :05 | Log Writer | — | Daily Log schreiben |
+| Stündlich :00 | Log Writer | — | Daily Log schreiben |
 | 03:05, 11:05, 18:05 | `daily_digest.py` | kein LLM | Digest in alle Sub-Workspaces |
 | Freitag 04:00 | Weekly Maintenance | Mistral | Daily Logs → Topics verdichten |
-| Täglich 07:45 | Health Check | Mistral | Silent on success |
-| Täglich 07:55 | Morning Briefing | Mistral | Immer senden |
+| Alle 2h | Heartbeat | — | MEMORY.md + Daily Log lesen, ggf. ergänzen |
 
 ---
 
@@ -156,8 +159,8 @@ Für Sub-Agents zusätzlich:
   memory/
     digest-latest.md           ← Wird von Digest-Cron befüllt
     topics/                    ← Leer
-  AGENTS.md -> ../workspace/AGENTS.md    (Symlink)
-  USER.md -> ../workspace/USER.md        (Symlink)
-  HEARTBEAT.md -> ../workspace/HEARTBEAT.md (Symlink)
-  skills/ -> ../workspace/skills/        (Symlink)
+  AGENTS.md    → ../workspace/AGENTS.md      (Symlink)
+  USER.md      → ../workspace/USER.md        (Symlink)
+  HEARTBEAT.md → ../workspace/HEARTBEAT.md   (Symlink)
+  skills/      → ../workspace/skills/        (Symlink)
 ```
