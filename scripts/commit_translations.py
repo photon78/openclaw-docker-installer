@@ -9,7 +9,7 @@ os.chdir(repo)
 steps = [
     ["git", "add", "-A"],
     ["git", "commit", "-m", "docs: translate all markdown files to English, update wine link"],
-    ["git", "push", "github-docker-installer", "feature/prototype-docker-check"],
+    ["git", "push", "origin", "feature/prototype-docker-check"],
 ]
 
 for cmd in steps:
