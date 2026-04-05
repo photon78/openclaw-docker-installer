@@ -66,4 +66,4 @@ MIT — frei zu nutzen, zu modifizieren und weiterzugeben.
 
 Wenn dir dieses Projekt das Leben erleichtert: Der Autor freut sich über ein Glas guten Walliser Rotwein.
 
-[![Buy me a glass of red wine](https://img.shields.io/badge/Buy%20me%20a-glass%20of%20red%20wine%20%F0%9F%8D%B7-red?style=flat-square)](https://paypal.me/photon78)
+🟥 Buy me a glass of red wine 🍷 → [paypal.me/photon78](https://paypal.me/photon78)
