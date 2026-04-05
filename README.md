@@ -2,6 +2,8 @@
 
 > OpenClaw in a Box — vollständige, produktionsreife OpenClaw-Instanz in wenigen Minuten.
 
+[![Buy me a glass of red wine](https://img.shields.io/badge/Buy%20me%20a-glass%20of%20red%20wine%20%F0%9F%8D%B7-red?style=flat-square)](https://paypal.me/photon78)
+
 ## Status
 🚧 Work in progress — Frühe Entwicklungsphase
 
@@ -62,4 +64,6 @@ tests/
 ## Lizenz
 MIT — frei zu nutzen, zu modifizieren und weiterzugeben.
 
-Wenn dir dieses Projekt das Leben erleichtert: Der Autor freut sich über ein Glas guten Walliser Rotwein. 🍷
+Wenn dir dieses Projekt das Leben erleichtert: Der Autor freut sich über ein Glas guten Walliser Rotwein.
+
+[![Buy me a glass of red wine](https://img.shields.io/badge/Buy%20me%20a-glass%20of%20red%20wine%20%F0%9F%8D%B7-red?style=flat-square)](https://paypal.me/photon78)
