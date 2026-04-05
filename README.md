@@ -6,11 +6,17 @@
 🚧 Work in progress — Frühe Entwicklungsphase
 
 ## Vision
-Ein interaktiver TUI-Wizard (Python, cross-platform) der ohne tiefe Linux-Kenntnisse eine vollständige OpenClaw-Instanz aufsetzt:
-- Docker-basiert: läuft auf Linux, macOS, Windows
-- Headless-tauglich: funktioniert auf Raspberry Pi ohne Display
-- Security-first: API-Keys nur in `.env`, nie in docker-compose
-- Saubere Trennung: Kern-Logik ist UI-unabhängig
+
+OpenClaw ist mächtig. Zu mächtig für eine ungesicherte Standardinstallation.
+
+Dieser Installer setzt nicht einfach eine OpenClaw-Instanz auf — er setzt eine **sichere** auf. By default. Ohne dass der Nutzer wissen muss was `exec-approvals`, Allowlists oder Security-Levels bedeuten.
+
+**Prinzipien:**
+- **Security by Default** — restriktive Allowlist, kein Root-Zugriff, keine gefährlichen Tools
+- **Human in the Loop** — Approval-Mechanismus vorkonfiguriert, irreversible Aktionen brauchen Bestätigung
+- **Guardrails vor Convenience** — der Wizard erklärt was jede Entscheidung bedeutet
+- **Headless-tauglich** — läuft auf Raspberry Pi ohne Display
+- **Saubere Trennung** — Kern-Logik ist UI-unabhängig, TUI ist Überbau
 
 ## Features (geplant v1)
 - Docker-Verfügbarkeitscheck
