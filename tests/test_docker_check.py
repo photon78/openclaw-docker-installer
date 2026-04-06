@@ -6,9 +6,7 @@ All tests use mocks — no real Docker required.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from src.checks.docker_check import DockerStatus, check_docker
+from src.checks.docker_check import check_docker
 
 
 class TestDockerNotInstalled:

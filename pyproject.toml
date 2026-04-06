@@ -25,3 +25,10 @@ dev = ["pytest", "pytest-cov", "ruff", "mypy"]
 
 [project.scripts]
 openclaw-installer = "main:app"
+
+[tool.mypy]
+exclude = ["src/installer/templates/"]
+ignore_missing_imports = true
+
+[tool.ruff]
+exclude = ["src/installer/templates/"]

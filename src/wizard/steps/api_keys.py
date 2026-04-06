@@ -5,6 +5,7 @@ Follows the OpenClaw onboarding approach: pick a provider, authenticate,
 then configure model tiers. Mistral is recommended as a second provider
 for skills (translate, OCR, transcribe) and budget/media tasks.
 """
+from typing import Any
 import questionary
 from rich.console import Console
 from rich.panel import Panel
@@ -15,7 +16,7 @@ from wizard.state import WizardState
 console = Console()
 
 # Main LLM providers (the most common ones)
-PROVIDERS = [
+PROVIDERS: list[dict[str, Any]] = [
     {
         "id": "anthropic",
         "label": "Anthropic (Claude)",

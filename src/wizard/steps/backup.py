@@ -66,9 +66,9 @@ def run(state: WizardState) -> bool | str:
 
     # Crontab hint
     console.print(
-        f"\n[dim]Add to host crontab (runs backup daily at 04:10):[/dim]\n"
-        f"[cyan]10 4 * * * docker compose -f ~/.openclaw/docker-compose.yml "
-        f"exec -T openclaw-gateway python3 /home/node/.openclaw/scripts/daily_backup.py[/cyan]"
+        "\n[dim]Add to host crontab (runs backup daily at 04:10):[/dim]\n"
+        "[cyan]10 4 * * * docker compose -f ~/.openclaw/docker-compose.yml "
+        "exec -T openclaw-gateway python3 /home/node/.openclaw/scripts/daily_backup.py[/cyan]"
     )
 
     return True

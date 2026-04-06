@@ -13,7 +13,7 @@ Commands:
 import logging
 import typer
 from rich.console import Console
-from rich.panel import Panel
+
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
@@ -53,7 +53,7 @@ def install() -> None:
     result = run_generator(state)
     if not result.success:
         log.error("Configuration generation failed.")
-        console.print(f"[red]Configuration generation failed.[/red]")
+        console.print("[red]Configuration generation failed.[/red]")
         console.print(f"[dim]See log for details: {get_log_file()}[/dim]")
         raise typer.Exit(code=1)
 

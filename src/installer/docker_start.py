@@ -63,7 +63,7 @@ def run(state: WizardState) -> StartResult:
         console=console,
         transient=True,
     ) as progress:
-        task = progress.add_task("Waiting for gateway...", total=None)
+        progress.add_task("Waiting for gateway...", total=None)
         deadline = time.monotonic() + STARTUP_TIMEOUT
 
         while time.monotonic() < deadline:
