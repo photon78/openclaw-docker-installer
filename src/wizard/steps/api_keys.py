@@ -1,10 +1,9 @@
 """
-Step 2: API keys + model selection.
+Step 2: LLM provider selection, API keys, and model tiers.
 
-Anthropic is required. Mistral is optional but recommended:
-- Several skills depend on it (translate, OCR, transcribe)
-- Strong in language, multimedia, and summarization
-- Significantly cheaper for budget/media tasks
+Follows the OpenClaw onboarding approach: pick a provider, authenticate,
+then configure model tiers. Mistral is recommended as a second provider
+for skills (translate, OCR, transcribe) and budget/media tasks.
 """
 import questionary
 from rich.console import Console
@@ -15,121 +14,234 @@ from wizard.state import WizardState
 
 console = Console()
 
-ANTHROPIC_MODELS = {
-    "anthropic/claude-sonnet-4-6": "Claude Sonnet 4.6 — recommended (fast, capable, balanced cost)",
-    "anthropic/claude-opus-4-6":   "Claude Opus 4.6   — most powerful, higher cost",
-}
+# Main LLM providers (the most common ones)
+PROVIDERS = [
+    {
+        "id": "anthropic",
+        "label": "Anthropic (Claude)",
+        "key_hint": "Starts with sk-ant-  →  https://console.anthropic.com/",
+        "key_prefix": "sk-ant-",
+        "models": [
+            ("anthropic/claude-sonnet-4-6", "Claude Sonnet 4.6 — recommended"),
+            ("anthropic/claude-opus-4-6",   "Claude Opus 4.6   — most powerful"),
+            ("anthropic/claude-haiku-4-5",  "Claude Haiku 4.5  — fast & cheap"),
+        ],
+        "default_model": "anthropic/claude-sonnet-4-6",
+    },
+    {
+        "id": "openai",
+        "label": "OpenAI (ChatGPT / GPT-4)",
+        "key_hint": "Starts with sk-  →  https://platform.openai.com/",
+        "key_prefix": "sk-",
+        "models": [
+            ("openai/gpt-4o",        "GPT-4o — recommended"),
+            ("openai/gpt-4o-mini",   "GPT-4o Mini — fast & cheap"),
+            ("openai/o3",            "o3 — advanced reasoning"),
+        ],
+        "default_model": "openai/gpt-4o",
+    },
+    {
+        "id": "google",
+        "label": "Google (Gemini)",
+        "key_hint": "→  https://aistudio.google.com/",
+        "key_prefix": None,
+        "models": [
+            ("google/gemini-2.5-pro",   "Gemini 2.5 Pro — recommended"),
+            ("google/gemini-2.5-flash", "Gemini 2.5 Flash — fast & cheap"),
+        ],
+        "default_model": "google/gemini-2.5-pro",
+    },
+    {
+        "id": "xai",
+        "label": "xAI (Grok)",
+        "key_hint": "→  https://console.x.ai/",
+        "key_prefix": "xai-",
+        "models": [
+            ("xai/grok-3",      "Grok 3 — recommended"),
+            ("xai/grok-3-mini", "Grok 3 Mini — fast & cheap"),
+        ],
+        "default_model": "xai/grok-3",
+    },
+    {
+        "id": "mistral",
+        "label": "Mistral",
+        "key_hint": "→  https://console.mistral.ai/",
+        "key_prefix": None,
+        "models": [
+            ("mistral/mistral-large-latest", "Mistral Large — recommended"),
+            ("mistral/mistral-small-latest", "Mistral Small — fast & cheap"),
+        ],
+        "default_model": "mistral/mistral-large-latest",
+    },
+    {
+        "id": "openrouter",
+        "label": "OpenRouter (access to many providers)",
+        "key_hint": "Starts with sk-or-  →  https://openrouter.ai/",
+        "key_prefix": "sk-or-",
+        "models": [],  # user enters manually
+        "default_model": "",
+    },
+    {
+        "id": "ollama",
+        "label": "Ollama (local models, no API key needed)",
+        "key_hint": None,
+        "key_prefix": None,
+        "models": [
+            ("ollama/llama3.3", "Llama 3.3 — recommended local model"),
+            ("ollama/qwen2.5",  "Qwen 2.5  — strong multilingual"),
+        ],
+        "default_model": "ollama/llama3.3",
+    },
+    {
+        "id": "custom",
+        "label": "Other / Custom provider",
+        "key_hint": "Enter model ID manually (format: provider/model)",
+        "key_prefix": None,
+        "models": [],
+        "default_model": "",
+    },
+]
 
-MISTRAL_MODELS = {
-    "mistral/mistral-large-latest": "Mistral Large — recommended (strong reasoning + language)",
-    "mistral/mistral-small-latest": "Mistral Small — faster, cheaper, good for simple tasks",
-}
+
+def _ask_model(provider: dict) -> str:
+    """Ask user to select or enter a model for the given provider."""
+    if provider["models"]:
+        choices = [questionary.Choice(label, value=mid) for mid, label in provider["models"]]
+        choices.append(questionary.Choice("Enter manually...", value="__manual__"))
+        choice = questionary.select("Select model:", choices=choices,
+                                    default=provider["default_model"]).ask()
+        if choice == "__manual__":
+            return questionary.text("Model ID (e.g. provider/model-name):").ask() or ""
+        return choice or provider["default_model"]
+    else:
+        return questionary.text(
+            "Model ID (e.g. openrouter/anthropic/claude-sonnet):",
+            default=provider.get("default_model", ""),
+        ).ask() or ""
 
 
 def run(state: WizardState) -> bool:
-    """Prompt for API keys and model selection.
+    """Prompt for LLM provider, API key, and model tiers.
 
     Returns True to continue, False to abort.
     """
     console.print(Panel.fit(
-        "[bold]LLM Providers & API Keys[/bold]\n\n"
-        "[dim]Keys are stored in [bold].env[/bold] only.\n"
-        "Never in config files, logs, or Docker images.[/dim]",
+        "[bold]LLM Provider & API Keys[/bold]\n\n"
+        "[dim]Choose which AI provider powers your agent.\n"
+        "Keys are stored in [bold].env[/bold] only — never in config files or logs.[/dim]",
         border_style="blue",
     ))
     console.print()
 
-    # ── Anthropic (required) ────────────────────────────────────────────────
-    console.print("[bold]Anthropic[/bold] [red](required)[/red]")
-    console.print("[dim]Get your key at: https://console.anthropic.com/[/dim]\n")
+    # ── Primary provider ────────────────────────────────────────────────────
+    console.print("[bold]Primary provider[/bold] [dim](powers your main agent)[/dim]\n")
 
-    anthropic_key = questionary.password(
-        "Anthropic API key:",
-        validate=lambda v: True if v.strip().startswith("sk-ant-")
-        else "Key must start with sk-ant-",
+    provider_choice = questionary.select(
+        "Which LLM provider?",
+        choices=[questionary.Choice(p["label"], value=p["id"]) for p in PROVIDERS],
     ).ask()
 
-    if not anthropic_key:
-        return False
-    state.anthropic_api_key = anthropic_key.strip()
-
-    # Model selection for standard/power tier
-    console.print()
-    console.print("[bold]Primary model[/bold] [dim](used for standard tasks)[/dim]")
-    primary = questionary.select(
-        "Choose your primary model:",
-        choices=[
-            questionary.Choice(desc, value=key)
-            for key, desc in ANTHROPIC_MODELS.items()
-        ],
-        default=list(ANTHROPIC_MODELS.keys())[0],
-    ).ask()
-
-    if not primary:
+    if not provider_choice:
         return False
 
-    state.llm_standard = primary
-    state.llm_power = "anthropic/claude-opus-4-6"
+    provider = next(p for p in PROVIDERS if p["id"] == provider_choice)
 
-    # ── Mistral (optional but recommended) ─────────────────────────────────
-    console.print()
-    console.print("[bold]Mistral[/bold] [dim](optional — but recommended)[/dim]")
+    # API key (skip for Ollama)
+    if provider["key_hint"]:
+        console.print()
+        console.print(f"[dim]{provider['key_hint']}[/dim]\n")
 
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_row("[green]✓[/green]", "Required by skills: translate, OCR, transcribe")
-    table.add_row("[green]✓[/green]", "Strong in language and multimedia tasks")
-    table.add_row("[green]✓[/green]", "Much cheaper for budget/media workloads")
-    table.add_row("[green]✓[/green]", "Powers semantic memory search (hybrid mode)")
-    console.print(table)
-    console.print("[dim]Get your key at: https://console.mistral.ai/[/dim]\n")
+        def validate_key(v: str) -> bool | str:
+            if not v.strip():
+                return "Key cannot be empty"
+            if provider["key_prefix"] and not v.strip().startswith(provider["key_prefix"]):
+                return f"Key should start with {provider['key_prefix']}"
+            return True
 
-    want_mistral = questionary.confirm(
-        "Add a Mistral API key? (recommended)",
-        default=True,
-    ).ask()
+        key = questionary.password("API key:").ask()
+        if not key:
+            return False
+        key = key.strip()
 
-    if want_mistral:
-        mistral_key = questionary.password("Mistral API key:").ask()
-        if mistral_key and mistral_key.strip():
-            state.mistral_api_key = mistral_key.strip()
-
-            console.print()
-            console.print("[bold]Mistral model[/bold] [dim](used for budget/media/skills)[/dim]")
-            mistral_model = questionary.select(
-                "Choose Mistral model tier:",
-                choices=[
-                    questionary.Choice(desc, value=key)
-                    for key, desc in MISTRAL_MODELS.items()
-                ],
-                default=list(MISTRAL_MODELS.keys())[0],
-            ).ask()
-
-            if mistral_model:
-                state.llm_budget = mistral_model
-                state.llm_media = mistral_model
+        # Store in correct state field
+        if provider["id"] == "anthropic":
+            state.anthropic_api_key = key
+        elif provider["id"] == "mistral":
+            state.mistral_api_key = key
         else:
-            # No Mistral — fall back to Anthropic Haiku for budget tasks
-            state.llm_budget = "anthropic/claude-haiku-4-5"
-            state.llm_media = "anthropic/claude-haiku-4-5"
-    else:
-        # Explicitly skipped — use Anthropic Haiku as budget fallback
-        state.llm_budget = "anthropic/claude-haiku-4-5"
-        state.llm_media = "anthropic/claude-haiku-4-5"
-        console.print(
-            "[yellow]Note:[/yellow] Some skills (translate, OCR, transcribe) require Mistral.\n"
-            "[dim]You can add a Mistral key later by editing .env.[/dim]\n"
-        )
+            # Generic: store as primary_api_key for config generator
+            state.primary_provider_id = provider["id"]
+            state.primary_api_key = key
 
+    # Model selection
     console.print()
-    console.print("[green]✓[/green] API keys and models configured.\n")
+    console.print("[bold]Model selection[/bold]\n")
+    primary_model = _ask_model(provider)
+    if not primary_model:
+        return False
 
-    # Summary
+    state.llm_standard = primary_model
+    state.llm_power = primary_model  # user can refine later
+
+    # ── Mistral as skills provider (if not already chosen) ─────────────────
+    if provider["id"] != "mistral":
+        console.print()
+        console.print(Panel.fit(
+            "[bold]Mistral as skills provider[/bold] [dim](optional — recommended)[/dim]\n\n"
+            "[dim]Several built-in skills require Mistral:\n"
+            "  • Translate — document/text translation\n"
+            "  • OCR — image to text\n"
+            "  • Transcribe — audio to text\n\n"
+            "Mistral is also used for semantic memory search and\n"
+            "budget/media tasks (significantly cheaper than larger models).[/dim]",
+            border_style="dim",
+        ))
+        console.print()
+
+        want_mistral = questionary.confirm(
+            "Add Mistral as skills/budget provider? (recommended)",
+            default=True,
+        ).ask()
+
+        if want_mistral:
+            console.print("[dim]→  https://console.mistral.ai/[/dim]\n")
+            mistral_key = questionary.password("Mistral API key:").ask()
+            if mistral_key and mistral_key.strip():
+                state.mistral_api_key = mistral_key.strip()
+                state.llm_budget = "mistral/mistral-large-latest"
+                state.llm_media = "mistral/mistral-large-latest"
+            else:
+                _set_fallback_budget(state, primary_model)
+        else:
+            _set_fallback_budget(state, primary_model)
+            console.print(
+                "[yellow]Note:[/yellow] Skills requiring Mistral (translate, OCR, transcribe)\n"
+                "[dim]will not be available. You can add a Mistral key later in .env.[/dim]\n"
+            )
+    else:
+        # Mistral IS the primary — use it for everything
+        state.llm_budget = primary_model
+        state.llm_media = primary_model
+
+    # ── Summary ─────────────────────────────────────────────────────────────
+    console.print()
+    console.print("[green]✓[/green] Provider configured.\n")
+
     table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_row("[dim]Standard[/dim]", f"[bold]{state.llm_standard}[/bold]")
-    table.add_row("[dim]Power[/dim]",    f"[bold]{state.llm_power}[/bold]")
-    table.add_row("[dim]Budget[/dim]",   f"[bold]{state.llm_budget}[/bold]")
-    table.add_row("[dim]Media[/dim]",    f"[bold]{state.llm_media}[/bold]")
+    table.add_row("[dim]Primary provider[/dim]", f"[bold]{provider['label']}[/bold]")
+    table.add_row("[dim]Standard model[/dim]",   f"[bold]{state.llm_standard}[/bold]")
+    table.add_row("[dim]Power model[/dim]",       f"[bold]{state.llm_power}[/bold]")
+    table.add_row("[dim]Budget model[/dim]",      f"[bold]{state.llm_budget}[/bold]")
+    table.add_row("[dim]Media model[/dim]",       f"[bold]{state.llm_media}[/bold]")
+    if state.mistral_api_key:
+        table.add_row("[dim]Skills provider[/dim]", "[bold]Mistral[/bold] [green]✓[/green]")
     console.print(table)
     console.print()
 
     return True
+
+
+def _set_fallback_budget(state: WizardState, primary_model: str) -> None:
+    """Set budget/media to cheapest available tier from primary provider."""
+    state.llm_budget = primary_model
+    state.llm_media = primary_model
