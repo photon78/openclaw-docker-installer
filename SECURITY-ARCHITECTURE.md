@@ -216,6 +216,58 @@ No container = no process isolation. Security relies entirely on:
 
 ---
 
+## Layer 5: Input Channel Trust & Sender Verification
+
+### Problem: Not All Input Channels Are Equal
+
+An LLM agent can receive instructions from multiple sources:
+- **Telegram DM / Group Topics** — sender ID is verified by Telegram's servers. Hard to spoof.
+- **E-Mail** — sender address is trivially spoofable. SMTP `From:` has no cryptographic guarantee without DKIM + strict policy.
+- **Webhooks / API** — depends on authentication mechanism.
+
+### Current State (this installation)
+
+| Channel | Trust Level | Mechanism |
+|---------|-------------|----------|
+| Telegram | ✅ High | `allowFrom: [user_id]` — Telegram ID is platform-verified |
+| E-Mail (read) | ⚠️ Low | No sender whitelist, no shared secret — passive only |
+| E-Mail (instructions) | ❌ Not implemented | Should not be trusted without verification |
+
+### Threat: Prompt Injection via E-Mail
+
+If an agent polls a mailbox and acts on email content:
+1. Attacker sends email to agent's address with crafted instructions
+2. Agent reads email, interprets as legitimate command
+3. Agent executes — potentially destructive actions if allowlist is too broad
+
+**This attack requires no hacking — just sending an email.**
+
+### Required Safeguards for E-Mail Instructions
+
+Before an agent may act on instructions received by e-mail:
+
+1. **Sender Whitelist** — only pre-configured addresses may issue commands
+2. **Shared Secret** — a secret keyword/passphrase in the email body that the agent verifies before acting
+3. **DKIM Verification (recommended)** — verify the cryptographic signature of the sending domain
+4. **Scope Limitation** — e-mail instructions may only trigger predefined actions (no free-form exec)
+5. **Audit Trail** — every e-mail instruction logged with sender, subject, action taken
+
+### Installer Requirements
+
+- Wizard must ask: "Will this agent act on e-mail instructions?"
+- If yes: require sender whitelist + shared secret before generating email skill config
+- Document clearly: E-mail reading (passive) ≠ E-mail instructions (active, needs verification)
+- `check_mail.py` skill: reading is safe, acting on content requires the safeguards above
+
+### Conscious Compromise
+
+| Compromise | Why |
+|-----------|-----|
+| No DKIM verification by default | Complex to implement, requires DNS access |
+| Shared secret in plaintext email | Weaker than DKIM but practical for most users |
+
+---
+
 ## Installer Wizard: Security Setup
 
 ```

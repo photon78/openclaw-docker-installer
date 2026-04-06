@@ -101,3 +101,74 @@ An inexperienced user in a chemical plant control room would click "open everyth
 > Recommendation: Enter a Mistral key if available. Can be activated later."*
 
 **Source:** Photon, 2026-04-05
+
+---
+
+## Decision 6: Skill-Scoping via Shared Symlink + Agent-Private Directory
+
+**Problem:** All agents sharing one global skills symlink get access to all skills — including sensitive ones (email, git). This violates least-privilege.
+
+**Rejected Alternative:** Copy skills per agent
+- High maintenance burden
+- Skills diverge over time
+- Error-prone on updates
+
+**Chosen Solution:** Two-tier skill structure per agent workspace:
+```
+workspace-<agent>/
+  skills -> ../workspace/skills/    ← Symlink to shared skills (read-only, all agents)
+  skills-private/                   ← Agent-specific skills (only this agent)
+    email/   ← only buero_zot
+    git-workflows/  ← only coding_zot
+```
+
+**Rules:**
+- Agent reads skills from both `skills/` and `skills-private/`
+- New shared skills → `workspace/skills/` (one place, all agents benefit)
+- New agent-specific skills → `skills-private/` of that agent's workspace
+- Installer Wizard: asks per agent which private skills to activate
+
+**Skill Assignment (current):**
+| Skill | Shared | buero_zot | coding_zot | formular_zot | main |
+|-------|--------|-----------|------------|--------------|------|
+| web-search | ✅ | — | — | — | — |
+| docs-summarize | ✅ | — | — | — | — |
+| email | — | ✅ private | — | — | — |
+| git-workflows | — | — | ✅ private | — | — |
+| voice-agent | — | — | — | — | main only |
+
+**Source:** Photon + Zot, 2026-04-06
+
+---
+
+## Decision 7: Backup-System als Core-Feature (nicht optional)
+
+**Rationale:** Ein unkonfiguriertes System ohne Backup ist kein produktionsreifes System. Der Installer muss den User aktiv durch das Backup-Setup führen — nicht als optionales Extra.
+
+**Was der Installer einrichtet:**
+- `daily_backup.py` aus Templates deployen (konfiguriert mit User-definiertem Mount-Pfad)
+- Crontab-Eintrag automatisch anlegen (Standard: 04:10 täglich)
+- Backup-Ziel: SD-Karte oder USB (Wizard fragt: "Wo ist dein Backup-Medium?")
+- `restore.md` bei Installation generieren (mit konkreten Pfaden, Token-Placeholder, API-Key-Hinweise)
+
+**Backup-Inhalt:**
+
+| Was | Wie |
+|-----|-----|
+| Workspaces | rsync, Diff Mo–Sa, Voll So |
+| openclaw.json | copy |
+| Scripts (`*.py`) | copy |
+| systemd Drop-ins | copy |
+| Memory SQLite | copy |
+| exec-approvals.json | copy, Token=REDACTED |
+
+**Bewusst NICHT gesichert:**
+- API-Keys / `.env` — zu sensibel
+- Session-JSONL — zu gross, nicht kritisch
+- node_modules / dist / .astro — regenerierbar
+- Socket-Token — bleibt nur im Restore-Script
+
+**Referenz-Implementierung:** `~/.openclaw/scripts/daily_backup.py` (live, getestet 2026-04-06)  
+**Referenz-Restore:** `~/.openclaw/workspace/restore.md`
+
+**Source:** Photon + Zot, 2026-04-06
