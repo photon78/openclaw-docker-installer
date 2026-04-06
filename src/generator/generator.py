@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen
 
 console = Console()
 
@@ -20,6 +20,7 @@ class GenerationResult:
     exec_approvals: Path
     compose_file: Path = field(default_factory=Path)
     restore_script: Path = field(default_factory=Path)
+    backup_script: Path = field(default_factory=Path)
     image: str = ""
     success: bool = True
 
@@ -78,12 +79,21 @@ def run(state: WizardState) -> GenerationResult:
         results.append(("[red]✗[/red]", "restore_exec_approvals.py", "FAILED", str(e)))
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
+    # Generate daily_backup.py
+    try:
+        backup_path = backup_gen.write(state)
+        results.append(("[green]✓[/green]", "daily_backup.py", str(backup_path), f"backup → {state.backup_mount_path or '/mnt/backup'}"))
+    except Exception as e:
+        results.append(("[red]✗[/red]", "daily_backup.py", "FAILED", str(e)))
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
     return GenerationResult(
         env_file=env_path,
         openclaw_json=json_path,
         exec_approvals=approvals_path,
         compose_file=compose_path,
         restore_script=restore_path,
+        backup_script=backup_path,
         image=image,
         success=True,
     )

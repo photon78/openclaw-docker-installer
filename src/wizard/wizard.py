@@ -5,7 +5,7 @@ Runs steps in sequence, carries state through, returns completed WizardState.
 from rich.console import Console
 
 from wizard.state import WizardState
-from wizard.steps import welcome, api_keys, channel, security
+from wizard.steps import welcome, api_keys, channel, security, backup
 
 console = Console()
 
@@ -14,6 +14,7 @@ STEPS = [
     ("API Keys",  api_keys.run),
     ("Channel",   channel.run),
     ("Security",  security.run),
+    ("Backup",    backup.run),
 ]
 
 
