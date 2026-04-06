@@ -83,6 +83,24 @@ def show(state: WizardState, image: str) -> None:
             "after the gateway is running."
         )
 
+    # INSTALLER NOTE hint
+    soul_path = state.workspace_dir / "SOUL.md"
+    agents_path = state.workspace_dir / "AGENTS.md"
+    console.print(Panel(
+        f"""Your workspace files contain [bold]<!-- INSTALLER NOTE -->[/bold] comments.
+
+They explain what each section does and what to customize.
+Read and edit these files to make your agent truly yours:
+
+  [cyan]{soul_path}[/cyan]
+  [cyan]{agents_path}[/cyan]
+
+The agent will walk you through the rest on first run ([cyan]BOOTSTRAP.md[/cyan]).""",
+        title="📝 Customize your agent",
+        border_style="yellow",
+        padding=(1, 2),
+    ))
+
     console.print()
     console.print("[bold green]OpenClaw is ready. Have fun.[/bold green]")
     console.print()
