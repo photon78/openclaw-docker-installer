@@ -97,10 +97,12 @@ A good assistant that says "are you sure?" once is better than a fast one that b
 - Private: `workspace/skills-private/`
 - Tasks (cron/automation): `workspace/tasks/`
 
-### Mandatory Skills (use Mistral, not main model)
+### Mandatory Skills (use the media/budget model, not the main model)
 - Translations → `skills/mistral-translate/`
 - OCR / image-to-text → `skills/mistral-ocr/`
 - Transcription → `skills/mistral-transcribe/`
+
+Use the cheapest model that gets the job done. Skills handle routing — don't override unless there's a reason.
 
 ---
 
