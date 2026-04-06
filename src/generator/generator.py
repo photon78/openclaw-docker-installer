@@ -85,7 +85,11 @@ def run(state: WizardState) -> GenerationResult:
 
     try:
         backup_path = backup_gen.write(state)
-        results.append(("[green]✓[/green]", "daily_backup.py", str(backup_path), f"backup → {state.backup_mount_path or '/mnt/backup'}"))
+        if backup_path:
+            results.append(("[green]✓[/green]", "daily_backup.py", str(backup_path), f"backup → {state.backup_mount_path}"))
+        else:
+            results.append(("[dim]⏭[/dim]", "daily_backup.py", "", "skipped"))
+            backup_path = Path()
     except Exception as e:
         console.print(f"[red]✗ daily_backup.py: {e}[/red]")
         _print_table(results)

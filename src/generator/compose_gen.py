@@ -80,9 +80,7 @@ services:
       # Scripts: read-only (agent cannot modify its own tools)
       - {scripts_dir}:/home/node/.openclaw/scripts:ro
 
-      # Backup medium (host path mounted into container)
-      - {state.backup_mount_path or '/mnt/backup'}:{state.backup_mount_path or '/mnt/backup'}
-
+{_backup_mount_line(state)}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18789/healthz"]
       interval: 30s
@@ -118,6 +116,12 @@ services:
       - ALL
 """
     return compose
+
+
+def _backup_mount_line(state: WizardState) -> str:
+    if state.backup_mount_path:
+        return f"      # Backup medium\n      - {state.backup_mount_path}:{state.backup_mount_path}"
+    return "      # Backup: not configured (skipped during install)"
 
 
 def write(state: WizardState, image: str) -> Path:

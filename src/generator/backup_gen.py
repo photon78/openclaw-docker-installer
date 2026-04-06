@@ -197,8 +197,10 @@ if __name__ == "__main__":
 '''
 
 
-def write(state: WizardState) -> Path:
-    """Write daily_backup.py to scripts_dir. Returns path."""
+def write(state: WizardState) -> Path | None:
+    """Write daily_backup.py to scripts_dir. Returns path, or None if skipped."""
+    if not state.backup_mount_path:
+        return None
     scripts_dir = state.openclaw_dir / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
     target = scripts_dir / "daily_backup.py"

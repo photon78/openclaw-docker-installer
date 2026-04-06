@@ -49,6 +49,7 @@ def run(state: WizardState) -> bool | str:
         questionary.Choice(v["label"], value=k)
         for k, v in CHANNELS.items()
     ]
+    choices.append(questionary.Choice("⏭  Skip — configure later via openclaw.json", value="__skip__"))
     choices.append(questionary.Choice("← Back", value="__back__"))
 
     channel_choice = questionary.select(
@@ -60,6 +61,10 @@ def run(state: WizardState) -> bool | str:
         return False
     if channel_choice == "__back__":
         return "back"
+    if channel_choice == "__skip__":
+        console.print("[dim]Channel skipped. Add it later in openclaw.json.[/dim]")
+        state.channel = None
+        return True
 
     state.channel = channel_choice
     info = CHANNELS[channel_choice]

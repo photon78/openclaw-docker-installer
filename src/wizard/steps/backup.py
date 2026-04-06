@@ -32,7 +32,10 @@ def run(state: WizardState) -> bool | str:
         padding=(1, 2),
     ))
 
-    choices = DEFAULT_MOUNTS + ["← Back"]
+    choices = DEFAULT_MOUNTS + [
+        "⏭  Skip — configure backup later",
+        "← Back",
+    ]
 
     choice = questionary.select(
         "Where is your backup medium mounted?",
@@ -43,6 +46,10 @@ def run(state: WizardState) -> bool | str:
         return False
     if choice == "← Back":
         return "back"
+    if choice == "⏭  Skip — configure backup later":
+        console.print("[yellow]⚠[/yellow]  Backup skipped. Configure [cyan]daily_backup.py[/cyan] manually later.")
+        state.backup_mount_path = None
+        return True
 
     if choice == "Custom path...":
         custom = questionary.text(
