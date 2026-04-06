@@ -17,6 +17,7 @@ from rich.console import Console
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
+from checks.python_check import check_python
 from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
 from installer.docker_start import run as docker_start
@@ -41,6 +42,13 @@ def install() -> None:
     log_file = setup_logging()
     console.print(f"[dim]Install log: {log_file}[/dim]\n")
     log.info("=== openclaw-installer: install started ===")
+
+    # Pre-flight: Python version (relevant on Windows)
+    py = check_python()
+    if not py.ready:
+        console.print(f"[red]\u2717 Python 3.11+ required.[/red] {py.error}")
+        raise typer.Exit(code=1)
+    log.info("Python OK: %s (%s)", py.version, py.executable)
 
     state = run_wizard()
     if state is None:
