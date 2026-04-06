@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=72", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "openclaw-docker-installer"
@@ -17,10 +17,11 @@ dependencies = [
     "httpx",
     "platformdirs",
     "send2trash",
+    "typer[all]",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy"]
 
 [project.scripts]
-openclaw-installer = "main:main"
+openclaw-installer = "main:app"

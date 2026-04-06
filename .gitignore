@@ -35,4 +35,5 @@ Thumbs.db
 *.log
 *.tmp
 KICKOFF.md
+docs/
 # DESIGN-DECISIONS.md bleibt im Repo — gehört zur Architektur

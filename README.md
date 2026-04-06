@@ -1,65 +1,67 @@
 # openclaw-docker-installer
 
-> OpenClaw in a Box — vollständige, produktionsreife OpenClaw-Instanz in wenigen Minuten.
+> OpenClaw in a Box — complete, production-ready OpenClaw instance in just a few minutes.
 
 ## Status
-🚧 Work in progress — Frühe Entwicklungsphase
+🚧 Work in progress — Early development phase
 
 ## Vision
 
-> *Ein LLM-Agent mit Shell-Zugriff ist eine kontrollierte Waffe. Nicht die Fähigkeit ist das Problem — sondern unkontrollierte Fähigkeit. Dieses System gibt dem Agent genau so viel Macht wie er braucht, und nicht ein Byte mehr.*
+> *An LLM agent with shell access is a controlled weapon. The capability isn't the problem — uncontrolled capability is. This system gives the agent exactly as much power as it needs, and not a byte more.*
 
-OpenClaw ist mächtig. Zu mächtig für eine ungesicherte Standardinstallation.
+OpenClaw is powerful. Too powerful for an unsecured default installation.
 
-Dieser Installer setzt nicht einfach eine OpenClaw-Instanz auf — er setzt eine **sichere** auf. By default. Ohne dass der Nutzer wissen muss was `exec-approvals`, Allowlists oder Security-Levels bedeuten.
+This installer doesn't just set up an OpenClaw instance — it sets up a **secure** one. By default. Without the user needing to know what `exec-approvals`, allowlists, or security levels mean.
 
-**Prinzipien:**
-- **Security by Default** — restriktive Allowlist, kein Root-Zugriff, keine gefährlichen Tools
-- **Human in the Loop** — Approval-Mechanismus vorkonfiguriert, irreversible Aktionen brauchen Bestätigung
-- **Guardrails vor Convenience** — der Wizard erklärt was jede Entscheidung bedeutet
-- **Headless-tauglich** — läuft auf Raspberry Pi ohne Display
-- **Saubere Trennung** — Kern-Logik ist UI-unabhängig, TUI ist Überbau
+**Principles:**
+- **Security by Default** — restrictive allowlist, no root access, no dangerous tools
+- **Human in the Loop** — preconfigured approval mechanism, irreversible actions require confirmation
+- **Guardrails over Convenience** — the wizard explains what each decision means
+- **Headless-ready** — runs on Raspberry Pi without a display
+- **Clean Separation** — core logic is UI-independent, TUI is an overlay
 
-## Features (geplant v1)
-- Docker-Verfügbarkeitscheck
-- API-Key-Eingabe (Anthropic, optional Mistral/Telegram)
-- Modellauswahl
-- `docker-compose.yml` + `.env` Generierung
-- Workspace-Bootstrapping (AGENTS.md, SOUL.md, MEMORY.md)
-- Post-Install Gateway-Check
+## Features (planned v1)
+- Docker availability check
+- API key input (Anthropic, optional Mistral/Telegram)
+- Model selection
+- `docker-compose.yml` + `.env` generation
+- Workspace bootstrapping (AGENTS.md, SOUL.md, MEMORY.md)
+- Post-install gateway check
 
 ## Requirements
 - Python 3.11+
 - Docker + Docker Compose
 
 ## Stack
-- TUI: `rich` + `questionary` (oder `textual`)
-- Docker: Python docker SDK
+- TUI: `rich` + `questionary` (or `textual`)
+- Docker: Python Docker SDK
 - System: `psutil`, `httpx`, `platformdirs`
 - Config: TOML (`tomllib` Stdlib)
 - Templates: Jinja2
-- Packaging: pyinstaller → single binary
+- Packaging: PyInstaller → single binary
 
-## Struktur
+## Structure
 ```
 src/
-  main.py              ← Einstiegspunkt
+  main.py              ← Entry point
   tui/
-    wizard.py          ← Haupt-Wizard
-    steps/             ← Je ein Schritt als Modul
+    wizard.py          ← Main wizard
+    steps/             ← One step per module
   docker/
-    compose_gen.py     ← docker-compose + .env Generator
-    templates/         ← Jinja2-Templates
+    compose_gen.py     ← docker-compose + .env generator
+    templates/         ← Jinja2 templates
   bootstrap/
-    workspace.py       ← Workspace-Struktur anlegen
+    workspace.py       ← Create workspace structure
     templates/         ← AGENTS.md, SOUL.md, MEMORY.md
   checks/
-    docker_check.py    ← Docker verfügbar?
-    gateway_check.py   ← Ping nach Install
+    docker_check.py    ← Docker available?
+    gateway_check.py   ← Post-install ping
 tests/
 ```
 
-## Lizenz
-MIT — frei zu nutzen, zu modifizieren und weiterzugeben.
+## License
+MIT — free to use, modify, and distribute.
 
-Wenn dir dieses Projekt das Leben erleichtert: Der Autor freut sich über ein Glas guten Walliser Rotwein. 🍷
+If this saved you some time — or just made you smile — Photon would love a glass of good Valais red wine. No pressure, just appreciation.
+
+🟥 [paypal.me/photon78](https://paypal.me/photon78) 🍷
