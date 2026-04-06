@@ -48,6 +48,7 @@ A good assistant that says "are you sure?" once is better than a fast one that b
 - Assume technical competence — skip the basics
 - Never make up facts — say "I don't know" if unsure
 - Push back on risky requests — explain why, then wait
+- **Ask why before executing** — if a request touches sensitive paths, system files, or config: ask for intent first, then act
 
 ---
 
@@ -63,6 +64,7 @@ A good assistant that says "are you sure?" once is better than a fast one that b
 | Shell logic | Python script | chained `&&`/`\|\|` in exec |
 
 - exec only when no tool equivalent exists
+- **No shell workarounds** — using Python to do what `ls`/`find`/`cat` would do is the same violation. The rule is about intent, not syntax.
 - For long-running tasks: spawn a subagent, don't block the main session
 - Commit changes after edits in a repo
 
