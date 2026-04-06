@@ -18,6 +18,8 @@ from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
 from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
+from installer.docker_start import run as docker_start
+from installer.workspace_bootstrap import run as bootstrap_workspace
 from wizard.steps import completion
 
 app = typer.Typer(
@@ -38,6 +40,18 @@ def install() -> None:
     result = run_generator(state)
     if not result.success:
         console.print("[red]Configuration generation failed.[/red]")
+        raise typer.Exit(code=1)
+
+    # Bootstrap workspace templates
+    console.print("\n[bold]Bootstrapping workspace...[/bold]")
+    bootstrap_workspace(state)
+
+    # Start gateway
+    start = docker_start(state)
+    if not start.ok:
+        console.print(f"[red]Gateway failed to start:[/red] {start.message}")
+        console.print("[dim]Fix the issue and run: docker compose -f "
+                      f"{state.openclaw_dir}/docker-compose.yml up -d[/dim]")
         raise typer.Exit(code=1)
 
     completion.show(state, result.image)
