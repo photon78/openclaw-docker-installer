@@ -2,8 +2,8 @@
 
 *Fill this in during the first conversation.*
 
-- Name: *(fill in)*
-- Timezone: *(fill in)*
-- Preferred language: *(fill in)*
+- Name: *(e.g. Alice)*
+- Timezone: *(e.g. Europe/Berlin)*
+- Preferred language: *(e.g. German — English for technical topics)*
 - Technical level: *(beginner / intermediate / expert)*
-- Notes: *(anything the agent should always keep in mind)*
+- Notes: *(e.g. prefers concise answers; hates marketing fluff; Linux user)*

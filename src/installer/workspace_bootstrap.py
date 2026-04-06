@@ -91,6 +91,13 @@ def run(state: WizardState) -> BootstrapResult:
     # Skills: copy template skills into workspace/skills/ (idempotent)
     _bootstrap_skills(workspace, result)
 
+    # BOOTSTRAP.md: rename to .done after writing — it's a one-time guide
+    bootstrap_dst = workspace / "BOOTSTRAP.md"
+    bootstrap_done = workspace / "BOOTSTRAP.md.done"
+    if bootstrap_dst.exists() and not bootstrap_done.exists():
+        bootstrap_dst.rename(bootstrap_done)
+        result.written.append("BOOTSTRAP.md → BOOTSTRAP.md.done")
+
     _print_summary(result)
     return result
 

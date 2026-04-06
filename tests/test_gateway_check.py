@@ -8,8 +8,6 @@ import urllib.error
 import socket
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.checks.gateway_check import GatewayState, check_gateway
 
 

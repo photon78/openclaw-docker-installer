@@ -1,6 +1,6 @@
 # AGENTS.md — Persistent Sub-Agent
 
-*This template is for named, topic-bound sub-agents (e.g. coding_zot, buero_zot).*
+*This template is for named, topic-bound sub-agents (e.g. coding_AGENT, buero_AGENT).*
 *Copy to the sub-agent's workspace and fill in the Role and Red Lines sections.*
 
 ---
@@ -34,8 +34,8 @@
 | Shell logic | Python script | chained `&&`/`\|\|` in exec |
 
 ## Red Lines (fill in per agent)
-- *(e.g. buero_zot: no deployment, no git push without approval)*
-- *(e.g. coding_zot: no Apache reload without Photon's confirmation)*
+- *(e.g. buero_AGENT: no deployment, no git push without approval)*
+- *(e.g. coding_AGENT: no Apache reload without HUMAN's confirmation)*
 
 ## Skills
 - Shared: `workspace/skills/` (symlinked from main workspace)

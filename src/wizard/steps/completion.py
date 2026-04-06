@@ -2,11 +2,9 @@
 completion.py — Post-installation instructions screen.
 Shows the user exactly how to start OpenClaw and what to do next.
 """
-from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
-from rich.text import Text
 
 from wizard.state import WizardState
 

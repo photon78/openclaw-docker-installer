@@ -32,7 +32,9 @@ Explain the use case, not just the feature.
 2. Create a branch: `feature/your-thing` or `fix/your-bug`
 3. Write tests for non-UI code (target: 80%+ coverage)
 4. Run checks before pushing (see below)
-5. Open a PR against `main`
+5. Open a PR against the **active feature branch** (e.g. `feature/v0-1-improvements`) — not directly against `main`
+
+> **Why?** `main` is always releasable. New work lands in a feature branch first, gets reviewed there, then merges to `main` as a unit.
 
 ---
 

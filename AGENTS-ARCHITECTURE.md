@@ -31,9 +31,9 @@ This mirrors the allowlist philosophy in `DESIGN-DECISIONS.md DD-001`.
 | Agent | Role | Model Tier | Allowlist Tier |
 |-------|------|------------|----------------|
 | `main` | Botmaster, Security Auditor, Heartbeat | Power | Elevated |
-| `coding_zot` | Code, Website, Git, Deployment | Standard | Standard |
-| `buero_zot` | Email, Documents, Accounting | Budget | Restricted |
-| `formular_zot` | Form processing, Notifications | Budget | Restricted |
+| `coding_AGENT` | Code, Website, Git, Deployment | Standard | Standard |
+| `buero_AGENT` | Email, Documents, Accounting | Budget | Restricted |
+| `formular_AGENT` | Form processing, Notifications | Budget | Restricted |
 
 ### main
 - Orchestrates other agents via cross-session messaging
@@ -42,20 +42,20 @@ This mirrors the allowlist philosophy in `DESIGN-DECISIONS.md DD-001`.
 - Can restart gateway, manage systemd service
 - Has broadest allowlist — but still no `rm`, no `pip install`
 
-### coding_zot
+### coding_AGENT
 - Code editing, website builds, Git operations
 - Runs npm/astro/python3 builds
 - Manages deployment scripts
 - Has Git, Node, Python, SSH in allowlist
 - No email, no system-level service management
 
-### buero_zot
+### buero_AGENT
 - Reads and sends email (dedicated email skill)
 - Handles documents, invoices, correspondence
 - No interpreter access — only named script paths in allowlist
 - Cannot touch code repositories or system files
 
-### formular_zot
+### formular_AGENT
 - Processes incoming form submissions
 - Sends confirmation emails (via shared secret, not free-form)
 - Most restricted agent — smallest allowlist
@@ -70,9 +70,9 @@ Each agent gets its own workspace directory:
 ```
 ~/.openclaw/
   workspace/              ← main agent (primary workspace)
-  workspace-coding/       ← coding_zot
-  workspace-buero/        ← buero_zot
-  workspace-formular/     ← formular_zot
+  workspace-coding/       ← coding_AGENT
+  workspace-buero/        ← buero_AGENT
+  workspace-formular/     ← formular_AGENT
 ```
 
 ### Per-Workspace Layout
@@ -87,7 +87,7 @@ workspace-<agent>/
     digest-latest.md    ← Cross-agent digest (written by cron)
     topics/             ← Condensed knowledge per topic
     docs/               ← Permanent documentation references
-  tasks/                ← Tasks from Photon or other agents
+  tasks/                ← Tasks from HUMAN or other agents
   work/                 ← Active work directories
   skills/               → symlink to ~/.openclaw/workspace/skills/
   skills-private/       ← Agent-specific skills (NOT a symlink)
@@ -132,7 +132,7 @@ workspace-<agent>/
 
 ### Skill Assignment
 
-| Skill | Shared | main | coding_zot | buero_zot | formular_zot |
+| Skill | Shared | main | coding_AGENT | buero_AGENT | formular_AGENT |
 |-------|--------|------|------------|-----------|--------------|
 | `web-search` | ✅ | — | — | — | — |
 | `docs-summarize` | ✅ | — | — | — | — |
@@ -163,7 +163,7 @@ workspace-<agent>/tasks/YYYY-MM-DD-<short-description>.md
 
 ```markdown
 # Task: <Title>
-**Created:** YYYY-MM-DD HH:MM | **By:** <agent or Photon> | **For:** <agent>
+**Created:** YYYY-MM-DD HH:MM | **By:** <agent or HUMAN> | **For:** <agent>
 
 ## Mission
 What needs to be done and why.
@@ -174,7 +174,7 @@ What needs to be done and why.
 
 ## Completion
 - Update daily log
-- Notify Photon if needed
+- Notify HUMAN if needed
 ```
 
 ### Workflow
@@ -213,7 +213,7 @@ The installer generates `AGENTS.md` from a template. It is the **law** for all a
 The installer fills in agent-specific details:
 - Workspace paths
 - Allowed tool patterns
-- Agent-specific Red Lines (e.g., "no Git operations" for buero_zot)
+- Agent-specific Red Lines (e.g., "no Git operations" for buero_AGENT)
 
 ### Shared via Symlink
 
@@ -232,7 +232,7 @@ If an agent needs extensions (additional rules), it gets its own `AGENTS.md` tha
 | Webhooks | Depends | Requires authentication token |
 
 > **Rule:** E-mail content may be read and summarized. It may never directly trigger actions.
-> Every action derived from email content must be confirmed by Photon via Telegram.
+> Every action derived from email content must be confirmed by HUMAN via Telegram.
 
 ---
 
@@ -242,9 +242,9 @@ If an agent needs extensions (additional rules), it gets its own `AGENTS.md` tha
 🤖 Which agents should be installed?
 
   [✅] main          — Required. Botmaster and security auditor.
-  [✅] coding_zot    — Code, website, Git.
-  [ ] buero_zot     — Email, documents. (requires email credentials)
-  [ ] formular_zot  — Form processing. (requires email + webhook config)
+  [✅] coding_AGENT    — Code, website, Git.
+  [ ] buero_AGENT     — Email, documents. (requires email credentials)
+  [ ] formular_AGENT  — Form processing. (requires email + webhook config)
 
 For each selected agent:
   → Name and emoji
@@ -276,10 +276,10 @@ This setup is live and tested:
 
 ```
 ~/.openclaw/
-  workspace/        ← main (Zot)
-  workspace-coding/ ← coding_zot
-  workspace-buero/  ← buero_zot (planned)
-  workspace-formular/ ← formular_zot (planned)
+  workspace/        ← main (AGENT)
+  workspace-coding/ ← coding_AGENT
+  workspace-buero/  ← buero_AGENT (planned)
+  workspace-formular/ ← formular_AGENT (planned)
 ```
 
 See `~/.openclaw/workspace/AGENTS.md` for the shared AGENTS.md template.

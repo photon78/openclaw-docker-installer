@@ -75,7 +75,7 @@
 - **Required fields per agent**: id, workspace, identity.name, identity.emoji
 - **Optional per agent**: model.primary+fallbacks, memorySearch.extraPaths (can point at main's memory/topics)
 - **allowAgents** lives in `agents.agents[id].subagents` — NOT in `agents.defaults`
-- Source: openclaw.json inspection 2026-04-06, main-zot config as reference
+- Source: openclaw.json inspection 2026-04-06, main-AGENT config as reference
 
 ### Multi-Agent
 - [ ] Wizard: optional "Add specialist agent?" step (after main is configured)
