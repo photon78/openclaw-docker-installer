@@ -16,6 +16,7 @@ from rich.panel import Panel
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
+from wizard.wizard import run_wizard
 
 app = typer.Typer(
     name="openclaw-installer",
@@ -28,15 +29,11 @@ console = Console()
 @app.command()
 def install() -> None:
     """Run the interactive setup wizard."""
-    console.print(Panel.fit(
-        "[bold cyan]OpenClaw Installer[/bold cyan]\n"
-        "[dim]Secure by default. Human in the loop.[/dim]",
-        border_style="cyan",
-    ))
-    console.print("\n[yellow]Wizard not yet implemented.[/yellow]")
-    console.print("Running pre-flight checks...\n")
-
-    _run_preflight()
+    state = run_wizard()
+    if state is None:
+        raise typer.Exit(code=1)
+    console.print("[green]Wizard complete.[/green] Generating configuration...")
+    console.print("[yellow]Config generation not yet implemented.[/yellow]")
 
 
 @app.command()
