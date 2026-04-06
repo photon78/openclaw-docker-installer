@@ -75,12 +75,19 @@ def run(state: WizardState) -> bool | str:
     console.print(info["guide"])
     console.print()
 
-    # Token input
-    token = questionary.password(f"{info['label']} bot token: (or type 'back')").ask()
-    if not token:
-        return False
-    if token.strip().lower() == "back":
-        return "back"
+    # Token input — required, loop until valid or back
+    while True:
+        token = questionary.password(
+            f"{info['label']} bot token: (required — type 'back' to go back)"
+        ).ask()
+        if token is None:
+            # Ctrl+C / Ctrl+D
+            return False
+        if token.strip().lower() == "back":
+            return "back"
+        if token.strip():
+            break
+        console.print("[yellow]Token cannot be empty.[/yellow]")
 
     state.telegram_bot_token = token.strip()
 

@@ -166,11 +166,15 @@ def run(state: WizardState) -> bool | str:
                 return f"Key should start with {provider['key_prefix']}"
             return True
 
-        key = questionary.password("API key: (or type 'back' to go back)").ask()
-        if not key:
-            return False
-        if key.strip().lower() == "back":
-            return BACK
+        while True:
+            key = questionary.password("API key: (required — type 'back' to go back)").ask()
+            if key is None:
+                return False
+            if key.strip().lower() == "back":
+                return BACK
+            if key.strip():
+                break
+            console.print("[yellow]API key cannot be empty.[/yellow]")
         key = key.strip()
 
         # Store in correct state field
@@ -221,8 +225,14 @@ def run(state: WizardState) -> bool | str:
 
         if want_mistral:
             console.print("[dim]→  https://console.mistral.ai/[/dim]\n")
-            mistral_key = questionary.password("Mistral API key: (or type 'back' to skip)").ask()
-            if mistral_key and mistral_key.strip().lower() != "back" and mistral_key.strip():
+            mistral_key = questionary.password(
+                "Mistral API key: (Enter to skip, type 'back' to go back)"
+            ).ask()
+            if mistral_key is None:
+                _set_fallback_budget(state, primary_model)
+            elif mistral_key.strip().lower() == "back":
+                return BACK
+            elif mistral_key.strip():
                 state.mistral_api_key = mistral_key.strip()
                 state.llm_budget = "mistral/mistral-large-latest"
                 state.llm_media = "mistral/mistral-large-latest"
