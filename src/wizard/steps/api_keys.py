@@ -196,15 +196,18 @@ def run(state: WizardState) -> bool | str:
     # ── Mistral as skills provider (if not already chosen) ─────────────────
     if provider["id"] != "mistral":
         console.print()
-        console.print(Panel.fit(
+        console.print(Panel(
             "[bold]Mistral as skills provider[/bold] [dim](optional — recommended)[/dim]\n\n"
-            "[dim]Several built-in skills require Mistral:\n"
-            "  • Translate — document/text translation\n"
-            "  • OCR — image to text\n"
-            "  • Transcribe — audio to text\n\n"
-            "Mistral is also used for semantic memory search and\n"
-            "budget/media tasks (significantly cheaper than larger models).[/dim]",
-            border_style="dim",
+            "Mistral excels at specific tasks that other providers handle poorly or expensively:\n\n"
+            "  [cyan]• OCR[/cyan]         Extract text from images, scans, photos — fast and accurate\n"
+            "  [cyan]• Translate[/cyan]   Document/text translation across 30+ languages\n"
+            "  [cyan]• Transcribe[/cyan]  Speech-to-text for audio files\n"
+            "  [cyan]• Memory[/cyan]      Semantic search in your agent\'s memory (embeddings)\n"
+            "  [cyan]• Budget[/cyan]      Cheap model for cron jobs, digests, summaries\n\n"
+            "[dim]Without Mistral: OCR, translation and transcription skills won\'t work.\n"
+            "Cost: ~10× cheaper than Claude/GPT for bulk tasks.[/dim]",
+            border_style="blue",
+            padding=(1, 2),
         ))
         console.print()
 
