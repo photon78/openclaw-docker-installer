@@ -33,11 +33,11 @@ class TestComposeGen:
         content = compose_gen.generate(state, IMAGE)
         assert ".env" in content
 
-    def test_config_mounted(self, state: WizardState) -> None:
-        # Config files must be mounted (writable — gateway writes temp files alongside them)
+    def test_openclaw_dir_mounted(self, state: WizardState) -> None:
+        # Full openclaw dir must be mounted (gateway needs write access for temp files)
         content = compose_gen.generate(state, IMAGE)
-        assert "openclaw.json" in content
-        assert "exec-approvals.json" in content
+        assert str(state.openclaw_dir) in content
+        assert "/home/node/.openclaw" in content
 
     def test_no_hardcoded_username(self, state: WizardState) -> None:
         content = compose_gen.generate(state, IMAGE)
@@ -46,7 +46,7 @@ class TestComposeGen:
 
     def test_paths_from_state(self, state: WizardState) -> None:
         content = compose_gen.generate(state, IMAGE)
-        assert str(state.workspace_dir) in content
+        assert str(state.openclaw_dir) in content
         assert str(state.scripts_dir) in content
 
     def test_no_new_privileges(self, state: WizardState) -> None:

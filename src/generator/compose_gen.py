@@ -65,24 +65,14 @@ services:
     restart: unless-stopped
 
     env_file:
-      - {openclaw_dir}/.env   # read-only at runtime via Docker
+      - {openclaw_dir}/.env
 
     ports:
       - "127.0.0.1:18789:18789"
 
     volumes:
-      # Workspace: read-write (agent needs to write files)
-      - {workspace_dir}:/home/node/.openclaw/workspace
-
-      # Logs: read-write
-      - {logs_dir}:/home/node/.openclaw/logs
-
-      # Memory: read-write
-      - {memory_dir}:/home/node/.openclaw/memory
-
-      # Config: writable (gateway writes temp files alongside these during startup)
-      - {openclaw_dir}/openclaw.json:/home/node/.openclaw/openclaw.json
-      - {openclaw_dir}/exec-approvals.json:/home/node/.openclaw/exec-approvals.json
+      # Full openclaw config dir — gateway needs write access for temp files and runtime state
+      - {openclaw_dir}:/home/node/.openclaw
 
       # Scripts: read-only (agent cannot modify its own tools)
       - {scripts_dir}:/home/node/.openclaw/scripts:ro
@@ -113,8 +103,7 @@ services:
     env_file:
       - {openclaw_dir}/.env
     volumes:
-      - {workspace_dir}:/home/node/.openclaw/workspace
-      - {openclaw_dir}/openclaw.json:/home/node/.openclaw/openclaw.json:ro
+      - {openclaw_dir}:/home/node/.openclaw
     depends_on:
       - openclaw-gateway
     security_opt:
