@@ -40,10 +40,17 @@ def generate(state: WizardState) -> dict:
             }
         },
         "gateway": {
-            "bind": "loopback",
+            "mode": "local",
+            "bind": "lan",
             "port": 18789,
             "reload": {
                 "mode": "hybrid",
+            },
+            "controlUi": {
+                "allowedOrigins": [
+                    "http://localhost:18789",
+                    "http://127.0.0.1:18789",
+                ]
             },
         },
         "session": {
