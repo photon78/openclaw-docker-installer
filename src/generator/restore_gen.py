@@ -190,5 +190,5 @@ echo "[✓] Restoring exec-approvals.json..."
 python3 {_SCRIPTS}/restore_exec_approvals.py
 
 echo "[✓] Starting OpenClaw gateway..."
-exec node dist/index.js
+exec node /app/dist/index.js gateway
 '''
