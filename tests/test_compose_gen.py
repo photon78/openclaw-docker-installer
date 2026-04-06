@@ -33,10 +33,11 @@ class TestComposeGen:
         content = compose_gen.generate(state, IMAGE)
         assert ".env" in content
 
-    def test_config_readonly(self, state: WizardState) -> None:
+    def test_config_mounted(self, state: WizardState) -> None:
+        # Config files must be mounted (writable — gateway writes temp files alongside them)
         content = compose_gen.generate(state, IMAGE)
-        assert "openclaw.json:ro" in content
-        assert "exec-approvals.json:ro" in content
+        assert "openclaw.json" in content
+        assert "exec-approvals.json" in content
 
     def test_no_hardcoded_username(self, state: WizardState) -> None:
         content = compose_gen.generate(state, IMAGE)

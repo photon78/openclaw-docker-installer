@@ -80,9 +80,9 @@ services:
       # Memory: read-write
       - {memory_dir}:/home/node/.openclaw/memory
 
-      # Config: read-only (agent must not modify)
-      - {openclaw_dir}/openclaw.json:/home/node/.openclaw/openclaw.json:ro
-      - {openclaw_dir}/exec-approvals.json:/home/node/.openclaw/exec-approvals.json:ro
+      # Config: writable (gateway writes temp files alongside these during startup)
+      - {openclaw_dir}/openclaw.json:/home/node/.openclaw/openclaw.json
+      - {openclaw_dir}/exec-approvals.json:/home/node/.openclaw/exec-approvals.json
 
       # Scripts: read-only (agent cannot modify its own tools)
       - {scripts_dir}:/home/node/.openclaw/scripts:ro
