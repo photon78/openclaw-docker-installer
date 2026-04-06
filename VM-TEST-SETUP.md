@@ -61,12 +61,22 @@ git checkout feature/prototype-docker-check
 
 ## Step 4: Python Environment
 
+**Linux/macOS:**
 ```bash
 python3 -m venv .venv --copies
 source .venv/bin/activate
 # Editable install may fail on Ubuntu 24.04 due to setuptools — use direct install instead:
 pip install typer rich questionary httpx psutil platformdirs docker jinja2 pytest
 ```
+
+**Windows:**
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install typer rich questionary httpx psutil platformdirs docker jinja2 pytest
+```
+
+> **Important:** The installer has no bundled dependencies. You must activate the venv before running `python src/main.py install`. A `ModuleNotFoundError` means the venv is not active.
 
 ---
 
