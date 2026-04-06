@@ -64,6 +64,9 @@ services:
     container_name: openclaw-gateway
     restart: unless-stopped
 
+    # start.sh restores exec-approvals.json on every container start
+    entrypoint: ["/home/node/.openclaw/scripts/start.sh"]
+
     env_file:
       - {openclaw_dir}/.env
 

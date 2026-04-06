@@ -155,11 +155,32 @@ def _agents_block(state: WizardState) -> str:
 
 
 def write(state: WizardState) -> Path:
-    """Write restore_exec_approvals.py to scripts_dir. Returns path."""
-    # In Docker, scripts go into openclaw_dir/scripts (mounted :ro into container)
+    """Write restore_exec_approvals.py and start.sh to scripts_dir."""
     scripts_dir = state.openclaw_dir / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
-    target = scripts_dir / "restore_exec_approvals.py"
-    target.write_text(generate(state))
-    target.chmod(0o755)
-    return target
+
+    # restore script
+    restore = scripts_dir / "restore_exec_approvals.py"
+    restore.write_text(generate(state))
+    restore.chmod(0o755)
+
+    # entrypoint wrapper — runs restore then launches gateway
+    start_sh = scripts_dir / "start.sh"
+    start_sh.write_text(_start_sh())
+    start_sh.chmod(0o755)
+
+    return restore
+
+
+def _start_sh() -> str:
+    return f'''#!/bin/bash
+# start.sh — OpenClaw container entrypoint
+# Restores exec-approvals.json on every start, then launches the gateway.
+set -e
+
+echo "[✓] Restoring exec-approvals.json..."
+python3 {_SCRIPTS}/restore_exec_approvals.py
+
+echo "[✓] Starting OpenClaw gateway..."
+exec node dist/index.js
+'''
