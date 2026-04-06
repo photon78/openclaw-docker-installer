@@ -88,8 +88,30 @@ def run(state: WizardState) -> BootstrapResult:
             shutil.copy2(src, dst)
             result.written.append(filename)
 
+    # Skills: copy template skills into workspace/skills/ (idempotent)
+    _bootstrap_skills(workspace, result)
+
     _print_summary(result)
     return result
+
+
+def _bootstrap_skills(workspace: Path, result: BootstrapResult) -> None:
+    """Copy bundled skills to workspace/skills/. Skip existing."""
+    skills_src = TEMPLATES_DIR / "skills"
+    if not skills_src.exists():
+        return
+    skills_dst = workspace / "skills"
+    skills_dst.mkdir(parents=True, exist_ok=True)
+
+    for skill_dir in sorted(skills_src.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        target = skills_dst / skill_dir.name
+        if target.exists():
+            result.skipped.append(f"skills/{skill_dir.name}")
+        else:
+            shutil.copytree(skill_dir, target)
+            result.written.append(f"skills/{skill_dir.name}")
 
 
 def _apply_substitutions(content: str, state: WizardState) -> str:
