@@ -43,12 +43,15 @@ class TestEnvGen:
         assert "LLM_POWER=anthropic/claude-opus-4-6" in content
         assert "LLM_BUDGET=mistral/mistral-large-latest" in content
 
-    def test_username_from_state(self, state: WizardState) -> None:
-        # Username must come from state, not be hardcoded
-        state.username = "testuser"
+    def test_no_hardcoded_values(self, state: WizardState, tmp_path: Path) -> None:
+        # All values must come from state — no hardcoded paths or usernames
+        state.username = "ghostuser"
+        state.home_dir = tmp_path / "ghostuser"
+        state.openclaw_dir = state.home_dir / ".openclaw"
         content = env_gen.generate(state)
-        assert "USER_NAME=testuser" in content
-        assert "USER_NAME=hummer" not in content
+        assert "USER_NAME=ghostuser" in content
+        assert "hummer" not in content
+        assert "/home/" not in content  # no absolute paths in .env
 
     def test_file_permissions(self, state: WizardState) -> None:
         path = env_gen.write(state)
@@ -71,10 +74,15 @@ class TestOpenClawJsonGen:
         allow = config["channels"]["telegram"].get("allowFrom", [])
         assert len(allow) == 1
 
-    def test_workspace_from_state(self, state: WizardState, tmp_path: Path) -> None:
-        # Workspace path must come from state
+    def test_no_hardcoded_values(self, state: WizardState) -> None:
+        # Workspace path must come from state — no hardcoded paths
+        # Use a neutral tmp_path that doesn't contain system usernames
+        fake_home = Path("/opt/octest")
+        state.home_dir = fake_home
+        state.openclaw_dir = fake_home / ".openclaw"
         content = json.dumps(openclaw_json_gen.generate(state))
-        assert str(state.workspace_dir) in content
+        assert "/opt/octest/.openclaw/workspace" in content
+        assert "/home/hummer" not in content
 
     def test_cron_enabled(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
@@ -94,10 +102,13 @@ class TestExecApprovalsGen:
         config = exec_approvals_gen.generate(state)
         assert len(config["socket"]["token"]) > 20
 
-    def test_paths_from_state(self, state: WizardState) -> None:
-        # All paths must use state.openclaw_dir, not hardcoded /home/hummer
+    def test_no_hardcoded_values(self, state: WizardState) -> None:
+        # All paths must come from state — no hardcoded /home/hummer or similar
+        fake_home = Path("/opt/octest")
+        state.home_dir = fake_home
+        state.openclaw_dir = fake_home / ".openclaw"
         content = json.dumps(exec_approvals_gen.generate(state))
-        assert str(state.openclaw_dir) in content
+        assert "/opt/octest/.openclaw" in content
         assert "/home/hummer" not in content
 
     def test_main_agent_has_allowlist(self, state: WizardState) -> None:
