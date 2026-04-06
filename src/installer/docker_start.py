@@ -20,9 +20,9 @@ log = logging.getLogger("installer.docker_start")
 
 console = Console()
 
-HEALTHZ_URL = "http://127.0.0.1:18789/healthz"
+HEALTHZ_URL = "http://127.0.0.1:18789/readyz"  # readiness probe (gateway fully up)
 POLL_INTERVAL = 2      # seconds between health checks
-STARTUP_TIMEOUT = 60   # max seconds to wait
+STARTUP_TIMEOUT = 90   # max seconds to wait (Docker image may need to initialize)
 
 
 @dataclass
@@ -53,7 +53,10 @@ def run(state: WizardState) -> StartResult:
     log.info("Container started.")
     console.print("[green]✓[/green] Container started.")
 
-    # Poll /healthz
+    # Fix permissions: container runs as node (uid 1000)
+    _fix_permissions(state.openclaw_dir)
+
+    # Poll /readyz
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -80,6 +83,21 @@ def run(state: WizardState) -> StartResult:
                   f"{STARTUP_TIMEOUT}s. Last logs:")
     _show_logs(compose_file, lines=20)
     return StartResult(ok=False, message="Gateway startup timeout.")
+
+
+def _fix_permissions(openclaw_dir: Path) -> None:
+    """Ensure ~/.openclaw is owned by uid 1000 (node user inside container)."""
+    result = subprocess.run(
+        ["docker", "run", "--rm",
+         "-v", f"{openclaw_dir}:/target",
+         "busybox", "chown", "-R", "1000:1000", "/target"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        log.info("Permissions fixed: %s owned by uid 1000", openclaw_dir)
+    else:
+        log.warning("chown failed (non-fatal): %s", result.stderr.strip())
 
 
 def _show_logs(compose_file: Path, lines: int = 20) -> None:
