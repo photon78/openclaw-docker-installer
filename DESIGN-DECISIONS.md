@@ -58,7 +58,7 @@ that's usually the reason.
 
 > *An LLM agent with shell access is a controlled weapon. The issue isn't the capability — it's uncontrolled capability. This system gives the agent exactly as much power as it needs, and not a byte more.*
 
-— Photon, 2026-04-05
+— HUMAN, 2026-04-05
 
 ---
 
@@ -83,7 +83,7 @@ Every approved binary runs without approval. But `ls | grep foo` = `bash -c "ls 
 - Shows which binaries are pre-approved and why
 - Warns if someone tries to enable `bash` with a wildcard or `security: full`
 
-**Source:** Photon + coding_zot, 2026-04-05
+**Source:** HUMAN + coding_AGENT, 2026-04-05
 
 ---
 
@@ -98,7 +98,7 @@ An inexperienced user in a chemical plant control room would click "open everyth
 - Restrictive defaults, no wildcard option in the MVP
 - Those who want more must manually edit `exec-approvals.json` — a conscious decision, not a click
 
-**Source:** Photon + coding_zot, 2026-04-05
+**Source:** HUMAN + coding_AGENT, 2026-04-05
 
 ---
 
@@ -112,7 +112,7 @@ An inexperienced user in a chemical plant control room would click "open everyth
 - More robust cross-platform
 - Core logic remains UI-independent — TUI is just a layer on top
 
-**Source:** Photon + coding_zot, 2026-04-05
+**Source:** HUMAN + coding_AGENT, 2026-04-05
 
 ---
 
@@ -125,7 +125,7 @@ An inexperienced user in a chemical plant control room would click "open everyth
 - Core is testable without UI
 - Headless operation (e.g., CI/CD) possible
 
-**Source:** Photon (voice message), 2026-04-05
+**Source:** HUMAN (voice message), 2026-04-05
 
 ---
 
@@ -149,7 +149,7 @@ An inexperienced user in a chemical plant control room would click "open everyth
 > With Mistral: Semantic search — also finds related terms.
 > Recommendation: Enter a Mistral key if available. Can be activated later."*
 
-**Source:** Photon, 2026-04-05
+**Source:** HUMAN, 2026-04-05
 
 ---
 
@@ -167,8 +167,8 @@ An inexperienced user in a chemical plant control room would click "open everyth
 workspace-<agent>/
   skills -> ../workspace/skills/    ← Symlink to shared skills (read-only, all agents)
   skills-private/                   ← Agent-specific skills (only this agent)
-    email/   ← only buero_zot
-    git-workflows/  ← only coding_zot
+    email/   ← only buero_AGENT
+    git-workflows/  ← only coding_AGENT
 ```
 
 **Rules:**
@@ -178,7 +178,7 @@ workspace-<agent>/
 - Installer Wizard: asks per agent which private skills to activate
 
 **Skill Assignment (current):**
-| Skill | Shared | buero_zot | coding_zot | formular_zot | main |
+| Skill | Shared | buero_AGENT | coding_AGENT | formular_AGENT | main |
 |-------|--------|-----------|------------|--------------|------|
 | web-search | ✅ | — | — | — | — |
 | docs-summarize | ✅ | — | — | — | — |
@@ -186,7 +186,7 @@ workspace-<agent>/
 | git-workflows | — | — | ✅ private | — | — |
 | voice-agent | — | — | — | — | main only |
 
-**Source:** Photon + Zot, 2026-04-06
+**Source:** HUMAN + AGENT, 2026-04-06
 
 ---
 
@@ -220,7 +220,7 @@ workspace-<agent>/
 **Referenz-Implementierung:** `~/.openclaw/scripts/daily_backup.py` (live, getestet 2026-04-06)  
 **Referenz-Restore:** `~/.openclaw/workspace/restore.md`
 
-**Source:** Photon + Zot, 2026-04-06
+**Source:** HUMAN + AGENT, 2026-04-06
 
 ---
 
@@ -245,4 +245,4 @@ workspace-<agent>/
 - No integrity guarantee without checksums
 - More moving parts
 
-**Source:** Photon + Zot, 2026-04-06
+**Source:** HUMAN + AGENT, 2026-04-06

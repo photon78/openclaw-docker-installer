@@ -10,8 +10,8 @@ Each agent gets its own `skills-private/` directory (no symlink — private per 
 ## Skill assignment per agent
 | Skill | Agent |
 |-------|-------|
-| `email/` | buero_zot only |
-| `git-workflows/` | coding_zot only |
+| `email/` | buero_AGENT only |
+| `git-workflows/` | coding_AGENT only |
 | `voice-agent/` | main only |
 
 ## Adding an agent-private skill
