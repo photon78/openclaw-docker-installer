@@ -18,6 +18,7 @@ from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
 from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
+from wizard.steps import completion
 
 app = typer.Typer(
     name="openclaw-installer",
@@ -39,9 +40,7 @@ def install() -> None:
         console.print("[red]Configuration generation failed.[/red]")
         raise typer.Exit(code=1)
 
-    console.print("[green]✓ Installation complete![/green]")
-    console.print(f"[dim]Config: {result.openclaw_json}[/dim]")
-    console.print(f"[dim]Secrets: {result.env_file}[/dim]")
+    completion.show(state, result.image)
 
 
 @app.command()
