@@ -2,13 +2,13 @@
 generator.py — Orchestrates config file generation from WizardState.
 Calls all individual generators and reports what was written.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen
 
 console = Console()
 
@@ -18,6 +18,8 @@ class GenerationResult:
     env_file: Path
     openclaw_json: Path
     exec_approvals: Path
+    compose_file: Path = field(default_factory=Path)
+    image: str = ""
     success: bool = True
 
 
@@ -48,6 +50,18 @@ def run(state: WizardState) -> GenerationResult:
         results.append(("[red]✗[/red]", "exec-approvals.json", "FAILED", str(e)))
         return GenerationResult(env_path, json_path, Path(), success=False)
 
+    # Fetch version + generate docker-compose.yml
+    console.print("[dim]Fetching current OpenClaw release...[/dim]")
+    image = compose_gen.fetch_latest_version()
+    console.print(f"[dim]Pinning image: {image}[/dim]\n")
+
+    try:
+        compose_path = compose_gen.write(state, image)
+        results.append(("[green]✓[/green]", "docker-compose.yml", str(compose_path), f"image: {image}"))
+    except Exception as e:
+        results.append(("[red]✗[/red]", "docker-compose.yml", "FAILED", str(e)))
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
     # Summary table
     table = Table(show_header=False, box=None, padding=(0, 2))
     for status, name, path, desc in results:
@@ -59,5 +73,7 @@ def run(state: WizardState) -> GenerationResult:
         env_file=env_path,
         openclaw_json=json_path,
         exec_approvals=approvals_path,
+        compose_file=compose_path,
+        image=image,
         success=True,
     )
