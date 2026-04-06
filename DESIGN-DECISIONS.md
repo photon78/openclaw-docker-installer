@@ -1,7 +1,58 @@
 # Design Decisions — openclaw-docker-installer
 
 This document records key design decisions — why things are the way they are.
-Not for the user. For us, when we ask in six months: "Why did we do it this way?"
+Not for the user. For contributors, when they ask in six months: "Why did we do it this way?"
+
+---
+
+## DD-000: Core Principles (Read This First)
+
+Before contributing, understand the three pillars this project stands on.
+Everything else follows from these.
+
+### 1. Our Setup Is the Reference
+
+This installer doesn't implement a theory. It packages a real, tested, running system:
+a Raspberry Pi 5 running OpenClaw natively, with multi-agent setup, allowlists,
+integrity monitoring, and daily backups — in production since early 2026.
+
+**What this means for contributors:**
+- Every feature in this installer has a working reference implementation
+- When in doubt: look at how the live system does it, not at what seems elegant
+- New features require a tested reference before they go into the installer
+
+### 2. Everything User-Specific Goes Through Variables
+
+No hardcoded usernames. No hardcoded paths. No hardcoded tokens.
+Every value that is installation-specific must come from the wizard and flow through
+a template variable — even if it feels obvious or unlikely to change.
+
+**Why:** If something is missed during installation, it must be fixable later without
+reinstalling from scratch. Variables make the system auditable, updatable, and portable.
+
+```
+# ❌ Wrong
+path = "/home/hummer/.openclaw/scripts/health_check.py"
+
+# ✅ Right
+path = str(Path.home() / ".openclaw" / "scripts" / "health_check.py")
+```
+
+### 3. The Goal Is One Thing: A Secure, Clean, Docker-based OpenClaw Instance
+
+Not "installable". Not "configurable". **Secure.** That means:
+- Allowlist active from day one — no `security: full`
+- Restore script in place — allowlist survives gateway updates
+- Integrity monitoring — changes are detected
+- Backup configured — data survives hardware failure
+- Secrets in `.env` only — never in service files or committed code
+- Scripts mounted read-only in Docker — agent cannot modify its own tools
+
+**Idempotency:** Running the installer twice must not break a working system.
+Re-run = update, not chaos.
+
+**Transparency:** The wizard explains what it does. Users understand what gets deployed.
+No magic. Everything is plain text, auditable, version-controlled.
 
 ---
 
