@@ -172,3 +172,28 @@ workspace-<agent>/
 **Referenz-Restore:** `~/.openclaw/workspace/restore.md`
 
 **Source:** Photon + Zot, 2026-04-06
+
+---
+
+## DD-008: Skills and Scripts as Versioned Templates in the Installer Repo
+
+**Decision:** Skills (`web-search`, `docs-summarize`, `email`) and scripts (`health_check.py`, `daily_backup.py`, `restore_exec_approvals.py`, etc.) are versioned directly in the installer repository as templates.
+
+**What this means:**
+- Skills and scripts live in `installer-repo/templates/skills/` and `installer-repo/templates/scripts/`
+- Templates contain placeholder variables (e.g., `{{ home_dir }}`, `{{ socket_token }}`)
+- At install time: Wizard fills variables → scripts are deployed to `~/.openclaw/scripts/`
+- Updates: `git pull` on the installer repo + re-run deploy step
+
+**Benefits:**
+- **Offsite backup** — installer repo IS the source of truth for all scripts
+- **Version control** — every script change is tracked, diffable, revertable
+- **One source of truth** — no divergence between installations
+- **Updates via pull** — `openclaw-installer update` = git pull + re-deploy templates
+
+**Rejected alternative:** Download scripts from a CDN or separate repo at install time
+- Network dependency at install time
+- No integrity guarantee without checksums
+- More moving parts
+
+**Source:** Photon + Zot, 2026-04-06
