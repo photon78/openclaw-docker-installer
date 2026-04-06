@@ -48,41 +48,7 @@ def write(state: WizardState) -> Path:
     """Write .env to openclaw_dir. Returns path."""
     env_file = state.env_file
     env_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Never overwrite existing keys — merge instead
-    existing: dict[str, str] = {}
-    if env_file.exists():
-        for line in env_file.read_text().splitlines():
-            if "=" in line and not line.startswith("#"):
-                k, _, v = line.partition("=")
-                existing[k.strip()] = v.strip()
-
-    new_content = generate(state)
-    new_lines: dict[str, str] = {}
-    for line in new_content.splitlines():
-        if "=" in line and not line.startswith("#"):
-            k, _, v = line.partition("=")
-            new_lines[k.strip()] = v.strip()
-
-    # Existing values win (don't overwrite manual edits)
-    merged = {**new_lines, **existing}
-
-    # Rebuild in order of new_content, then append extras from existing
-    output_lines = []
-    seen: set[str] = set()
-    for line in new_content.splitlines():
-        if "=" in line and not line.startswith("#"):
-            k = line.split("=")[0].strip()
-            output_lines.append(f"{k}={merged[k]}")
-            seen.add(k)
-        else:
-            output_lines.append(line)
-
-    for k, v in existing.items():
-        if k not in seen:
-            output_lines.append(f"{k}={v}")
-
-    env_file.write_text("\n".join(output_lines) + "\n")
+    env_file.write_text(generate(state))
     env_file.chmod(0o600)  # owner read/write only
     return env_file
 
