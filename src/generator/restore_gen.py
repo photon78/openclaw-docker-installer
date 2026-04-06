@@ -19,8 +19,15 @@ _WORKSPACE  = f"{_OPENCLAW}/workspace"
 
 def generate(state: WizardState) -> str:
     """Return restore_exec_approvals.py content as string."""
+    import json as _json
 
-    token = state.exec_approvals_token
+    # Read token from the already-written exec-approvals.json
+    approvals_file = state.openclaw_dir / "exec-approvals.json"
+    try:
+        token = _json.loads(approvals_file.read_text())["socket"]["token"]
+    except Exception:
+        token = "REPLACE_WITH_SOCKET_TOKEN"
+
     socket_path = f"{_OPENCLAW}/exec-approvals.sock"
 
     # Build agent allowlists as Python literal (injected verbatim)
