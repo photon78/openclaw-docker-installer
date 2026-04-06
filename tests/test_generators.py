@@ -81,15 +81,13 @@ class TestOpenClawJsonGen:
         allow = config["channels"]["telegram"].get("allowFrom", [])
         assert len(allow) == 1
 
-    def test_no_hardcoded_values(self, state: WizardState) -> None:
-        # Workspace path must come from state — no hardcoded paths
-        # Use a neutral tmp_path that doesn't contain system usernames
-        fake_home = Path("/opt/octest")
-        state.home_dir = fake_home
-        state.openclaw_dir = fake_home / ".openclaw"
-        content = json.dumps(openclaw_json_gen.generate(state))
-        assert "/opt/octest/.openclaw/workspace" in content
-        assert "/home/hummer" not in content
+    def test_workspace_uses_container_path(self, state: WizardState) -> None:
+        # workspace must be the container-internal path, not the host path
+        config = openclaw_json_gen.generate(state)
+        workspace = config["agents"]["defaults"]["workspace"]
+        assert workspace == "/home/node/.openclaw/workspace"
+        assert "hummer" not in workspace
+        assert "vboxuser" not in workspace
 
     def test_cron_enabled(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)

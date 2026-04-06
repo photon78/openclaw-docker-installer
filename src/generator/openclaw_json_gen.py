@@ -12,7 +12,8 @@ def generate(state: WizardState) -> dict:
     config: dict = {
         "agents": {
             "defaults": {
-                "workspace": str(state.workspace_dir),
+                # Container-internal path — host path is bind-mounted here
+                "workspace": "/home/node/.openclaw/workspace",
                 "model": {
                     "primary": state.llm_standard,
                     "fallbacks": [state.llm_power],
