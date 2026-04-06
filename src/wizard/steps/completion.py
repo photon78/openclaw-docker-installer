@@ -44,7 +44,12 @@ def show(state: WizardState, image: str) -> None:
   [cyan]sudo systemctl enable docker[/cyan]
   Then add a systemd unit or use [cyan]restart: unless-stopped[/cyan] (already set).
 
-[bold]5. Update later[/bold]
+[bold]5. Restore exec-approvals (if needed)[/bold]
+
+  If the gateway ever overwrites exec-approvals.json via doctor mode:
+  [cyan]docker compose exec openclaw-gateway python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
+
+[bold]6. Update later[/bold]
 
   [cyan]openclaw-installer update[/cyan]
   Pulls the latest image and restarts the container.

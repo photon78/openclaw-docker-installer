@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen
 
 console = Console()
 
@@ -19,6 +19,7 @@ class GenerationResult:
     openclaw_json: Path
     exec_approvals: Path
     compose_file: Path = field(default_factory=Path)
+    restore_script: Path = field(default_factory=Path)
     image: str = ""
     success: bool = True
 
@@ -69,11 +70,20 @@ def run(state: WizardState) -> GenerationResult:
     console.print(table)
     console.print()
 
+    # Generate restore_exec_approvals.py
+    try:
+        restore_path = restore_gen.write(state)
+        results.append(("[green]✓[/green]", "restore_exec_approvals.py", str(restore_path), "exec-approvals restore script"))
+    except Exception as e:
+        results.append(("[red]✗[/red]", "restore_exec_approvals.py", "FAILED", str(e)))
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
     return GenerationResult(
         env_file=env_path,
         openclaw_json=json_path,
         exec_approvals=approvals_path,
         compose_file=compose_path,
+        restore_script=restore_path,
         image=image,
         success=True,
     )
