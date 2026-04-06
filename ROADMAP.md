@@ -25,15 +25,15 @@
 ### Generation
 - [x] docker-compose.yml (bind mounts, .env + scripts read-only, pinned release)
 - [x] .env (API keys, LLM tiers, USER_NAME)
-- [ ] openclaw.json (bootstrapMaxChars, subagents, sessions)
+- [x] openclaw.json (bootstrapMaxChars, subagents, sessions, maintenance)
 - [x] exec-approvals.json (from security profile, per-agent tiers)
-- [ ] restore_exec_approvals.py (from wizard config)
-- [ ] Workspace bootstrapping (AGENTS.md, SOUL.md, IDENTITY.md, MEMORY.md templates)
+- [x] restore_exec_approvals.py (container-internal paths, main agent allowlist)
+- [x] Workspace bootstrapping (AGENTS.md, SOUL.md, USER.md, MEMORY.md, BOOTSTRAP.md templates)
 
 ### Security Baseline
 - [x] Bundle health_check.py
 - [x] Bundle audit_integrity.py + set baselines
-- [ ] API keys only in .env, never in service file
+- [x] API keys only in .env, never in service file
 
 ### Backup Setup (Core Feature — not optional)
 - [ ] Wizard: "Where is your backup medium?" (SD card / USB mount path)
@@ -45,9 +45,10 @@
 - [x] Reference implementation: `~/.openclaw/scripts/daily_backup.py` (live, tested 2026-04-06)
 
 ### Post-Install
-- [ ] docker-compose up via CLI
-- [ ] Gateway ping (health check)
-- [ ] Summary + next steps
+- [x] docker-compose up via CLI
+- [x] Gateway health poll (/healthz, 60s timeout with log fallback)
+- [x] Summary + next steps (completion screen)
+- [x] start.sh entrypoint — restores exec-approvals.json on every container start
 
 ### Docs & Community
 - [x] README.md (Vision, Quick Start, Screenshots)
@@ -69,6 +70,7 @@
 - [ ] Generate Telegram group + topic bindings
 - [ ] Generate per-agent allowlist
 - [ ] Automatically create symlinks
+- [x] Subagent templates: AGENTS-persistent.md + AGENTS-ephemeral.md (in installer)
 
 ### Extended Memory (Opt-in)
 - [ ] Wizard prompt: Basic vs. Extended
