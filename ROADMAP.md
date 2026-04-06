@@ -34,6 +34,15 @@
 - [ ] Bundle audit_integrity.py + set baselines
 - [ ] API keys only in .env, never in service file
 
+### Backup Setup (Core Feature — not optional)
+- [ ] Wizard: "Where is your backup medium?" (SD card / USB mount path)
+- [ ] Deploy `daily_backup.py` from template (configured with user-defined mount path)
+- [ ] Crontab entry: daily at 04:10
+- [ ] Generate `restore.md` with concrete paths + token placeholder
+- [ ] What is backed up: workspaces (rsync diff Mon–Sat, full Sun), openclaw.json, scripts (*.py), systemd drop-ins, memory SQLite, exec-approvals.json (token=REDACTED)
+- [ ] What is NOT backed up: .env / API keys, session JSONL, node_modules / dist / .astro
+- [ ] Reference implementation: `~/.openclaw/scripts/daily_backup.py` (live, tested 2026-04-06)
+
 ### Post-Install
 - [ ] docker-compose up via CLI
 - [ ] Gateway ping (health check)
