@@ -9,25 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN` throughout (real URLs and GitHub usernames preserved)
+
 ### Added
-- Pre-flight checks: Docker availability, version, Compose v2
-- Gateway reachability check (HTTP ping)
-- Unit tests for `docker_check` and `gateway_check` (mock-based, no Docker required)
-- `ROADMAP.md` — v0.1.0 through v0.5.0
-- `SECURITY-ARCHITECTURE.md` — 5-layer security model, honest threat model
+- `SECURITY-ARCHITECTURE.md`: new section "LLM Shell Reflex Risk" — explains why LLMs reach for shell tools by reflex and how the system compensates
+
+---
+
+## [0.1.0-alpha] — 2026-04-06
+
+### Added
+- Interactive TUI wizard (questionary + rich): Welcome, API Keys, Channel, Persona, Security, Backup, Completion steps
+- Persona step: agent name, emoji, style preset (direct / formal / friendly)
+- `docker-compose.yml` generator — pins release tag via GitHub Releases API, fallback to `:latest`
+- `.env` generator — API keys, LLM tiers, USER_NAME
+- `openclaw.json` generator — ENV-based config, no hardcoded models
+- `exec-approvals.json` generator — Security Allowlist with permission tiers (Restricted / Standard / Elevated / Cron)
+- `restore_exec_approvals.py` generator
+- `backup_gen.py` — daily backup script template (rsync, diff Mon–Sat, full Sun)
+- Workspace bootstrapping: AGENTS.md, SOUL.md, MEMORY.md, USER.md, BOOTSTRAP.md templates
+- SOUL.md template with Jinja2 placeholders (rendered by wizard with real values)
+- Bundled skills: `web-search`, `docs-summarize`, `mistral-ocr`, `mistral-translate`, `mistral-transcribe`
+- Subagent templates: ephemeral and persistent
+- Centralised logging: `~/.openclaw/logs/installer.log` (rotating, 1 MB, 3 backups)
+- Channel and Backup steps support skip option
+- Required fields loop until valid; Ctrl+C exits cleanly
+- `AGENTS-ARCHITECTURE.md` — multi-agent architecture reference
+- `SECURITY-ARCHITECTURE.md` — 5-layer security model, honest threat model, channel trust, input validation
 - `MEMORY-ARCHITECTURE.md` — three-layer memory system reference
 - `DESIGN-DECISIONS.md` — architectural decisions with rationale
-- Community files: CONTRIBUTING.md, CHANGELOG.md, CODE_OF_CONDUCT.md, SECURITY.md
+- `ROADMAP.md` — v0.1.0 through v0.5.0
+- `VM-TEST-SETUP.md` — VM test guide (Violette, Ubuntu 24.04)
+- Community files: CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
 - GitHub Issue Templates (Bug / Feature / Security)
 - CI workflow: ruff, mypy, pytest, Docker build test
+- 36 unit tests — all green
 
-### Planned for v0.1.0
-- Interactive TUI wizard (questionary + rich)
-- `docker-compose.yml` + `.env` generation
-- `exec-approvals.json` generation (Security Profile: Strict / Standard)
-- `restore_exec_approvals.py` generation
-- Workspace bootstrapping (AGENTS.md, SOUL.md, MEMORY.md templates)
-- Post-install Gateway check
+### Changed
+- `CONTRIBUTING.md`: PR target corrected — PRs go against `feature/` branches, not directly against `main`
+
+### Tested
+- VM "Violette" (Ubuntu 24.04, non-root user): Gateway ✅ Telegram ✅ Agent ✅
 
 ---
 
@@ -43,5 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `README.md` — vision and project overview
 - `LICENSE` — MIT
 
-[Unreleased]: https://github.com/photon78/openclaw-docker-installer/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/photon78/openclaw-docker-installer/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/photon78/openclaw-docker-installer/compare/v0.0.1...v0.1.0-alpha
 [0.0.1]: https://github.com/photon78/openclaw-docker-installer/releases/tag/v0.0.1
