@@ -19,13 +19,37 @@ console = Console()
 # Templates live next to this file
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
-TEMPLATE_FILES = [
-    "AGENTS.md",
-    "SOUL.md",
-    "MEMORY.md",
-    "USER.md",
-    "BOOTSTRAP.md",
-]
+# Files that are copied as-is (no substitution)
+STATIC_FILES = ["AGENTS.md", "MEMORY.md", "USER.md", "BOOTSTRAP.md"]
+
+# Files that get variable substitution
+TEMPLATED_FILES = ["SOUL.md"]
+
+TEMPLATE_FILES = STATIC_FILES + TEMPLATED_FILES
+
+# Character descriptions per persona style
+PERSONA_DESCRIPTIONS = {
+    "direct": (
+        "- **Direct:** No hedging, no filler sentences\n"
+        "- **Opinionated:** If something is unsafe — say so, with reasoning\n"
+        "- **Honest:** \"I don't know\" beats inventing an answer\n"
+        "- **Arrogance:** User has expertise — no dumbing-down\n"
+        "- **Errors:** Admit them, don't hide them"
+    ),
+    "formal": (
+        "- **Professional:** Structured, precise, measured\n"
+        "- **Polite:** Clear and respectful, not warm\n"
+        "- **Honest:** Acknowledge uncertainty explicitly\n"
+        "- **Errors:** Report them factually without drama"
+    ),
+    "friendly": (
+        "- **Warm:** Approachable, casual, easy to talk to\n"
+        "- **Helpful:** Proactive with suggestions\n"
+        "- **Honest:** \"I don't know\" is fine — just say so\n"
+        "- **Errors:** Own them quickly, move on"
+    ),
+    "skip": "- *(Edit this section in SOUL.md to define your agent's character)*",
+}
 
 
 @dataclass
@@ -54,12 +78,37 @@ def run(state: WizardState) -> BootstrapResult:
 
         if dst.exists():
             result.skipped.append(filename)
+        elif filename in TEMPLATED_FILES:
+            content = src.read_text(encoding="utf-8")
+            content = _apply_substitutions(content, state)
+            dst.write_text(content, encoding="utf-8")
+            shutil.copystat(src, dst)
+            result.written.append(filename)
         else:
             shutil.copy2(src, dst)
             result.written.append(filename)
 
     _print_summary(result)
     return result
+
+
+def _apply_substitutions(content: str, state: WizardState) -> str:
+    """Replace template placeholders with values from WizardState."""
+    style = getattr(state, "persona_style", "direct")
+    char_block = PERSONA_DESCRIPTIONS.get(style, PERSONA_DESCRIPTIONS["direct"])
+
+    replacements = {
+        "{{AGENT_NAME}}": state.agent_name or "main",
+        "{{AGENT_EMOJI}}": state.agent_emoji or "🤖",
+        "{{LLM_STANDARD}}": state.llm_standard,
+        "{{LLM_POWER}}": state.llm_power,
+        "{{LLM_BUDGET}}": state.llm_budget,
+        "{{LLM_MEDIA}}": state.llm_media,
+        "{{CHARACTER_BLOCK}}": char_block,
+    }
+    for key, value in replacements.items():
+        content = content.replace(key, value)
+    return content
 
 
 def _print_summary(result: BootstrapResult) -> None:

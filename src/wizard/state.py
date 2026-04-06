@@ -28,6 +28,9 @@ class WizardState:
     agent_name: str = "main"
     agent_emoji: str = "🤖"
 
+    # Persona
+    persona_style: str = "direct"   # "direct" | "formal" | "friendly" | "skip"
+
     # Security
     security_profile: str = "strict"   # "strict" | "standard" | "custom"
 
