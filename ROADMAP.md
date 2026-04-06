@@ -14,18 +14,19 @@
 - [x] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
 
 ### Wizard
-- [ ] Interactive wizard (questionary + rich)
-- [ ] Welcome + platform detection
-- [ ] Request API key(s) (Anthropic, optional Mistral)
-- [ ] Select channel (Telegram / Discord / Signal)
-- [ ] Request channel credentials (bot token, etc.)
-- [ ] Security profile: Strict / Standard / Custom
+- [x] Interactive wizard (questionary + rich)
+- [x] Welcome + platform detection
+- [x] Request API key(s) — multi-provider (Anthropic, OpenAI, Google, xAI, Ollama, etc.)
+- [x] Mistral as recommended skills/budget provider
+- [x] Select channel (Telegram / Discord / Signal)
+- [x] Request channel credentials (bot token, etc.)
+- [x] Security profile: Strict / Standard / Custom
 
 ### Generation
-- [ ] docker-compose.yml (bind mounts, .env + scripts read-only)
-- [ ] .env (API keys, LLM tiers)
+- [x] docker-compose.yml (bind mounts, .env + scripts read-only, pinned release)
+- [x] .env (API keys, LLM tiers, USER_NAME)
 - [ ] openclaw.json (bootstrapMaxChars, subagents, sessions)
-- [ ] exec-approvals.json (from security profile, per-agent tiers)
+- [x] exec-approvals.json (from security profile, per-agent tiers)
 - [ ] restore_exec_approvals.py (from wizard config)
 - [ ] Workspace bootstrapping (AGENTS.md, SOUL.md, IDENTITY.md, MEMORY.md templates)
 
