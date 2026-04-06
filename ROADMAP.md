@@ -10,7 +10,7 @@
 
 ### Infrastructure
 - [x] Python project structure (pyproject.toml, src/, tests/)
-- [ ] CLI framework (typer): install / status / start / stop / uninstall
+- [x] CLI framework (typer): install / status / start / stop / uninstall
 - [x] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
 
 ### Wizard

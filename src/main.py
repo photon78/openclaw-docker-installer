@@ -1,45 +1,110 @@
 #!/usr/bin/env python3
 """
-openclaw-docker-installer — entry point.
+openclaw-installer — CLI entry point.
 
-Prototype: runs Docker and Gateway checks, prints results.
-TUI wizard comes in a later feature branch.
+Commands:
+  install    Run the setup wizard (interactive)
+  status     Show current OpenClaw installation status
+  start      Start the OpenClaw gateway (docker-compose up)
+  stop       Stop the OpenClaw gateway (docker-compose down)
+  uninstall  Remove the OpenClaw installation
 """
 
-import sys
+import typer
+from rich.console import Console
+from rich.panel import Panel
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
 
+app = typer.Typer(
+    name="openclaw-installer",
+    help="OpenClaw in a Box — secure, production-ready OpenClaw setup.",
+    add_completion=False,
+)
+console = Console()
 
-def main() -> int:
-    """Run pre-flight checks and report results.
 
-    Returns exit code: 0 = all ok, 1 = check failed.
-    """
-    print("openclaw-docker-installer — pre-flight check\n")
+@app.command()
+def install() -> None:
+    """Run the interactive setup wizard."""
+    console.print(Panel.fit(
+        "[bold cyan]OpenClaw Installer[/bold cyan]\n"
+        "[dim]Secure by default. Human in the loop.[/dim]",
+        border_style="cyan",
+    ))
+    console.print("\n[yellow]Wizard not yet implemented.[/yellow]")
+    console.print("Running pre-flight checks...\n")
 
-    # Docker check
+    _run_preflight()
+
+
+@app.command()
+def status() -> None:
+    """Show current OpenClaw installation status."""
+    console.print("[bold]OpenClaw Status[/bold]\n")
+
     docker = check_docker()
     if docker.ready:
-        print(f"[OK] Docker {docker.version} is ready.")
+        console.print(f"[green]✓[/green] Docker {docker.version} — ready")
     else:
-        print(f"[FAIL] Docker check failed.")
-        if docker.error:
-            print(f"       {docker.error}")
-        return 1
+        console.print(f"[red]✗[/red] Docker — {docker.error or 'not available'}")
 
-    # Gateway check (only relevant after installation)
     gateway = check_gateway(port=DEFAULT_PORT)
     if gateway.ok:
-        print(f"[OK] Gateway is reachable on port {gateway.port}.")
+        console.print(f"[green]✓[/green] Gateway — reachable on port {gateway.port}")
     else:
-        # Not a hard failure at this stage — gateway may not be installed yet
-        print(f"[INFO] Gateway: {gateway.message}")
+        console.print(f"[yellow]·[/yellow] Gateway — {gateway.message}")
 
-    print("\nAll checks passed. Ready to proceed.")
-    return 0
+
+@app.command()
+def start() -> None:
+    """Start the OpenClaw gateway (docker-compose up -d)."""
+    console.print("[bold]Starting OpenClaw...[/bold]")
+    console.print("[yellow]Not yet implemented.[/yellow]")
+    console.print("[dim]Will run: docker compose up -d[/dim]")
+
+
+@app.command()
+def stop() -> None:
+    """Stop the OpenClaw gateway (docker-compose down)."""
+    console.print("[bold]Stopping OpenClaw...[/bold]")
+    console.print("[yellow]Not yet implemented.[/yellow]")
+    console.print("[dim]Will run: docker compose down[/dim]")
+
+
+@app.command()
+def uninstall(
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+) -> None:
+    """Remove the OpenClaw installation."""
+    if not confirm:
+        confirmed = typer.confirm(
+            "This will remove the OpenClaw installation. Are you sure?",
+            default=False,
+        )
+        if not confirmed:
+            console.print("[dim]Aborted.[/dim]")
+            raise typer.Exit()
+
+    console.print("[bold red]Uninstall[/bold red]")
+    console.print("[yellow]Not yet implemented.[/yellow]")
+
+
+def _run_preflight() -> bool:
+    """Run pre-flight checks. Returns True if all critical checks pass."""
+    docker = check_docker()
+    if docker.ready:
+        console.print(f"[green]✓[/green] Docker {docker.version} — ready")
+    else:
+        console.print(f"[red]✗[/red] Docker — {docker.error or 'not available'}")
+        console.print("\n[red]Docker is required. Please install Docker first.[/red]")
+        console.print("  https://docs.docker.com/engine/install/")
+        return False
+
+    console.print("\n[green]Pre-flight checks passed.[/green]")
+    return True
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

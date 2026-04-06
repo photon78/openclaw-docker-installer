@@ -17,10 +17,11 @@ dependencies = [
     "httpx",
     "platformdirs",
     "send2trash",
+    "typer[all]",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy"]
 
 [project.scripts]
-openclaw-installer = "main:main"
+openclaw-installer = "main:app"
