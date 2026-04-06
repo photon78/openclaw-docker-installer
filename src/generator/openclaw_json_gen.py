@@ -36,16 +36,6 @@ def generate(state: WizardState) -> dict:
                     "maxConcurrent": 2,
                 },
             },
-            # Explicit agent profile for main — enables sub-agent spawning
-            "agents": [
-                {
-                    "id": "main",
-                    "subagents": {
-                        "maxConcurrent": 2,
-                        "allowAgents": ["*"],
-                    },
-                }
-            ],
         },
         "gateway": {
             "mode": "local",
