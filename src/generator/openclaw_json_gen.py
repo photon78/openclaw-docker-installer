@@ -14,14 +14,14 @@ def generate(state: WizardState) -> dict:
             "defaults": {
                 "workspace": str(state.workspace_dir),
                 "model": {
-                    "primary": "${LLM_STANDARD}",
-                    "fallbacks": ["${LLM_POWER}"],
+                    "primary": state.llm_standard,
+                    "fallbacks": [state.llm_power],
                 },
                 "models": {
-                    "budget": "${LLM_BUDGET}",
-                    "standard": "${LLM_STANDARD}",
-                    "power": "${LLM_POWER}",
-                    "media": "${LLM_MEDIA}",
+                    state.llm_budget:   {"alias": "budget"},
+                    state.llm_standard: {"alias": "standard"},
+                    state.llm_power:    {"alias": "power"},
+                    state.llm_media:    {"alias": "media"},
                 },
                 "heartbeat": {
                     "every": "30m",

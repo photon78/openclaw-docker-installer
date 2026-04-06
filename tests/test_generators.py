@@ -59,10 +59,17 @@ class TestEnvGen:
 
 
 class TestOpenClawJsonGen:
-    def test_uses_env_vars_not_hardcoded_models(self, state: WizardState) -> None:
+    def test_model_primary_from_state(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
         primary = config["agents"]["defaults"]["model"]["primary"]
-        assert primary == "${LLM_STANDARD}"
+        assert primary == state.llm_standard
+
+    def test_models_dict_is_object_map(self, state: WizardState) -> None:
+        # models must be a dict of model-id -> object, not model-id -> string
+        config = openclaw_json_gen.generate(state)
+        models = config["agents"]["defaults"]["models"]
+        for key, val in models.items():
+            assert isinstance(val, dict), f"models[{key!r}] must be an object, got {type(val)}"
 
     def test_telegram_channel_configured(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
