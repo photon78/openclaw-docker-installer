@@ -9,11 +9,14 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import logging
 import httpx
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from wizard.state import WizardState
+
+log = logging.getLogger("installer.docker_start")
 
 console = Console()
 
@@ -43,9 +46,11 @@ def run(state: WizardState) -> StartResult:
         text=True,
     )
     if result.returncode != 0:
+        log.error("docker compose up failed:\n%s", result.stderr)
         console.print(f"[red]✗ docker compose up failed:[/red]\n{result.stderr}")
         return StartResult(ok=False, message=result.stderr.strip())
 
+    log.info("Container started.")
     console.print("[green]✓[/green] Container started.")
 
     # Poll /healthz
@@ -63,6 +68,7 @@ def run(state: WizardState) -> StartResult:
                 resp = httpx.get(HEALTHZ_URL, timeout=3)
                 if resp.status_code == 200:
                     progress.stop()
+                    log.info("Gateway healthy at %s", HEALTHZ_URL)
                     console.print("[green]✓[/green] Gateway is healthy.")
                     return StartResult(ok=True, message="Gateway ready.")
             except Exception:

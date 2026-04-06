@@ -10,6 +10,7 @@ Commands:
   uninstall  Remove the OpenClaw installation
 """
 
+import logging
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -20,7 +21,10 @@ from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
 from installer.docker_start import run as docker_start
 from installer.workspace_bootstrap import run as bootstrap_workspace
+from installer.logging_setup import setup as setup_logging, get_log_file
 from wizard.steps import completion
+
+log = logging.getLogger("installer")
 
 app = typer.Typer(
     name="openclaw-installer",
@@ -33,27 +37,44 @@ console = Console()
 @app.command()
 def install() -> None:
     """Run the interactive setup wizard."""
+    # Setup logging first — before wizard so all output is captured
+    log_file = setup_logging()
+    console.print(f"[dim]Install log: {log_file}[/dim]\n")
+    log.info("=== openclaw-installer: install started ===")
+
     state = run_wizard()
     if state is None:
+        log.info("Installation aborted by user.")
         raise typer.Exit(code=1)
+
+    log.info("Wizard complete — channel=%s security=%s backup=%s",
+             state.channel, state.security_profile, state.backup_mount_path)
 
     result = run_generator(state)
     if not result.success:
-        console.print("[red]Configuration generation failed.[/red]")
+        log.error("Configuration generation failed.")
+        console.print(f"[red]Configuration generation failed.[/red]")
+        console.print(f"[dim]See log for details: {get_log_file()}[/dim]")
         raise typer.Exit(code=1)
+
+    log.info("Config generated — image=%s", result.image)
 
     # Bootstrap workspace templates
     console.print("\n[bold]Bootstrapping workspace...[/bold]")
     bootstrap_workspace(state)
+    log.info("Workspace bootstrapped at %s", state.workspace_dir)
 
     # Start gateway
     start = docker_start(state)
     if not start.ok:
+        log.error("Gateway failed to start: %s", start.message)
         console.print(f"[red]Gateway failed to start:[/red] {start.message}")
         console.print("[dim]Fix the issue and run: docker compose -f "
                       f"{state.openclaw_dir}/docker-compose.yml up -d[/dim]")
+        console.print(f"[dim]See log: {get_log_file()}[/dim]")
         raise typer.Exit(code=1)
 
+    log.info("=== openclaw-installer: install complete ===")
     completion.show(state, result.image)
 
 
