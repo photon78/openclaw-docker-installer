@@ -64,9 +64,23 @@
 ## v0.2.0 — "The Pack" 🐺
 *Multi-Agent, Extended Memory, Telegram Topics.*
 
+### Design Decisions (locked)
+- **v0.1 = single main agent** — KISS, stable baseline
+- **v0.2 adds optional specialist agents** — each with own workspace, no shared MEMORY.md
+- **Shared MEMORY.md is a bug** — installer must enforce unique workspaces per agent
+- **Preset profiles** (no free-form in wizard): coder / researcher / buero
+  - coder: sonnet, workspace-coding
+  - researcher: sonnet, workspace-research  
+  - buero: mistral, workspace-buero
+- **Required fields per agent**: id, workspace, identity.name, identity.emoji
+- **Optional per agent**: model.primary+fallbacks, memorySearch.extraPaths (can point at main's memory/topics)
+- **allowAgents** lives in `agents.agents[id].subagents` — NOT in `agents.defaults`
+- Source: openclaw.json inspection 2026-04-06, main-zot config as reference
+
 ### Multi-Agent
-- [ ] Wizard: "How many agents?" + define roles
-- [ ] Per agent: Name, emoji, workspace, permission tier
+- [ ] Wizard: optional "Add specialist agent?" step (after main is configured)
+- [ ] Preset picker: coder / researcher / buero (or skip)
+- [ ] Per agent: Name, emoji, workspace auto-derived from preset
 - [ ] Generate Telegram group + topic bindings
 - [ ] Generate per-agent allowlist
 - [ ] Automatically create symlinks
