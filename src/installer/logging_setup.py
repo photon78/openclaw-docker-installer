@@ -1,13 +1,12 @@
 """
 logging_setup.py — Installer-wide logging.
-Writes to ~/.openclaw/logs/install-YYYY-MM-DD.log
-Also mirrors to stdout via Rich for interactive runs.
+Writes to ~/.openclaw/logs/installer.log (rotating, max 1 MB, 3 backups).
+Also mirrors INFO+ to stdout via Rich for interactive runs.
 """
 from __future__ import annotations
 
 import logging
-import sys
-from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from rich.logging import RichHandler
@@ -30,15 +29,19 @@ def setup(openclaw_dir: Path | None = None) -> Path:
     logs_dir = base / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    log_file = logs_dir / f"install-{date_str}.log"
+    log_file = logs_dir / "installer.log"
     _log_file = log_file
 
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
-    # File handler — full debug output
-    fh = logging.FileHandler(log_file, encoding="utf-8")
+    # Rotating file handler — max 1 MB, keeps 3 backups (installer.log, .1, .2, .3)
+    fh = RotatingFileHandler(
+        log_file,
+        maxBytes=1 * 1024 * 1024,
+        backupCount=3,
+        encoding="utf-8",
+    )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter(
         "[%(asctime)s] %(levelname)-8s %(name)s — %(message)s",
