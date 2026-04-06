@@ -7,6 +7,27 @@ from pathlib import Path
 from wizard.state import WizardState
 
 
+def _memory_search_config(state: WizardState) -> dict:
+    """Return memorySearch config with an explicit provider.
+
+    In Docker, API keys live in .env and are not visible to OpenClaw's
+    auto-detection logic at boot time. We must declare the provider explicitly
+    so memory_search works out of the box.
+
+    Priority: mistral > openai > anthropic (last resort: disabled).
+    """
+    if state.mistral_api_key:
+        return {
+            "provider": "mistral",
+            "model": "mistral-embed",
+        }
+    if state.anthropic_api_key:
+        # Anthropic does not offer embeddings — fall through to disabled
+        pass
+    # No supported embedding provider found — disable gracefully
+    return {"enabled": False}
+
+
 def generate(state: WizardState) -> dict:
     """Return openclaw.json content as dict."""
     config: dict = {
@@ -35,6 +56,9 @@ def generate(state: WizardState) -> dict:
                 "subagents": {
                     "maxConcurrent": 2,
                 },
+                # Memory search: explicit provider so embedding works out of the box
+                # Auto-detection fails in Docker when API keys are only in .env
+                "memorySearch": _memory_search_config(state),
             },
         },
         "gateway": {

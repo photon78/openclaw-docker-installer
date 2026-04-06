@@ -93,6 +93,21 @@ class TestOpenClawJsonGen:
         config = openclaw_json_gen.generate(state)
         assert config.get("cron", {}).get("enabled") is True
 
+    def test_memory_search_provider_mistral(self, state: WizardState) -> None:
+        # Mistral key present — should use mistral-embed
+        state.mistral_api_key = "mistral-test-key"
+        config = openclaw_json_gen.generate(state)
+        ms = config["agents"]["defaults"]["memorySearch"]
+        assert ms["provider"] == "mistral"
+        assert ms["model"] == "mistral-embed"
+
+    def test_memory_search_disabled_without_provider(self, state: WizardState) -> None:
+        # No supported embedding provider — should disable gracefully
+        state.mistral_api_key = ""
+        config = openclaw_json_gen.generate(state)
+        ms = config["agents"]["defaults"]["memorySearch"]
+        assert ms.get("enabled") is False
+
 
 class TestExecApprovalsGen:
     def test_security_allowlist(self, state: WizardState) -> None:
