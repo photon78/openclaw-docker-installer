@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Status: 2026-04-05
+> Status: 2026-04-06
 > Principle: Every version is stable in itself. Secure by Default. All Python.
 
 ---
@@ -9,9 +9,9 @@
 *Single Agent, Docker, functional.*
 
 ### Infrastructure
-- [ ] Python project structure (pyproject.toml, src/, tests/)
+- [x] Python project structure (pyproject.toml, src/, tests/)
 - [ ] CLI framework (typer): install / status / start / stop / uninstall
-- [ ] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
+- [x] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
 
 ### Wizard
 - [ ] Interactive wizard (questionary + rich)
@@ -30,8 +30,8 @@
 - [ ] Workspace bootstrapping (AGENTS.md, SOUL.md, IDENTITY.md, MEMORY.md templates)
 
 ### Security Baseline
-- [ ] Bundle health_check.py
-- [ ] Bundle audit_integrity.py + set baselines
+- [x] Bundle health_check.py
+- [x] Bundle audit_integrity.py + set baselines
 - [ ] API keys only in .env, never in service file
 
 ### Backup Setup (Core Feature — not optional)
@@ -41,7 +41,7 @@
 - [ ] Generate `restore.md` with concrete paths + token placeholder
 - [ ] What is backed up: workspaces (rsync diff Mon–Sat, full Sun), openclaw.json, scripts (*.py), systemd drop-ins, memory SQLite, exec-approvals.json (token=REDACTED)
 - [ ] What is NOT backed up: .env / API keys, session JSONL, node_modules / dist / .astro
-- [ ] Reference implementation: `~/.openclaw/scripts/daily_backup.py` (live, tested 2026-04-06)
+- [x] Reference implementation: `~/.openclaw/scripts/daily_backup.py` (live, tested 2026-04-06)
 
 ### Post-Install
 - [ ] docker-compose up via CLI
@@ -49,13 +49,13 @@
 - [ ] Summary + next steps
 
 ### Docs & Community
-- [ ] README.md (Vision, Quick Start, Screenshots)
-- [ ] LICENSE (MIT)
-- [ ] CHANGELOG.md (Keep a Changelog)
-- [ ] CONTRIBUTING.md (DCO, Code Style, PR process)
-- [ ] CODE_OF_CONDUCT.md (Contributor Covenant)
-- [ ] SECURITY.md (Responsible Disclosure)
-- [ ] GitHub issue templates (Bug / Feature / Security Report)
+- [x] README.md (Vision, Quick Start, Screenshots)
+- [x] LICENSE (MIT)
+- [x] CHANGELOG.md (Keep a Changelog)
+- [x] CONTRIBUTING.md (DCO, Code Style, PR process)
+- [x] CODE_OF_CONDUCT.md (Contributor Covenant)
+- [x] SECURITY.md (Responsible Disclosure)
+- [x] GitHub issue templates (Bug / Feature / Security Report)
 
 ---
 
