@@ -50,18 +50,22 @@ docker compose version
 ## Step 3: Clone Installer
 
 ```bash
-git clone https://github.com/photon78/openclaw-docker-installer.git
+git clone git@github-installer:photon78/openclaw-docker-installer.git
 cd openclaw-docker-installer
+git checkout feature/prototype-docker-check
 ```
+
+> **Note:** Deploy key required for private repo. See [GitHub Deploy Keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys).
 
 ---
 
 ## Step 4: Python Environment
 
 ```bash
-python3 -m venv .venv
+python3 -m venv .venv --copies
 source .venv/bin/activate
-pip install -e ".[dev]"
+# Editable install may fail on Ubuntu 24.04 due to setuptools — use direct install instead:
+pip install typer rich questionary httpx psutil platformdirs docker jinja2 pytest
 ```
 
 ---
@@ -76,16 +80,47 @@ All tests should pass without Docker running (mock-based).
 
 ---
 
-## Step 6: Manual Checks (when wizard exists)
+## Step 6: Run Wizard
 
-- [ ] Wizard starts without errors
-- [ ] Platform detection works (Linux, correct username)
-- [ ] API key input works
-- [ ] docker-compose.yml generated with correct paths (no `/home/hummer`)
-- [ ] .env generated correctly
-- [ ] exec-approvals.json uses `Path.home()` correctly
-- [ ] restore_exec_approvals.py runs without errors
-- [ ] Gateway ping works after docker-compose up
+```bash
+python src/main.py install
+```
+
+Durchklicken mit echten oder Test-Credentials.
+
+---
+
+## Step 7: Start Gateway
+
+```bash
+docker compose -f ~/.openclaw/docker-compose.yml up -d
+docker compose -f ~/.openclaw/docker-compose.yml logs -f
+```
+
+---
+
+## Step 8: Clean für neuen Testlauf
+
+```bash
+./scripts/clean.sh        # mit Bestätigung
+./scripts/clean.sh --yes  # ohne Rückfrage
+```
+
+Entfernt: Container, Image (`ghcr.io/openclaw/openclaw:*`), `~/.openclaw/`.
+
+---
+
+## Manuelle Checks
+
+- [ ] Wizard startet ohne Fehler
+- [ ] Platform Detection: korrekter Username (nicht `hummer`)
+- [ ] API Key Input funktioniert
+- [ ] `docker-compose.yml` generiert mit korrekten Pfaden (kein `/home/hummer`)
+- [ ] `.env` korrekt, keine Duplikate, keine `+`-Zeilen
+- [ ] `openclaw.json` valid — `models` ist Dict von ID→Objekt
+- [ ] `exec-approvals.json` verwendet `Path.home()` korrekt
+- [ ] Gateway startet ohne Config-Errors
+- [ ] Completion-Screen zeigt korrekten `docker compose`-Befehl
 
 ---
 
