@@ -102,11 +102,14 @@ docker compose -f ~/.openclaw/docker-compose.yml logs -f
 ## Step 8: Clean für neuen Testlauf
 
 ```bash
-./scripts/clean.sh        # mit Bestätigung
-./scripts/clean.sh --yes  # ohne Rückfrage
+./scripts/clean.sh                      # mit Bestätigung
+./scripts/clean.sh --yes               # ohne Rückfrage
+./scripts/clean.sh --yes --keep-image  # Image behalten (spart Re-Download)
 ```
 
 Entfernt: Container, Image (`ghcr.io/openclaw/openclaw:*`), `~/.openclaw/`.
+
+> **Tipp:** `--keep-image` verwenden wenn das Image sich nicht geändert hat — spart beim Wizard-Durchklicken mehrere Minuten.
 
 ---
 
