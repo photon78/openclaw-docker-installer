@@ -19,8 +19,8 @@ DEFAULT_MOUNTS = [
 ]
 
 
-def run(state: WizardState) -> bool:
-    """Ask user for backup mount path. Returns False to abort."""
+def run(state: WizardState) -> bool | str:
+    """Ask user for backup mount path. Returns False to abort, 'back' to go back."""
     console.print()
     console.print(Panel(
         "[bold]Backup setup[/bold]\n\n"
@@ -32,13 +32,17 @@ def run(state: WizardState) -> bool:
         padding=(1, 2),
     ))
 
+    choices = DEFAULT_MOUNTS + ["← Back"]
+
     choice = questionary.select(
         "Where is your backup medium mounted?",
-        choices=DEFAULT_MOUNTS,
+        choices=choices,
     ).ask()
 
     if choice is None:
         return False
+    if choice == "← Back":
+        return "back"
 
     if choice == "Custom path...":
         custom = questionary.text(

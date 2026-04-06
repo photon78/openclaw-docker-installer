@@ -32,10 +32,10 @@ CHANNELS = {
 }
 
 
-def run(state: WizardState) -> bool:
+def run(state: WizardState) -> bool | str:
     """Prompt for channel selection and credentials.
 
-    Returns True to continue, False to abort.
+    Returns True to continue, False to abort, "back" to go to previous step.
     """
     console.print(Panel.fit(
         "[bold]Channel Setup[/bold]\n\n"
@@ -45,16 +45,21 @@ def run(state: WizardState) -> bool:
     ))
     console.print()
 
+    choices = [
+        questionary.Choice(v["label"], value=k)
+        for k, v in CHANNELS.items()
+    ]
+    choices.append(questionary.Choice("← Back", value="__back__"))
+
     channel_choice = questionary.select(
         "Which channel do you want to use?",
-        choices=[
-            questionary.Choice(v["label"], value=k)
-            for k, v in CHANNELS.items()
-        ],
+        choices=choices,
     ).ask()
 
     if not channel_choice:
         return False
+    if channel_choice == "__back__":
+        return "back"
 
     state.channel = channel_choice
     info = CHANNELS[channel_choice]
@@ -66,9 +71,11 @@ def run(state: WizardState) -> bool:
     console.print()
 
     # Token input
-    token = questionary.password(f"{info['label']} bot token:").ask()
+    token = questionary.password(f"{info['label']} bot token: (or type 'back')").ask()
     if not token:
         return False
+    if token.strip().lower() == "back":
+        return "back"
 
     state.telegram_bot_token = token.strip()
 

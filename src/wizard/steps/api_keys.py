@@ -120,10 +120,13 @@ def _ask_model(provider: dict) -> str:
         ).ask() or ""
 
 
-def run(state: WizardState) -> bool:
+BACK = "back"
+
+
+def run(state: WizardState) -> bool | str:
     """Prompt for LLM provider, API key, and model tiers.
 
-    Returns True to continue, False to abort.
+    Returns True to continue, False to abort, "back" to go to previous step.
     """
     console.print(Panel.fit(
         "[bold]LLM Provider & API Keys[/bold]\n\n"
@@ -136,13 +139,18 @@ def run(state: WizardState) -> bool:
     # ── Primary provider ────────────────────────────────────────────────────
     console.print("[bold]Primary provider[/bold] [dim](powers your main agent)[/dim]\n")
 
+    choices = [questionary.Choice(p["label"], value=p["id"]) for p in PROVIDERS]
+    choices.append(questionary.Choice("← Back", value="__back__"))
+
     provider_choice = questionary.select(
         "Which LLM provider?",
-        choices=[questionary.Choice(p["label"], value=p["id"]) for p in PROVIDERS],
+        choices=choices,
     ).ask()
 
     if not provider_choice:
         return False
+    if provider_choice == "__back__":
+        return BACK
 
     provider = next(p for p in PROVIDERS if p["id"] == provider_choice)
 
@@ -158,9 +166,11 @@ def run(state: WizardState) -> bool:
                 return f"Key should start with {provider['key_prefix']}"
             return True
 
-        key = questionary.password("API key:").ask()
+        key = questionary.password("API key: (or type 'back' to go back)").ask()
         if not key:
             return False
+        if key.strip().lower() == "back":
+            return BACK
         key = key.strip()
 
         # Store in correct state field
@@ -199,14 +209,17 @@ def run(state: WizardState) -> bool:
         console.print()
 
         want_mistral = questionary.confirm(
-            "Add Mistral as skills/budget provider? (recommended)",
+            "Add Mistral as skills/budget provider? (recommended) [Enter=yes, n=no, b=back]",
             default=True,
         ).ask()
 
+        if want_mistral is None:
+            return BACK
+
         if want_mistral:
             console.print("[dim]→  https://console.mistral.ai/[/dim]\n")
-            mistral_key = questionary.password("Mistral API key:").ask()
-            if mistral_key and mistral_key.strip():
+            mistral_key = questionary.password("Mistral API key: (or type 'back' to skip)").ask()
+            if mistral_key and mistral_key.strip().lower() != "back" and mistral_key.strip():
                 state.mistral_api_key = mistral_key.strip()
                 state.llm_budget = "mistral/mistral-large-latest"
                 state.llm_media = "mistral/mistral-large-latest"

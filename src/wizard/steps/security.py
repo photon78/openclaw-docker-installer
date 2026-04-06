@@ -33,10 +33,10 @@ PROFILES = {
 }
 
 
-def run(state: WizardState) -> bool:
+def run(state: WizardState) -> bool | str:
     """Prompt for security profile.
 
-    Returns True to continue, False to abort.
+    Returns True to continue, False to abort, "back" to go to previous step.
     """
     console.print(Panel.fit(
         "[bold]Security Profile[/bold]\n\n"
@@ -65,17 +65,22 @@ def run(state: WizardState) -> bool:
         "If you need it, you can set it manually in exec-approvals.json.[/dim]\n"
     )
 
+    choices = [
+        questionary.Choice(v["label"], value=k)
+        for k, v in PROFILES.items()
+    ]
+    choices.append(questionary.Choice("← Back", value="__back__"))
+
     profile = questionary.select(
         "Choose a security profile:",
-        choices=[
-            questionary.Choice(v["label"], value=k)
-            for k, v in PROFILES.items()
-        ],
+        choices=choices,
         default="strict",
     ).ask()
 
     if not profile:
         return False
+    if profile == "__back__":
+        return "back"
 
     state.security_profile = profile
 
