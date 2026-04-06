@@ -28,6 +28,14 @@ def generate(state: WizardState) -> dict:
                     "every": "30m",
                     "target": "last",
                 },
+                # Bootstrap: how much workspace context is injected per session
+                "bootstrapMaxChars": 20000,
+                "bootstrapTotalMaxChars": 100000,
+                # Subagents: main agent can spawn subagents (same agent only by default)
+                "subagents": {
+                    "maxConcurrent": 2,
+                    "allowAgents": ["*"],
+                },
             }
         },
         "gateway": {
@@ -39,6 +47,12 @@ def generate(state: WizardState) -> dict:
         },
         "session": {
             "dmScope": "per-channel-peer",
+            "maintenance": {
+                "mode": "warn",
+                "pruneAfter": "30d",
+                "maxEntries": 500,
+                "rotateBytes": "10mb",
+            },
         },
         "cron": {
             "enabled": True,
