@@ -31,10 +31,12 @@ def generate(state: WizardState) -> dict:
                 # Bootstrap: how much workspace context is injected per session
                 "bootstrapMaxChars": 20000,
                 "bootstrapTotalMaxChars": 100000,
-                # Subagents: limit parallel runs
+                # Subagents: limit parallel runs (allowAgents is per-agent-profile, not here)
                 "subagents": {
                     "maxConcurrent": 2,
                 },
+                # Note: subagents.allowAgents belongs in agents.agents[].subagents profiles
+                # and will be generated in v0.2.0 multi-agent setup
             }
         },
         "gateway": {
