@@ -158,7 +158,8 @@ def _agents_block(state: WizardState) -> str:
             "allowlist": main_allowlist,
         }
     }
-    return _json.dumps(agents, indent=4)
+    # Use json.dumps but replace JSON booleans with Python booleans
+    return _json.dumps(agents, indent=4).replace(": true", ": True").replace(": false", ": False")
 
 
 def write(state: WizardState) -> Path:
