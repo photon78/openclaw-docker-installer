@@ -1,7 +1,15 @@
 # OpenClaw Installer — Roadmap
 
-> Status: 2026-04-06
-> Principle: Every version is stable in itself. Secure by Default. All Python.
+> Status: 2026-04-07
+
+## Principles
+
+1. **Every version is stable in itself** — no "only works with v0.3"
+2. **Secure by Default** — every version, every feature
+3. **Backward compatible** — config from v0.1 works in v0.5
+4. **Wizard prevents poor decisions** — friction for risk
+5. **All Python** — wizard, scripts, skills, tests
+6. **Docker first, Native second** — but native is first-class, not an afterthought
 
 ---
 
@@ -95,8 +103,8 @@
 - [ ] HEARTBEAT.md with guards (line limit, log compactness, digest age)
 
 ### LLM Tiers
-- [ ] Budget / Standard / Power / Media in .env
-- [ ] openclaw.json with ${LLM_*} variables
+- [x] Budget / Standard / Power / Media in .env
+- [x] openclaw.json with ${LLM_*} variables
 
 ### Agent Management
 - [ ] openclaw-installer add-agent (post-installation)
@@ -104,7 +112,29 @@
 
 ---
 
-## v0.3.0 — "Unleash the Beast" 🐧
+## v0.3.0 — "VPS Ready" 🖥️
+*One-command setup for VPS deployments: nginx, HTTPS, firewall.*
+
+### VPS Quick Deploy Mode
+- [ ] Detect fresh Ubuntu/Debian VPS
+- [ ] Install and configure nginx as reverse proxy
+- [ ] Set up Certbot (Let's Encrypt) for HTTPS
+- [ ] Configure basic ufw firewall rules (80, 443, SSH)
+- [ ] Generate nginx config for the OpenClaw gateway
+
+### Resource Limits
+- [ ] Wizard: "How much RAM does your server have?" (1 / 2 / 4+ GB)
+- [ ] Generate docker-compose.yml with memory/CPU caps
+
+### Unattended Updates
+- [ ] Weekly cron: check for new OpenClaw image releases
+- [ ] Pull + restart container automatically
+- [ ] Notify via Telegram after successful update
+- [ ] Rollback on health check failure
+
+---
+
+## v0.4.0 — "Unleash the Beast" 🐧
 *Native Linux, systemd, no Docker.*
 
 ### Native Installation
@@ -125,7 +155,7 @@
 
 ---
 
-## v0.4.0 — "Shape Shifter" 🔄
+## v0.5.0 — "Shape Shifter" 🔄
 *Migration, Updates, Portability.*
 
 - [ ] openclaw-installer migrate docker-to-native
@@ -136,7 +166,7 @@
 
 ---
 
-## v0.5.0 — "All Platforms" 🌐
+## v0.6.0 — "All Platforms" 🌐
 *macOS + Windows Support.*
 
 - [ ] macOS: launchd service (~/Library/LaunchAgents/)
@@ -157,13 +187,4 @@
 - [ ] Community Skills Repository integration (ClaWHub)
 - [ ] Cluster mode (multiple servers)
 
----
 
-## Principles
-
-1. **Every version is stable in itself** — no "only works with v0.3"
-2. **Secure by Default** — every version, every feature
-3. **Backward compatible** — config from v0.1 works in v0.5
-4. **Wizard prevents poor decisions** — friction for risk
-5. **All Python** — wizard, scripts, skills, tests
-6. **Docker first, Native second** — but native is first-class, not an afterthought
