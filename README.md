@@ -8,6 +8,20 @@
 
 ---
 
+## Status
+
+| Version | Status | What works |
+|---------|--------|------------|
+| **v0.1.0-alpha** | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
+| feature/windows-compat | 🔧 In progress | Windows path handling, security hardening |
+
+Install the latest stable release:
+```bash
+git clone --branch v0.1.0-alpha https://github.com/photon78/openclaw-docker-installer.git
+```
+
+---
+
 ## What is this?
 
 OpenClaw is a powerful self-hosted AI agent platform. It's flexible, extensible — and by default, it gives the agent a lot of power.
@@ -20,16 +34,27 @@ Everything runs in Docker. Works on Linux, macOS, and Windows.
 
 ---
 
-## What you get
+## Features
 
-- ✅ Interactive setup wizard (5–10 minutes)
+**Setup**
+- ✅ Interactive TUI wizard (5–10 minutes, no config files to edit)
 - ✅ Docker-based OpenClaw instance, pinned to a stable release
-- ✅ Restrictive exec allowlist — no `rm`, no root, no shell wildcards
-- ✅ Workspace bootstrapped: `AGENTS.md`, `SOUL.md`, `MEMORY.md`, `BOOTSTRAP.md`
-- ✅ Memory search configured out of the box (Mistral embeddings)
 - ✅ Telegram, Discord, or Signal channel setup
-- ✅ Backup script pre-configured and ready to schedule
 - ✅ Agent persona: name, emoji, communication style
+
+**Security**
+- ✅ Restrictive exec allowlist — shell tools (`ls`, `cat`, `grep`, `bash` …) excluded by design
+- ✅ Gateway auth rate-limiting out of the box (10 attempts / 5 min lockout)
+- ✅ Plugin version pinning — no silent upstream changes
+- ✅ `autoAllowSkills` off by default — opt-in only
+- ✅ "No commands via email" rule in all workspace templates
+
+**Workspace**
+- ✅ Full workspace bootstrapped: `SOUL.md`, `AGENTS.md`, `HEARTBEAT.md`, `IDENTITY.md`,
+  `MEMORY.md`, `USER.md`, `BOOTSTRAP.md`, `scripts/check_tasks.py`
+- ✅ All workspace files as real copies — no symlinks (OpenClaw doesn’t follow symlinks)
+- ✅ Memory search configured out of the box (Mistral embeddings)
+- ✅ Backup script pre-configured and ready to schedule
 
 ---
 
