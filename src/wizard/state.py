@@ -33,6 +33,7 @@ class WizardState:
 
     # Security
     security_profile: str = "strict"   # "strict" | "standard" | "custom"
+    auto_allow_skills: bool = False    # autoAllowSkills in exec-approvals.json (default: off for security)
 
     # Backup
     backup_enabled: bool = True

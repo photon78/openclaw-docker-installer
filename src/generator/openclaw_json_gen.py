@@ -68,12 +68,26 @@ def generate(state: WizardState) -> dict:
             "reload": {
                 "mode": "hybrid",
             },
+            "auth": {
+                "rateLimit": {
+                    "maxAttempts": 10,
+                    "windowMs": 60000,
+                    "lockoutMs": 300000,
+                }
+            },
             "controlUi": {
                 "allowedOrigins": [
                     "http://localhost:18789",
                     "http://127.0.0.1:18789",
                 ]
             },
+        },
+        "plugins": {
+            "entries": {
+                "telegram-approval-buttons": {
+                    "spec": "telegram-approval-buttons@5.1.0",
+                }
+            }
         },
         "session": {
             "dmScope": "per-channel-peer",

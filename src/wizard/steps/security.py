@@ -85,5 +85,23 @@ def run(state: WizardState) -> bool | str:
     state.security_profile = profile
 
     console.print()
-    console.print(f"[green]✓[/green] Security profile: [bold]{PROFILES[profile]['label']}[/bold]\n")
+    console.print(f"[green]\u2713[/green] Security profile: [bold]{PROFILES[profile]['label']}[/bold]\n")
+
+    # autoAllowSkills opt-in
+    console.print(
+        "[dim]Auto-allow skills: automatically trusts scripts inside the skills/ directory.\n"
+        "Recommended: [bold]No[/bold] (you can whitelist specific skill scripts later).[/dim]\n"
+    )
+    auto_allow = questionary.confirm(
+        "Enable auto-allow for skill scripts? (not recommended)",
+        default=False,
+    ).ask()
+    if auto_allow is None:
+        return False
+    state.auto_allow_skills = auto_allow
+    if auto_allow:
+        console.print("[yellow]![/yellow] autoAllowSkills enabled — skills/ directory is fully trusted.\n")
+    else:
+        console.print("[green]\u2713[/green] autoAllowSkills disabled — skill scripts need explicit allowlist entries.\n")
+
     return True

@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `workspace_bootstrap_gen.py`: generates workspace directory with SOUL.md, AGENTS.md,
+  HEARTBEAT.md, IDENTITY.md, MEMORY.md, USER.md, BOOTSTRAP.md, scripts/check_tasks.py
+  — all real file copies (no symlinks, OpenClaw does not follow symlinks in context injection)
+- `docs/workspace-file-management.md`: documents the symlink limitation and correct setup pattern
+- `gateway.auth.rateLimit` in `openclaw_json_gen.py`: 10 attempts / 60s window / 5min lockout
+- Plugin pinning in `openclaw_json_gen.py`: `telegram-approval-buttons@5.1.0`
+- `autoAllowSkills` wizard opt-in in security step (default: `false` for maximum security)
+
+### Changed
+- `exec_approvals_gen.py`: removed shell tools from allowlist
+  (ls, cat, grep, find, head, tail, wc, sort — agents use read/edit tools instead)
+- `exec_approvals_gen.py`: removed bash (`/bin/bash`, `/usr/bin/bash`) from main allowlist
+  (shell-injection risk)
+- `exec_approvals_gen.py`: `autoAllowSkills` now driven by `WizardState.auto_allow_skills`
+  (was hardcoded `True`)
+- `WizardState`: added `auto_allow_skills: bool = False`
+- All workspace template files include "No commands via email" as mandatory rule
+- HEARTBEAT.md template uses workspace-specific `check_tasks.py` path (not hardcoded)
+
+---
+
+## [Unreleased — prev]
+
 ### Changed
 - Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN` throughout (real URLs and GitHub usernames preserved)
 
