@@ -10,34 +10,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `workspace_bootstrap_gen.py`: generates workspace directory with SOUL.md, AGENTS.md,
+- `workspace_bootstrap_gen.py`: generates complete workspace with SOUL.md, AGENTS.md,
   HEARTBEAT.md, IDENTITY.md, MEMORY.md, USER.md, BOOTSTRAP.md, scripts/check_tasks.py
-  — all real file copies (no symlinks, OpenClaw does not follow symlinks in context injection)
-- `docs/workspace-file-management.md`: documents the symlink limitation and correct setup pattern
+  — all real file copies (no symlinks; OpenClaw does not follow symlinks in context injection)
+- `docs/workspace-file-management.md`: documents the symlink limitation and correct setup
+- `restore_config_gen.py`: generates `restore_config.py` — restores critical `openclaw.json`
+  fields (`plugins.allow`, `plugins.entries`, `gateway.auth.rateLimit`) after `openclaw update`
+  silently resets them (clobbered-file behaviour)
 - `gateway.auth.rateLimit` in `openclaw_json_gen.py`: 10 attempts / 60s window / 5min lockout
-- Plugin pinning in `openclaw_json_gen.py`: `telegram-approval-buttons@5.1.0`
-- `autoAllowSkills` wizard opt-in in security step (default: `false` for maximum security)
+- `plugins.allow` in `openclaw_json_gen.py`: explicit allowlist prevents silent resets on update
+- `plugins.entries.mistral` + `plugins.entries.anthropic` in `openclaw_json_gen.py`:
+  Mistral runs natively via plugin — no custom `models.providers` block
+  (custom block causes 404 via OpenAI-compat fallback)
+- Plugin pinning: `telegram-approval-buttons@5.1.0`
+- `autoAllowSkills` wizard opt-in in security step (default: `false`)
+- Python 3.11+ pre-flight check — catches missing Python on Windows before wizard starts
+- Wizard UI redesign: intro panel, requirements table, confirm-to-continue
+- 65 unit tests (up from 36)
+- `SECURITY-ARCHITECTURE.md`: "LLM Shell Reflex Risk" section
 
 ### Changed
 - `exec_approvals_gen.py`: removed shell tools from allowlist
   (ls, cat, grep, find, head, tail, wc, sort — agents use read/edit tools instead)
 - `exec_approvals_gen.py`: removed bash (`/bin/bash`, `/usr/bin/bash`) from main allowlist
-  (shell-injection risk)
-- `exec_approvals_gen.py`: `autoAllowSkills` now driven by `WizardState.auto_allow_skills`
+  (shell-injection risk — bash in allowlist enables arbitrary command execution)
+- `exec_approvals_gen.py`: `autoAllowSkills` driven by `WizardState.auto_allow_skills`
   (was hardcoded `True`)
 - `WizardState`: added `auto_allow_skills: bool = False`
-- All workspace template files include "No commands via email" as mandatory rule
-- HEARTBEAT.md template uses workspace-specific `check_tasks.py` path (not hardcoded)
+- All workspace template files include "No commands via email" as first mandatory rule
+- HEARTBEAT.md template: workspace-specific `check_tasks.py` path (not hardcoded)
+- Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN`
+- README: Status table, Features section restructured, post-update warning added
 
----
-
-## [Unreleased — prev]
-
-### Changed
-- Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN` throughout (real URLs and GitHub usernames preserved)
-
-### Added
-- `SECURITY-ARCHITECTURE.md`: new section "LLM Shell Reflex Risk" — explains why LLMs reach for shell tools by reflex and how the system compensates
+### Known issues
+- `restore_gen.py` (generated `restore_exec_approvals.py`): still contains shell tools
+  in the hardcoded defaults allowlist — fix planned for next release
 
 ---
 

@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Status: 2026-04-07
+> Status: 2026-04-08
 
 ## Principles
 
@@ -34,9 +34,15 @@
 - [x] docker-compose.yml (bind mounts, .env + scripts read-only, pinned release)
 - [x] .env (API keys, LLM tiers, USER_NAME)
 - [x] openclaw.json (bootstrapMaxChars, subagents, sessions, maintenance)
-- [x] exec-approvals.json (from security profile, per-agent tiers)
+- [x] exec-approvals.json (from security profile, per-agent tiers; shell tools + bash excluded by design)
 - [x] restore_exec_approvals.py (container-internal paths, main agent allowlist)
-- [x] Workspace bootstrapping (AGENTS.md, SOUL.md, USER.md, MEMORY.md, BOOTSTRAP.md templates)
+- [x] restore_config.py (restores plugins.allow, rateLimit after `openclaw update`)
+- [x] `plugins.allow` + Mistral/Anthropic plugin entries (no custom provider block)
+- [x] Plugin pinning: telegram-approval-buttons@5.1.0
+- [x] `gateway.auth.rateLimit` (10 attempts / 5min lockout)
+- [x] `autoAllowSkills` opt-in (default: false)
+- [x] Workspace bootstrapping (SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md, MEMORY.md,
+  USER.md, BOOTSTRAP.md, scripts/check_tasks.py — all real copies, no symlinks)
 
 ### Security Baseline
 - [x] Bundle health_check.py
@@ -59,13 +65,14 @@
 - [x] start.sh entrypoint — restores exec-approvals.json on every container start
 
 ### Docs & Community
-- [x] README.md (Vision, Quick Start, Screenshots)
+- [x] README.md (Vision, Quick Start, Status table, Features, post-update warning)
 - [x] LICENSE (MIT)
 - [x] CHANGELOG.md (Keep a Changelog)
 - [x] CONTRIBUTING.md (DCO, Code Style, PR process)
 - [x] CODE_OF_CONDUCT.md (Contributor Covenant)
 - [x] SECURITY.md (Responsible Disclosure)
 - [x] GitHub issue templates (Bug / Feature / Security Report)
+- [x] `docs/workspace-file-management.md` (symlink limitation + correct setup)
 
 ---
 
@@ -169,6 +176,8 @@
 ## v0.6.0 — "All Platforms" 🌐
 *macOS + Windows Support.*
 
+- [x] Python 3.11+ pre-flight check (catches missing Python on Windows before wizard)
+- [x] Windows venv instructions (`VM-TEST-SETUP.md`)
 - [ ] macOS: launchd service (~/Library/LaunchAgents/)
 - [ ] macOS: Docker Desktop integration
 - [ ] Windows: NSSM Service Manager
