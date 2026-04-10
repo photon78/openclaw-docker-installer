@@ -49,9 +49,9 @@
 - [x] Bundle audit_integrity.py + set baselines
 - [x] API keys only in .env, never in service file
 
-### Backup Setup (Core Feature — not optional)
-- [ ] Wizard: "Where is your backup medium?" (SD card / USB mount path)
-- [ ] Deploy `daily_backup.py` from template (configured with user-defined mount path)
+### Backup Setup (optional — can be configured after install)
+- [x] Wizard: "Where is your backup medium?" (SD card / USB mount path) — skippable, configure later
+- [x] Deploy `daily_backup.py` from template (configured with user-defined mount path)
 - [ ] Crontab entry: daily at 04:10
 - [ ] Generate `restore.md` with concrete paths + token placeholder
 - [ ] What is backed up: workspaces (rsync diff Mon–Sat, full Sun), openclaw.json, scripts (*.py), systemd drop-ins, memory SQLite, exec-approvals.json (token=REDACTED)
@@ -98,7 +98,7 @@
 - [ ] Per agent: Name, emoji, workspace auto-derived from preset
 - [ ] Generate Telegram group + topic bindings
 - [ ] Generate per-agent allowlist
-- [ ] Automatically create symlinks
+- [ ] Automatically copy workspace files per agent (real copies, NOT symlinks — OpenClaw does not follow symlinks in context injection)
 - [x] Subagent templates: AGENTS-persistent.md + AGENTS-ephemeral.md (in installer)
 
 ### Extended Memory (Opt-in)

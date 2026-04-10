@@ -77,7 +77,7 @@ Add the new agent to `agents.list`. Use the existing MAIN entry as reference.
         "id": "coding_agent",
         "workspace": "/home/node/.openclaw/workspace-coding",
         "model": {
-          "primary": "${LLM_STANDARD}",
+          "primary": "${LLM_POWER}",
           "fallbacks": ["${LLM_BUDGET}"]
         },
         "subagents": {
@@ -198,7 +198,7 @@ docker compose restart openclaw-gateway
 
 Or via the OpenClaw CLI:
 ```bash
-openclaw gateway reload
+openclaw gateway restart
 ```
 
 Verify the new agent appears in `/status` or the web UI.

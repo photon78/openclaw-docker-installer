@@ -73,6 +73,6 @@ Priorität 2 (mittel):
 
 ## Entschiedene Fragen (2026-04-10)
 
-1. **`LLM_COMPLEX`** → MAIN mappt auf `LLM_STANDARD`
+1. **`LLM_COMPLEX`** → MAIN mappt auf `LLM_POWER` (Coding-Tasks brauchen starke Modelle, nicht Budget)
 2. **Telegram Approval Targets** → kein Plugin, stattdessen AGENTS.md-Pflicht-Regel (vollständiges Paket)
 3. **`maxSpawnDepth: 1`** → valide — in `openclaw.json` aufnehmen

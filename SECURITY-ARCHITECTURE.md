@@ -17,9 +17,9 @@ exec-approvals.json
 ├── defaults          ← applies to ALL sessions (including Crons, isolated)
 ├── agents
 │   ├── main          ← Botmaster, broadest rights
-│   ├── coding_bot    ← Dev tools, Git, Node
-│   ├── buero_bot     ← only specific script paths
-│   └── formular_bot  ← only specific script paths
+│   ├── coding_agent  ← Dev tools, Git, Node
+│   ├── content_agent ← only specific script paths
+│   └── research_agent ← read-only, no exec
 ```
 
 ### Principle: Deny-by-Default, Allowlist-Only
@@ -40,8 +40,8 @@ exec-approvals.json
 
 | Tier | Agents | Bare Interpreter | What's Allowed |
 |------|--------|-----------------|----------------|
-| **Restricted** | buero_bot, formular_bot | ❌ No python3, no bash | Only named script paths + read tools (ls, cat, grep, etc.) |
-| **Standard** | coding_bot | ✅ python3 + bash | Dev tools, Git, Node, SSH, but no systemctl, no openclaw CLI |
+| **Restricted** | content_agent, research_agent | ❌ No python3, no bash | Only named script paths + read tools |
+| **Standard** | coding_agent | ✅ python3 | Dev tools, Git, Node, SSH, but no systemctl, no openclaw CLI |
 | **Elevated** | main | ✅ python3 + bash | System tools, gateway management, but no rm, no pip3, no root |
 | **Cron/Isolated** | defaults | ❌ No bash | python3 + read tools + health/digest scripts |
 
@@ -216,7 +216,7 @@ No container = no process isolation. Security relies entirely on:
 
 ---
 
-## Layer 5: Input Channel Trust & Sender Verification
+## Layer 6: Input Channel Trust & Sender Verification
 
 ### Problem: Not All Input Channels Are Equal
 

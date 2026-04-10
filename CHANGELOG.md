@@ -71,6 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known issues
 - Dependency pinning uses `~=` (compatible release) not `==` — exact reproducibility
   requires running `pip-compile pyproject.toml` locally
+- `allowInsecureAuth: true` may be set by `openclaw doctor` in certain environments —
+  check `openclaw.json` after first run and remove if present
 
 ---
 

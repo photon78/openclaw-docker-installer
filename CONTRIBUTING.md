@@ -32,9 +32,9 @@ Explain the use case, not just the feature.
 2. Create a branch: `feature/your-thing` or `fix/your-bug`
 3. Write tests for non-UI code (target: 80%+ coverage)
 4. Run checks before pushing (see below)
-5. Open a PR against the **active feature branch** (currently `feature/windows-compat`) — not directly against `main`
+5. Open a PR against **`main`**
 
-> **Why?** `main` is always releasable. New work lands in a feature branch first, gets reviewed there, then merges to `main` as a unit.
+> **Why?** `main` is always releasable. PRs go through CI before merge. Feature branches are used by maintainers for large batches of changes — not a requirement for contributors.
 
 ---
 
@@ -90,7 +90,7 @@ bash run_tests.sh
 | `docs/` | Documentation only |
 | `refactor/` | Restructuring without new behaviour |
 
-Merge directly into `main`. PRs require passing CI.
+PRs target `main` directly. Maintainers may use feature branches for large batches of work. Merge requires passing CI.
 
 ---
 

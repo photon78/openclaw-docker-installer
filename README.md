@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.1.0--alpha-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -132,7 +132,7 @@ This restores Mistral plugin config, rate-limiting, and plugin version pins.
 docker compose -f ~/.openclaw/docker-compose.yml up -d
 
 # Open the Control UI
-http://127.0.0.1:18789
+http://127.0.0.1:18789   # or https:// if TLS is configured
 
 # Check logs
 docker compose -f ~/.openclaw/docker-compose.yml logs -f

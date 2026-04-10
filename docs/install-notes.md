@@ -73,8 +73,9 @@ Enter at least one LLM API key:
 
 LLM tiers are assigned automatically:
 - Anthropic only → all 4 tiers use Anthropic models
+  ⚠️ **Note:** Claude Opus and Sonnet are expensive. Heartbeats, crons, and compaction use the budget tier — without Mistral, these also run on Anthropic models.
 - Mistral only → all 4 tiers use Mistral models
-- Both → Budget/Media = Mistral, Standard/Power = Anthropic
+- Both → Budget/Media = Mistral, Standard/Power = Anthropic (recommended)
 
 Optional: Telegram Bot Token. Skip to configure later.
 
@@ -137,8 +138,7 @@ Open Telegram → your bot → send any message.
 
 | File | Why |
 |------|-----|
-| `exec-approvals.json` | Controls what the agent can execute. Wrong changes = security hole or broken agent. |
-| `exec-approvals.json` → `autoAllowSkills` | Must stay `false`. Setting to `true` silently approves all skill execs. |
+| `exec-approvals.json` | Controls what the agent can execute. Wrong changes = security hole or broken agent. Must stay with `autoAllowSkills: false` — setting it to `true` silently approves all skill execs. |
 | `openclaw.json` → `gateway.auth.token` | This is your master access token. Keep it secret. |
 | `workspace/SOUL.md` → Red Lines section | Hard limits for the agent. Don't remove without understanding consequences. |
 | `docker-compose.yml` → image tag | Don't change manually — use `./run.sh update` when available. |
@@ -200,4 +200,18 @@ git pull
 ./run.sh install
 ```
 
+> ⚠️ **Warning:** `./run.sh clean --yes` removes **all** generated files including `~/.openclaw/workspace/`. Your agent's memories, tasks, and customizations will be deleted. Back up `~/.openclaw/workspace/` first if needed.
+
 Or (once implemented): `./run.sh update` — pulls new image without full reinstall.
+
+---
+
+## Optional: Local HTTPS (TLS)
+
+OpenClaw runs on HTTP by default (`http://127.0.0.1:18789`). For local HTTPS:
+
+1. Install [mkcert](https://github.com/FiloSottile/mkcert)
+2. Generate a local certificate: `mkcert localhost 127.0.0.1`
+3. Configure TLS in `openclaw.json` under `gateway.tls` (see OpenClaw docs)
+
+After TLS setup, the Control UI URL becomes `https://localhost:18789`.
