@@ -17,7 +17,8 @@ try:
     from rich.panel import Panel
     from rich.text import Text
 except ImportError:
-    import sys, os
+    import sys
+    import os
     _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     _venv_sh  = os.path.join(_root, "run.sh")
     _venv_bat = os.path.join(_root, "run.bat")
