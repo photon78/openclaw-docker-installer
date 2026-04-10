@@ -134,8 +134,12 @@ class TestExecApprovalsGen:
         state.home_dir = fake_home
         state.openclaw_dir = fake_home / ".openclaw"
         content = json.dumps(exec_approvals_gen.generate(state))
-        assert "/opt/octest/.openclaw" in content
-        assert "/home/hummer" not in content
+        # Normalize: on Windows Path uses backslashes, JSON-dumps escapes them
+        # Accept both forward-slash (Linux/macOS) and escaped backslash (Windows)
+        openclaw_path_fwd = "/opt/octest/.openclaw"
+        openclaw_path_win = "\\\\".join(["\\\\opt", "octest", ".openclaw"])
+        assert openclaw_path_fwd in content or openclaw_path_win in content
+        assert "hummer" not in content
 
     def test_main_agent_has_allowlist(self, state: WizardState) -> None:
         config = exec_approvals_gen.generate(state)
