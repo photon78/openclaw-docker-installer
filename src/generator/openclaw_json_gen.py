@@ -101,10 +101,8 @@ def generate(state: WizardState) -> dict:
         "cron": {
             "enabled": True,
         },
-        # Compaction: use budget model to avoid burning expensive tokens
-        "compaction": {
-            "model": "${LLM_BUDGET}",
-        },
+        # NOTE: compaction.model is not a valid openclaw.json key (as of 2026.4.9).
+        # If/when OpenClaw adds a compaction config surface, add it here.
     }
 
     # Channel defaults: security-hardened baseline for all channels
