@@ -80,8 +80,8 @@ def generate(state: WizardState) -> dict:
         },
         "plugins": {
             # Explicit allow-list: only these plugins are loaded.
-            # Without this, openclaw update may reset plugin config silently.
-            "allow": ["mistral", "anthropic", "telegram"],
+            # Channel plugin appended dynamically below based on wizard selection.
+            "allow": ["mistral", "anthropic"],
             "entries": {
                 # Mistral runs natively via plugin — NO custom models.providers block needed.
                 # Adding a custom provider block causes 404 (OpenAI-compat fallback).
@@ -101,38 +101,81 @@ def generate(state: WizardState) -> dict:
         "cron": {
             "enabled": True,
         },
+        # Compaction: use budget model to avoid burning expensive tokens
+        "compaction": {
+            "model": "${LLM_BUDGET}",
+        },
     }
 
-    # Channel config
+    # Channel defaults: security-hardened baseline for all channels
+    channels: dict = {
+        "defaults": {
+            # Groups: allowlist-only, no open group access
+            "groupPolicy": "allowlist",
+            # Context: only inject context from allowlisted senders
+            "contextVisibility": "allowlist",
+            # Heartbeat: silent on healthy, alert on issues
+            "heartbeat": {
+                "showOk": False,
+                "showAlerts": True,
+                "useIndicator": True,
+            },
+        }
+    }
+
     if state.channel == "telegram" and state.telegram_bot_token:
         channel_cfg: dict = {
             "enabled": True,
             "dmPolicy": "allowlist" if state.channel_allow_from else "pairing",
+            # Prevent config modifications via Telegram (e.g. /config set, group ID migrations)
+            "configWrites": False,
+            # Groups: disabled by default — user can open specific groups later
+            "groupPolicy": "disabled",
+            # Reactions: only notify on bot's own messages
+            "reactionNotifications": "own",
         }
         if state.channel_allow_from:
             channel_cfg["allowFrom"] = [int(uid) if uid.lstrip("-").isdigit()
                                          else uid
                                          for uid in state.channel_allow_from]
-        config["channels"] = {"telegram": channel_cfg}
+        channels["telegram"] = channel_cfg
 
     elif state.channel == "discord" and state.discord_bot_token:
         discord_cfg: dict = {
             "enabled": True,
             "dmPolicy": "allowlist" if state.channel_allow_from else "pairing",
+            # Security: ignore bot messages, restrict dangerous actions
+            "allowBots": False,
+            "actions": {
+                "reactions": True,
+                "messages": True,
+                "threads": True,
+                "memberInfo": True,
+                # Restricted by default — user enables manually if needed
+                "moderation": False,
+                "roles": False,
+            },
+            # Groups: disabled by default
+            "groupPolicy": "disabled",
         }
         if state.channel_allow_from:
             discord_cfg["allowFrom"] = [int(uid) if uid.lstrip("-").isdigit()
                                          else uid
                                          for uid in state.channel_allow_from]
-        config["channels"] = {"discord": discord_cfg}
+        channels["discord"] = discord_cfg
 
     elif state.channel == "signal" and state.signal_number:
-        config["channels"] = {
-            "signal": {
-                "enabled": True,
-                "dmPolicy": "pairing",
-            }
+        channels["signal"] = {
+            "enabled": True,
+            "dmPolicy": "pairing",
         }
+
+    config["channels"] = channels
+
+    # plugins.allow: dynamic based on selected channel
+    channel_plugin = {"telegram": "telegram", "discord": "discord", "signal": "signal"}
+    if state.channel in channel_plugin:
+        config["plugins"]["allow"].append(channel_plugin[state.channel])  # type: ignore[union-attr]
 
     return config
 
