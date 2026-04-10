@@ -30,14 +30,14 @@ REQUIREMENTS = [
         "https://docs.docker.com/compose/install/",
     ),
     (
-        "API Key (Anthropic or Mistral)",
-        "Powers your agent. Get one before starting.",
-        "https://console.anthropic.com/  |  https://console.mistral.ai/",
+        "LLM API Key",
+        "Powers your agent. Any supported provider works.",
+        "Anthropic, Mistral, OpenAI, Google, xAI, DeepSeek …",
     ),
     (
-        "Telegram Bot Token (optional)",
-        "To chat with your agent via Telegram.",
-        "https://t.me/BotFather",
+        "Messaging channel (optional)",
+        "To chat with your agent. Telegram recommended.",
+        "https://t.me/BotFather  |  Discord  |  Signal",
     ),
 ]
 
