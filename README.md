@@ -34,6 +34,17 @@ No root access. No dangerous shell tools. A restrictive allowlist from day one. 
 
 Everything runs in Docker. Works on Linux, macOS, and Windows.
 
+**What you get out of the box:**
+
+Without this installer, a typical OpenClaw setup takes hours:
+reading docs, writing config files, figuring out what SOUL.md is supposed to
+contain, realizing your agent can `rm -rf` things, starting over.
+
+With this installer, you run one wizard. 10 minutes later you have:
+a running agent that introduces itself, a complete workspace with all required
+files pre-built, memory search configured, and a security layer you don't have
+to think about. The hard parts are already done.
+
 ---
 
 ## Features
