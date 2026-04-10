@@ -2,7 +2,7 @@
 workspace_bootstrap_gen.py — Create workspace directory with template files.
 
 Generates SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md, MEMORY.md, USER.md,
-BOOTSTRAP.md, and scripts/check_tasks.py.
+BOOTSTRAP.md, TOOLS.md, and scripts/check_tasks.py.
 
 CRITICAL: All files are real copies — NO symlinks.
 OpenClaw does not follow symlinks during Project Context Injection.
@@ -221,6 +221,48 @@ _Good luck out there._
 """
 
 
+def _tools_md(state: WizardState) -> str:
+    skills_dir = state.workspace_dir / "skills"
+    scripts_dir = state.workspace_dir / "scripts"
+    return f"""\
+# TOOLS.md — {state.agent_name}
+
+<!-- INSTALLER NOTE: Document the tools, scripts, and skills available to this agent.
+ Update this file as you add new skills or workflows. -->
+
+## Skills
+
+| Skill | Command | Purpose |
+|-------|---------|--------|
+| **web-search** | `python3 {skills_dir}/web-search/search.py "<query>"` | DuckDuckGo search |
+| **docs-summarize** | `python3 {skills_dir}/docs-summarize/summarize.py <url>` | Summarize docs/URLs |
+| **mistral-translate** | `python3 {skills_dir}/mistral-translate/translate.py` | Translations (Mistral) |
+| **mistral-ocr** | `python3 {skills_dir}/mistral-ocr/ocr.py` | Image → text (Mistral) |
+| **mistral-transcribe** | `python3 {skills_dir}/mistral-transcribe/transcribe.py` | Audio → text (Mistral) |
+
+> ⚠️ Mistral skills require MISTRAL_API_KEY in .env.
+> Mistral excels at media tasks (OCR, translation, transcription) — fast, accurate,
+> and cost-efficient. Always prefer these skills for media processing.
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `python3 {scripts_dir}/check_tasks.py` | List open tasks |
+| `python3 {scripts_dir}/memory_digest.py` | Daily memory digest |
+| `python3 {scripts_dir}/hourly_log.py` | Agent activity log |
+| `python3 {scripts_dir}/health_check.py` | Gateway health check |
+
+## Git
+
+<!-- INSTALLER NOTE: Add your repo remotes and SSH config here. -->
+
+## Deployment
+
+<!-- INSTALLER NOTE: Add your deployment targets and workflows here. -->
+"""
+
+
 def _check_tasks_py(state: WizardState) -> str:
     tasks_dir = state.workspace_dir / "tasks"
     return f"""\
@@ -293,6 +335,7 @@ def generate(state: WizardState) -> list[Path]:
         "MEMORY.md":                _memory_md(state),
         "USER.md":                  _user_md(state),
         "BOOTSTRAP.md":             _bootstrap_md(state),
+        "TOOLS.md":                 _tools_md(state),
         "scripts/check_tasks.py":   _check_tasks_py(state),
     }
 
