@@ -91,7 +91,6 @@ def generate(state: WizardState) -> dict:
                 # Adding a custom provider block causes 404 (OpenAI-compat fallback).
                 "mistral": {"enabled": True},
                 "anthropic": {"enabled": True},
-                "telegram-approval-buttons": {"enabled": True},
             },
         },
         "session": {

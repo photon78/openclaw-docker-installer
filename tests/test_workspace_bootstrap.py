@@ -173,13 +173,12 @@ class TestWorkspaceBootstrapSecurityFeatures:
         assert rate_limit["windowMs"] == 60000
         assert rate_limit["lockoutMs"] == 300000
 
-    def test_openclaw_json_has_approval_buttons_plugin(self, state: WizardState) -> None:
+    def test_openclaw_json_no_approval_buttons_plugin(self, state: WizardState) -> None:
         from generator import openclaw_json_gen
         config = openclaw_json_gen.generate(state)
-        # telegram-approval-buttons must be present and enabled
-        # ("spec" key is not supported by OpenClaw config schema)
-        plugin = config["plugins"]["entries"]["telegram-approval-buttons"]
-        assert plugin.get("enabled") is True
+        # telegram-approval-buttons is an optional plugin — not installed by default
+        entries = config["plugins"]["entries"]
+        assert "telegram-approval-buttons" not in entries
 
     def test_openclaw_json_mistral_plugin_enabled(self, state: WizardState) -> None:
         """Mistral must run via plugin — no custom models.providers block."""
