@@ -53,6 +53,7 @@ class TestEnvGen:
         assert "hummer" not in content
         assert "/home/" not in content  # no absolute paths in .env
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_file_permissions(self, state: WizardState) -> None:
         path = env_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
@@ -141,6 +142,7 @@ class TestExecApprovalsGen:
         main = config["agents"]["main"]
         assert len(main["allowlist"]) > 0
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_file_permissions(self, state: WizardState) -> None:
         path = exec_approvals_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"

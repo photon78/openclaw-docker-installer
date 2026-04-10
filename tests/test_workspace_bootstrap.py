@@ -64,7 +64,7 @@ class TestWorkspaceBootstrapGen:
 
     def test_agents_md_contains_no_email_rule(self, state: WizardState) -> None:
         workspace_bootstrap_gen.write(state)
-        content = (state.workspace_dir / "AGENTS.md").read_text()
+        content = (state.workspace_dir / "AGENTS.md").read_text(encoding="utf-8")
         assert "email" in content.lower() or "e-mail" in content.lower()
 
     def test_soul_md_contains_agent_name(self, state: WizardState) -> None:
@@ -93,6 +93,7 @@ class TestWorkspaceBootstrapGen:
         expected_tasks_dir = str(state.workspace_dir / "tasks")
         assert expected_tasks_dir in content
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_check_tasks_py_is_executable(self, state: WizardState) -> None:
         workspace_bootstrap_gen.write(state)
         check_tasks = state.workspace_dir / "scripts" / "check_tasks.py"
