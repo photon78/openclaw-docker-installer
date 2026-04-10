@@ -90,6 +90,16 @@ services:
       - SETUID
       - SETGID
 
+    # Resource limits — prevent container from starving the host
+    deploy:
+      resources:
+        limits:
+          memory: 2g       # hard cap: OOM-killed if exceeded
+          cpus: "2.0"      # max 2 CPU cores
+        reservations:
+          memory: 256m     # guaranteed minimum
+          cpus: "0.25"     # guaranteed minimum
+
   openclaw-cli:
     image: {image}
     container_name: openclaw-cli
