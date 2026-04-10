@@ -182,8 +182,11 @@ class TestCronGen:
         assert digest["delivery"]["mode"] == "none"
 
     def test_crons_in_openclaw_json(self, state: WizardState) -> None:
+        # cron.jobs is not injected into openclaw.json — OpenClaw does not
+        # support this key. Crons are managed via the OpenClaw API post-install.
         config = openclaw_json_gen.generate(state)
-        assert len(config["cron"]["jobs"]) == 2
+        assert config["cron"]["enabled"] is True
+        assert "jobs" not in config["cron"]
 
     def test_no_hardcoded_model_names_in_cron_prompts(self, state: WizardState) -> None:
         """Cron prompts must not contain hardcoded model names."""

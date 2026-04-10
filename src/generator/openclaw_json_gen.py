@@ -5,7 +5,6 @@ Uses ${LLM_*} env var references — no hardcoded model names.
 import json
 from pathlib import Path
 from wizard.state import WizardState
-from generator import cron_gen
 
 
 def _memory_search_config(state: WizardState) -> dict:
@@ -92,9 +91,7 @@ def generate(state: WizardState) -> dict:
                 # Adding a custom provider block causes 404 (OpenAI-compat fallback).
                 "mistral": {"enabled": True},
                 "anthropic": {"enabled": True},
-                "telegram-approval-buttons": {
-                    "spec": "telegram-approval-buttons@5.1.0",
-                },
+                "telegram-approval-buttons": {"enabled": True},
             },
         },
         "session": {
@@ -108,7 +105,6 @@ def generate(state: WizardState) -> dict:
         },
         "cron": {
             "enabled": True,
-            "jobs": cron_gen.generate(state),
         },
     }
 
