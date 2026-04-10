@@ -75,10 +75,16 @@ def run(state: WizardState) -> bool | str:
     console.print(info["guide"])
     console.print()
 
-    # Token input — required, loop until valid or back
+    # Token / credential input — required, loop until valid or back
+    _labels = {
+        "telegram": "Telegram bot token",
+        "discord": "Discord bot token",
+        "signal": "signal-cli phone number (e.g. +41791234567)",
+    }
+    _prompt = _labels.get(channel_choice, f"{info['label']} token")
     while True:
         token = questionary.password(
-            f"{info['label']} bot token: (required — type 'back' to go back)"
+            f"{_prompt}: (required — type 'back' to go back)"
         ).ask()
         if token is None:
             # Ctrl+C / Ctrl+D

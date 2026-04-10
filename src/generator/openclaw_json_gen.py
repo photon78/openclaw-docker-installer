@@ -126,7 +126,7 @@ def generate(state: WizardState) -> dict:
                                          for uid in state.channel_allow_from]
         config["channels"] = {"discord": discord_cfg}
 
-    elif state.channel == "signal":
+    elif state.channel == "signal" and state.signal_number:
         config["channels"] = {
             "signal": {
                 "enabled": True,
