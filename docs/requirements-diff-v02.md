@@ -38,7 +38,7 @@
 **MAIN will:** `approvals.exec.targets` mit Telegram-ID in `openclaw.json`  
 **Installer:** Nicht drin — User setzt manuell
 
-**Grund:** User-ID variiert, Installer kennt sie nicht zuverlässig (ausser via Telegram-Channel-Setup). Sicherheitsrisiko wenn falsch gesetzt. → Bleibt manuell.
+**Entscheidung (Photon, 2026-04-10):** Kein Approval-Buttons-Plugin. Stattdessen Pflicht-Regel in AGENTS.md: Jeder Approval-Request als vollständiges Paket (Befehl + Was + Warum + `/approve`-ID) — auf Telegram, WebUI und Discord identisch.
 
 ---
 
@@ -71,8 +71,8 @@ Priorität 2 (mittel):
 
 ---
 
-## Offene Fragen an Photon
+## Entschiedene Fragen (2026-04-10)
 
-1. `LLM_COMPLEX` → soll MAIN das auf `LLM_STANDARD` oder `LLM_POWER` mappen?
-2. Telegram Approval Targets → bleibt dauerhaft manuell oder v0.3.0?
-3. `maxSpawnDepth: 1` → ist das ein valider OpenClaw-Key? (nicht in Docs gefunden)
+1. **`LLM_COMPLEX`** → MAIN mappt auf `LLM_STANDARD`
+2. **Telegram Approval Targets** → kein Plugin, stattdessen AGENTS.md-Pflicht-Regel (vollständiges Paket)
+3. **`maxSpawnDepth: 1`** → valide in unserem Setup — in `openclaw.json` aufnehmen

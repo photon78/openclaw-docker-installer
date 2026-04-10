@@ -89,12 +89,15 @@ def _agents_md(state: WizardState) -> str:
 - Python instead of Bash for new scripts
 - Safety first
 
-## Before Every Approval Request
-Always explain:
-- **What** the command does
-- **Why** it is needed
+## Approval Requests — Always a Complete Package
+Every approval request must include ALL of the following in one message:
+1. **The exact command** (full, nothing hidden)
+2. **What it does** — one sentence
+3. **Why it is needed** — one sentence
+4. **Approve instruction** — `/approve <id> allow-once`
 
-Never request approval without context.
+Never send a bare Approve-ID without context. Never omit the command.
+Works the same on Telegram, WebUI, and Discord.
 
 ## Communication
 - **Before tool call:** What / Why / Approve-ID if needed
