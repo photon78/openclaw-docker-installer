@@ -83,9 +83,8 @@ def run(state: WizardState) -> bool | str:
     }
     _prompt = _labels.get(channel_choice, f"{info['label']} token")
     while True:
-        token = questionary.password(
-            f"{_prompt}: (required — type 'back' to go back)"
-        ).ask()
+        console.print(f"[bold cyan]› {_prompt}:[/bold cyan] [dim](required, 'back' to go back)[/dim]")
+        token = questionary.password("").ask()
         if token is None:
             # Ctrl+C / Ctrl+D
             return False
