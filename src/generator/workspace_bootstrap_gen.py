@@ -314,6 +314,54 @@ if __name__ == "__main__":
 """
 
 
+def _cron_setup_task_md(state: WizardState) -> str:  # noqa: ARG001
+    return """\
+# Task: Set up recommended cron jobs
+
+**Priority:** Normal
+**Created by:** installer
+
+## What to do
+
+Run these two commands once to activate automated memory digests and health checks.
+Crons must be set via CLI — they cannot be defined in openclaw.json.
+
+### 1. Daily Memory Digest
+
+Runs at 03:05 every night, triggers your memory digest routine:
+
+```bash
+openclaw cron add --name "Daily Memory Digest" \\
+  --cron "5 3 * * *" \\
+  --session main \\
+  --system-event "HEARTBEAT: generate daily memory digest"
+```
+
+### 2. Gateway Health Check
+
+Runs every 2 hours, triggers a gateway health check:
+
+```bash
+openclaw cron add --name "Gateway Health Check" \\
+  --cron "0 */2 * * *" \\
+  --session main \\
+  --system-event "HEARTBEAT: gateway health check"
+```
+
+## Verify
+
+```bash
+openclaw cron list
+```
+
+Both jobs should appear as active.
+
+## Docs
+
+https://docs.openclaw.ai/cron
+"""
+
+
 def generate(state: WizardState) -> list[Path]:
     """Create workspace directory structure and all template files.
 
@@ -337,6 +385,7 @@ def generate(state: WizardState) -> list[Path]:
         "BOOTSTRAP.md":             _bootstrap_md(state),
         "TOOLS.md":                 _tools_md(state),
         "scripts/check_tasks.py":   _check_tasks_py(state),
+        "tasks/cron-setup.md":          _cron_setup_task_md(state),
     }
 
     written: list[Path] = []
