@@ -35,9 +35,24 @@ app = typer.Typer(
 console = Console()
 
 
+BANNER = r"""
+
+  ██████╗ ██████╗ ███████╗███╗   ██╗ ██████╗██╗      █████╗ ██╗    ██╗
+ ██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║     ██╔══██╗██║    ██║
+ ██║   ██║██████╔╝█████╗  ██╔██╗ ██║██║     ██║     ███████║██║ █╗ ██║
+ ██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║██║     ██║     ██╔══██║██║███╗██║
+ ╚██████╔╝██║     ███████╗██║ ╚████║╚██████╗███████╗██║  ██║╚███╔███╔╝
+  ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+                   [ in a box — installer ]
+"""
+
+
 @app.command()
 def install() -> None:
     """Run the interactive setup wizard."""
+    console.print(BANNER, style="bold cyan")
+
     # Setup logging first — before wizard so all output is captured
     log_file = setup_logging()
     console.print(f"[dim]Install log: {log_file}[/dim]\n")
