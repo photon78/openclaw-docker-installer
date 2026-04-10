@@ -11,11 +11,24 @@ Commands:
 """
 
 import logging
-import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-
+try:
+    import typer
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
+except ImportError:
+    import sys, os
+    _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _venv_sh  = os.path.join(_root, "run.sh")
+    _venv_bat = os.path.join(_root, "run.bat")
+    print("\nError: dependencies not installed.")
+    print("Use the launcher instead of calling main.py directly:\n")
+    if sys.platform == "win32":
+        print(f"  {_venv_bat} install")
+    else:
+        print(f"  chmod +x {_venv_sh} && {_venv_sh} install")
+    print()
+    sys.exit(1)
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
