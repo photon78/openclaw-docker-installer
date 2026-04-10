@@ -146,21 +146,70 @@ def stop() -> None:
 
 
 @app.command()
-def uninstall(
-    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+def clean(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ) -> None:
-    """Remove the OpenClaw installation."""
-    if not confirm:
+    """Remove generated OpenClaw files for a fresh install (keeps Docker + repo)."""
+    import shutil
+    import subprocess as sp
+    from pathlib import Path
+
+    openclaw_dir = Path.home() / ".openclaw"
+
+    generated = [
+        openclaw_dir / "docker-compose.yml",
+        openclaw_dir / ".env",
+        openclaw_dir / "openclaw.json",
+        openclaw_dir / "exec-approvals.json",
+        openclaw_dir / "workspace",
+        openclaw_dir / "scripts",
+        openclaw_dir / "logs",
+    ]
+
+    existing = [p for p in generated if p.exists()]
+    if not existing:
+        console.print("[dim]Nothing to clean — no generated files found.[/dim]")
+        raise typer.Exit()
+
+    console.print("[bold]Files to remove:[/bold]")
+    for p in existing:
+        console.print(f"  [red]-[/red] {p}")
+
+    if not yes:
         confirmed = typer.confirm(
-            "This will remove the OpenClaw installation. Are you sure?",
+            "\nRemove all generated files? (Container will be stopped first)",
             default=False,
         )
         if not confirmed:
             console.print("[dim]Aborted.[/dim]")
             raise typer.Exit()
 
-    console.print("[bold red]Uninstall[/bold red]")
-    console.print("[yellow]Not yet implemented.[/yellow]")
+    # Stop container if running
+    compose_file = openclaw_dir / "docker-compose.yml"
+    if compose_file.exists():
+        console.print("[dim]Stopping container...[/dim]")
+        sp.run(
+            ["docker", "compose", "-f", str(compose_file), "down"],
+            capture_output=True,
+        )
+
+    # Remove files
+    for p in existing:
+        if p.is_dir():
+            shutil.rmtree(p)
+        else:
+            p.unlink()
+        console.print(f"  [green]✓[/green] Removed {p}")
+
+    console.print("\n[green]Clean complete.[/green] Run [cyan]python3 src/main.py install[/cyan] to start fresh.")
+
+
+@app.command()
+def uninstall(
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+) -> None:
+    """Remove the OpenClaw installation (alias for clean)."""
+    clean(yes=confirm)
 
 
 def _run_preflight() -> bool:
