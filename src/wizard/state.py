@@ -18,7 +18,9 @@ class WizardState:
     mistral_api_key: str = ""       # optional, but recommended for skills
     primary_provider_id: str = ""   # e.g. "openai", "google", "xai"
     primary_api_key: str = ""       # key for non-anthropic/non-mistral providers
-    telegram_bot_token: str = ""    # optional, set per channel
+    telegram_bot_token: str = ""    # set when channel == telegram
+    discord_bot_token: str = ""     # set when channel == discord
+    signal_number: str = ""          # set when channel == signal
 
     # Channel
     channel: str = ""              # "telegram" | "discord" | "signal"

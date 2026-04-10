@@ -28,6 +28,10 @@ def generate(state: WizardState) -> str:
         lines.append(f"{env_var}={state.primary_api_key}")
     if state.telegram_bot_token:
         lines.append(f"TELEGRAM_BOT_TOKEN={state.telegram_bot_token}")
+    if state.discord_bot_token:
+        lines.append(f"DISCORD_BOT_TOKEN={state.discord_bot_token}")
+    if state.signal_number:
+        lines.append(f"SIGNAL_NUMBER={state.signal_number}")
 
     lines += [
         "",

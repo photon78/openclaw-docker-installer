@@ -115,13 +115,16 @@ def generate(state: WizardState) -> dict:
                                          for uid in state.channel_allow_from]
         config["channels"] = {"telegram": channel_cfg}
 
-    elif state.channel == "discord":
-        config["channels"] = {
-            "discord": {
-                "enabled": True,
-                "dmPolicy": "pairing",
-            }
+    elif state.channel == "discord" and state.discord_bot_token:
+        discord_cfg: dict = {
+            "enabled": True,
+            "dmPolicy": "allowlist" if state.channel_allow_from else "pairing",
         }
+        if state.channel_allow_from:
+            discord_cfg["allowFrom"] = [int(uid) if uid.lstrip("-").isdigit()
+                                         else uid
+                                         for uid in state.channel_allow_from]
+        config["channels"] = {"discord": discord_cfg}
 
     elif state.channel == "signal":
         config["channels"] = {

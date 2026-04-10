@@ -89,24 +89,39 @@ def run(state: WizardState) -> bool | str:
             break
         console.print("[yellow]Token cannot be empty.[/yellow]")
 
-    state.telegram_bot_token = token.strip()
+    # Save token to the correct field
+    if channel_choice == "telegram":
+        state.telegram_bot_token = token.strip()
+    elif channel_choice == "discord":
+        state.discord_bot_token = token.strip()
+    elif channel_choice == "signal":
+        state.signal_number = token.strip()
 
-    # allowFrom — who can talk to the agent
-    console.print()
-    console.print("[bold]Who should be able to reach the agent?[/bold]")
-    console.print(
-        "[dim]Enter your Telegram user ID (find it via @userinfobot).\n"
-        "Leave empty to skip — you can configure this in openclaw.json later.[/dim]\n"
-    )
+    # allowFrom — who can talk to the agent (Telegram + Discord only)
+    if channel_choice in ("telegram", "discord"):
+        console.print()
+        console.print("[bold]Who should be able to reach the agent?[/bold]")
+        if channel_choice == "telegram":
+            console.print(
+                "[dim]Enter your Telegram user ID (find it via @userinfobot).\n"
+                "Leave empty to skip — you can configure this in openclaw.json later.[/dim]\n"
+            )
+            id_hint = "Your Telegram user ID (e.g. 123456789):"
+        else:
+            console.print(
+                "[dim]Enter your Discord user ID (right-click your name → Copy User ID).\n"
+                "Leave empty to skip — you can configure this in openclaw.json later.[/dim]\n"
+            )
+            id_hint = "Your Discord user ID (e.g. 123456789012345678):"
 
-    allow_from = questionary.text(
-        "Your user ID (e.g. 123456789):",
-        validate=lambda v: True if not v or v.strip().lstrip("-").isdigit()
-        else "Must be a numeric ID or empty",
-    ).ask()
+        allow_from = questionary.text(
+            id_hint,
+            validate=lambda v: True if not v or v.strip().lstrip("-").isdigit()
+            else "Must be a numeric ID or empty",
+        ).ask()
 
-    if allow_from and allow_from.strip():
-        state.channel_allow_from = [allow_from.strip()]
+        if allow_from and allow_from.strip():
+            state.channel_allow_from = [allow_from.strip()]
 
     console.print()
     console.print(f"[green]✓[/green] Channel: {info['label']} configured.\n")
