@@ -391,6 +391,11 @@ def generate(state: WizardState) -> list[Path]:
     (workspace / "tasks").mkdir(exist_ok=True)
     (workspace / "scripts").mkdir(exist_ok=True)
 
+    # Wipe memory database — must never carry over between installs
+    for db_file in (workspace / "memory").glob("*.sqlite"):
+        db_file.unlink()
+        print(f"  [clean] removed memory db: {db_file.name}")
+
     files_to_write: dict[str, str] = {
         "SOUL.md":                  _soul_md(state),
         "AGENTS.md":                _agents_md(state),
