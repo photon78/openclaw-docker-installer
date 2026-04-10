@@ -77,7 +77,7 @@ Add the new agent to `agents.list`. Use the existing MAIN entry as reference.
         "id": "coding_agent",
         "workspace": "/home/node/.openclaw/workspace-coding",
         "model": {
-          "primary": "${LLM_COMPLEX}",
+          "primary": "${LLM_STANDARD}",
           "fallbacks": ["${LLM_BUDGET}"]
         },
         "subagents": {
@@ -106,8 +106,8 @@ Add the new agent to `agents.list`. Use the existing MAIN entry as reference.
 }
 ```
 
-**Model values:** Use the actual model strings from `.env` (OpenClaw does not
-interpolate `${VAR}` from `.env` into `openclaw.json` — write the values directly).
+**Model values:** Use `${LLM_BUDGET}` etc. — OpenClaw resolves `${VAR}` references
+from `.env` at runtime. Change models by editing `.env` only, no `openclaw.json` edit needed.
 
 ---
 
@@ -235,7 +235,7 @@ sub-agents that need to know who else is running.
 - [ ] `scripts/check_tasks.py` has correct `TASKS_DIR` path
 - [ ] Agent registered in `openclaw.json` → `agents.list`
 - [ ] `allowAgents` configured for all relevant agents (ask HUMAN first)
-- [ ] `maxSpawnDepth: 1` in `agents.defaults.subagents`
+- [ ] `maxSpawnDepth: 1` in `agents.defaults.subagents` *(check your OpenClaw version — key may vary)*
 - [ ] exec-approvals section added with `autoAllowSkills: false`
 - [ ] Allowlist complete (every script the agent needs, explicitly listed)
 - [ ] Telegram bot created and token added to `.env`
