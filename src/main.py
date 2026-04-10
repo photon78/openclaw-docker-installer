@@ -36,7 +36,6 @@ from checks.python_check import check_python
 from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
 from installer.docker_start import run as docker_start
-from installer.workspace_bootstrap import run as bootstrap_workspace
 from installer.logging_setup import setup as setup_logging, get_log_file
 from wizard.steps import completion
 
@@ -104,11 +103,6 @@ def install() -> None:
         raise typer.Exit(code=1)
 
     log.info("Config generated — image=%s", result.image)
-
-    # Bootstrap workspace templates
-    console.print("\n[bold]Bootstrapping workspace...[/bold]")
-    bootstrap_workspace(state)
-    log.info("Workspace bootstrapped at %s", state.workspace_dir)
 
     # Start gateway
     start = docker_start(state)

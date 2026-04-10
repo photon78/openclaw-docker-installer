@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, cron_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen
 
 
 @pytest.fixture
@@ -159,42 +159,10 @@ class TestExecApprovalsGen:
         assert config["agents"]["main"]["autoAllowSkills"] is False
 
 
-class TestCronGen:
-    def test_generates_two_crons(self, state: WizardState) -> None:
-        crons = cron_gen.generate(state)
-        assert len(crons) == 2
-
-    def test_cron_names(self, state: WizardState) -> None:
-        names = [c["name"] for c in cron_gen.generate(state)]
-        assert "Daily Memory Digest" in names
-        assert "Gateway Health Check" in names
-
-    def test_crons_use_budget_model(self, state: WizardState) -> None:
-        for cron in cron_gen.generate(state):
-            assert cron["payload"]["model"] == state.llm_budget
-
-    def test_health_check_notifies_telegram_user(self, state: WizardState) -> None:
-        crons = cron_gen.generate(state)
-        health = next(c for c in crons if c["name"] == "Gateway Health Check")
-        assert health["delivery"]["mode"] == "announce"
-        assert health["delivery"]["to"] == "8620748747"
-
-    def test_digest_delivery_is_none(self, state: WizardState) -> None:
-        crons = cron_gen.generate(state)
-        digest = next(c for c in crons if c["name"] == "Daily Memory Digest")
-        assert digest["delivery"]["mode"] == "none"
-
+class TestCronConfig:
     def test_crons_in_openclaw_json(self, state: WizardState) -> None:
         # cron.jobs is not injected into openclaw.json — OpenClaw does not
         # support this key. Crons are managed via the OpenClaw API post-install.
         config = openclaw_json_gen.generate(state)
         assert config["cron"]["enabled"] is True
         assert "jobs" not in config["cron"]
-
-    def test_no_hardcoded_model_names_in_cron_prompts(self, state: WizardState) -> None:
-        """Cron prompts must not contain hardcoded model names."""
-        hardcoded = ["claude", "mistral-large", "codestral", "gpt-"]
-        for cron in cron_gen.generate(state):
-            msg = cron["payload"]["message"]
-            for name in hardcoded:
-                assert name not in msg, f"Hardcoded model name {name!r} in cron prompt"

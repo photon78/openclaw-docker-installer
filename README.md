@@ -107,6 +107,24 @@ These aren't optional. They're the point.
 
 ---
 
+## After updates
+
+```bash
+openclaw update
+```
+
+> ⚠️ `openclaw update` may silently reset `plugins.allow` and `gateway.auth` in `openclaw.json`.
+> Always run the restore script afterwards:
+
+```bash
+python3 ~/.openclaw/scripts/restore_config.py
+docker compose -f ~/.openclaw/docker-compose.yml restart
+```
+
+This restores Mistral plugin config, rate-limiting, and plugin version pins.
+
+---
+
 ## After installation
 
 ```bash

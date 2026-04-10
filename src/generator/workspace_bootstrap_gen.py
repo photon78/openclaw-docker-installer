@@ -9,8 +9,12 @@ OpenClaw does not follow symlinks during Project Context Injection.
 Symlinked files are reported as [MISSING] and never injected into the agent context.
 The only exception: skills/ (directory symlink) is acceptable.
 """
+import shutil
 from pathlib import Path
 from wizard.state import WizardState
+
+# Bundled skills live next to the installer package
+_SKILLS_SRC = Path(__file__).parent.parent / "installer" / "templates" / "skills"
 
 _PERSONA_DESCRIPTIONS = {
     "direct":   "Direct and technical — no dumbing down. Gets to the point.",
@@ -406,6 +410,17 @@ def generate(state: WizardState) -> list[Path]:
 
     # scripts/check_tasks.py: make executable
     (workspace / "scripts" / "check_tasks.py").chmod(0o755)
+
+    # Copy bundled skills (idempotent — skip if already present)
+    if _SKILLS_SRC.exists():
+        skills_dst = workspace / "skills"
+        skills_dst.mkdir(exist_ok=True)
+        for skill_dir in sorted(_SKILLS_SRC.iterdir()):
+            if skill_dir.is_dir():
+                target = skills_dst / skill_dir.name
+                if not target.exists():
+                    shutil.copytree(skill_dir, target)
+                    written.append(target)
 
     return written
 

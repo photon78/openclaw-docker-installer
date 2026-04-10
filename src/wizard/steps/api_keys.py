@@ -83,6 +83,17 @@ PROVIDERS: list[dict[str, Any]] = [
         "default_model": "",
     },
     {
+        "id": "deepseek",
+        "label": "DeepSeek",
+        "key_hint": "→  https://platform.deepseek.com/",
+        "key_prefix": "sk-",
+        "models": [
+            ("deepseek/deepseek-chat",    "DeepSeek V3 — recommended"),
+            ("deepseek/deepseek-reasoner","DeepSeek R1 — advanced reasoning"),
+        ],
+        "default_model": "deepseek/deepseek-chat",
+    },
+    {
         "id": "ollama",
         "label": "Ollama (local models, no API key needed)",
         "key_hint": None,
