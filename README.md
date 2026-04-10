@@ -2,7 +2,7 @@
 
 > Set up a secure, production-ready [OpenClaw](https://openclaw.ai) agent in minutes — not hours.
 
-[![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg)](https://github.com/photon78/openclaw-docker-installer/actions)
+[![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.2.0-blue)](CHANGELOG.md)
 
