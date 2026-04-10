@@ -95,7 +95,24 @@ def run(state: WizardState) -> StartResult:
 
 
 def _fix_permissions(openclaw_dir: Path) -> None:
-    """Ensure ~/.openclaw is owned by uid 1000 (node user inside container)."""
+    """Ensure ~/.openclaw is owned by uid 1000 (node user inside container).
+
+    The OpenClaw Docker image runs as the 'node' user (uid 1000, gid 1000).
+    Mounted volumes must be owned by that uid so the container can write to them.
+
+    Side effect: if the host user has a different uid, they may lose direct
+    write access to openclaw_dir. This is intentional — the installer and
+    generated scripts are the only writers.
+    """
+    import os
+    host_uid = os.getuid()
+    if host_uid != 1000:
+        log.warning(
+            "Host user uid is %d (not 1000). Files in %s will be owned by uid 1000 "
+            "(Docker container user). Use sudo or re-run as uid 1000 if direct access needed.",
+            host_uid, openclaw_dir,
+        )
+
     result = subprocess.run(
         ["docker", "run", "--rm",
          "-v", f"{openclaw_dir}:/target",
@@ -104,7 +121,7 @@ def _fix_permissions(openclaw_dir: Path) -> None:
         text=True,
     )
     if result.returncode == 0:
-        log.info("Permissions fixed: %s owned by uid 1000", openclaw_dir)
+        log.info("Permissions fixed: %s owned by uid 1000 (container user)", openclaw_dir)
     else:
         log.warning("chown failed (non-fatal): %s", result.stderr.strip())
 
