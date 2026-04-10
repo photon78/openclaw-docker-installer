@@ -22,35 +22,33 @@ def show(state: WizardState, image: str) -> None:
 
     # Start instructions
     console.print(Panel(
-        f"""[bold]1. Start OpenClaw[/bold]
+        f"""[bold green]✓ Gateway is running[/bold green]
 
-  [cyan]docker compose -f {compose_file} up -d[/cyan]
-
-[bold]2. Check status[/bold]
-
-  [cyan]docker compose -f {compose_file} ps[/cyan]
-  [cyan]docker compose -f {compose_file} logs -f[/cyan]
-
-[bold]3. Open Control UI[/bold]
+[bold]1. Open Control UI[/bold]
 
   [link={dashboard_url}]{dashboard_url}[/link]
   → Paste your gateway token (from [cyan]{state.openclaw_dir}/.env[/cyan])
 
-[bold]4. Add to autostart (optional)[/bold]
+[bold]2. Check status / logs[/bold]
 
-  systemd:
+  [cyan]docker compose -f {compose_file} ps[/cyan]
+  [cyan]docker compose -f {compose_file} logs -f[/cyan]
+
+[bold]3. Add to autostart (optional)[/bold]
+
+  Docker restarts the container automatically ([cyan]restart: unless-stopped[/cyan]).
+  Make sure Docker itself starts on boot:
   [cyan]sudo systemctl enable docker[/cyan]
-  Then add a systemd unit or use [cyan]restart: unless-stopped[/cyan] (already set).
 
-[bold]5. Restore exec-approvals (if needed)[/bold]
+[bold]4. Restore exec-approvals (if needed)[/bold]
 
   If the gateway ever overwrites exec-approvals.json via doctor mode:
   [cyan]docker compose exec openclaw-gateway python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
 
-[bold]6. Update later[/bold]
+[bold]5. Restart / stop[/bold]
 
-  [cyan]openclaw-installer update[/cyan]
-  Pulls the latest image and restarts the container.
+  [cyan]docker compose -f {compose_file} restart[/cyan]
+  [cyan]docker compose -f {compose_file} down[/cyan]
 """,
         title="[bold green]Next steps[/bold green]",
         border_style="green",
