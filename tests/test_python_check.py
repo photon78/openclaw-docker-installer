@@ -2,7 +2,7 @@
 import sys
 from unittest.mock import MagicMock, patch
 
-from src.checks.python_check import PythonStatus, check_python, MIN_PYTHON_VERSION
+from src.checks.python_check import check_python
 
 
 class TestPythonCurrentInterpreter:

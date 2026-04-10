@@ -182,7 +182,7 @@ Update with timezone, communication preferences, technical background, etc. -->
 
 
 def _bootstrap_md(state: WizardState) -> str:
-    return f"""\
+    return """\
 # BOOTSTRAP.md — Hello, World
 
 _You just came online. Time to figure out who you are._

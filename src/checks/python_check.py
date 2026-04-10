@@ -76,7 +76,7 @@ def check_python() -> PythonStatus:
                     f"found {major}.{minor}"
                 ),
             )
-        except Exception as e:
+        except Exception:
             continue
 
     return PythonStatus(

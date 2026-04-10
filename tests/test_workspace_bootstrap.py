@@ -137,7 +137,6 @@ class TestWorkspaceBootstrapSecurityFeatures:
 
     def test_exec_approvals_no_shell_tools_in_defaults(self, state: WizardState) -> None:
         """Shell tools must not appear in the defaults allowlist."""
-        import json
         from generator import exec_approvals_gen
         config = exec_approvals_gen.generate(state)
         defaults_patterns = [e["pattern"] for e in config["defaults"]["allowlist"]]
@@ -180,3 +179,23 @@ class TestWorkspaceBootstrapSecurityFeatures:
         spec = config["plugins"]["entries"]["telegram-approval-buttons"]["spec"]
         assert "@" in spec, "Plugin spec must include a version pin"
         assert "telegram-approval-buttons@" in spec
+
+    def test_openclaw_json_mistral_plugin_enabled(self, state: WizardState) -> None:
+        """Mistral must run via plugin — no custom models.providers block."""
+        from generator import openclaw_json_gen
+        import json
+        config = openclaw_json_gen.generate(state)
+        # Plugin entry must exist and be enabled
+        assert config["plugins"]["entries"]["mistral"]["enabled"] is True
+        # No custom provider block (causes 404)
+        config_str = json.dumps(config)
+        assert "models.providers" not in config_str
+        assert "auth.profiles" not in config_str
+
+    def test_openclaw_json_plugins_allow_list(self, state: WizardState) -> None:
+        """plugins.allow must be set to prevent silent resets on openclaw update."""
+        from generator import openclaw_json_gen
+        config = openclaw_json_gen.generate(state)
+        allow = config["plugins"]["allow"]
+        assert "mistral" in allow
+        assert "anthropic" in allow
