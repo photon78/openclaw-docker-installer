@@ -30,7 +30,7 @@
 **MAIN will:** 6 Tiers (BUDGET, STANDARD, COMPLEX, CODE, MEDIA, POWER)  
 **Installer hat:** 4 Tiers (BUDGET, STANDARD, POWER, MEDIA)
 
-**Entscheidung (Photon, 2026-04-10):** LLM_COMPLEX und LLM_CODE fallen weg — zu granular, verwirrt User beim Setup. COMPLEX ≈ POWER, CODE ≈ BUDGET mit Codestral. Kann im `.env` nachträglich manuell ergänzt werden.
+**Entscheidung (maintainer, 2026-04-10):** LLM_COMPLEX und LLM_CODE fallen weg — zu granular, verwirrt User beim Setup. COMPLEX ≈ POWER, CODE ≈ BUDGET mit Codestral. Kann im `.env` nachträglich manuell ergänzt werden.
 
 **Offen:** MAIN verwendet LLM_COMPLEX in Cron-Prompts und Agent-Configs. → MAIN muss das auf STANDARD/POWER umschreiben.
 
@@ -38,7 +38,7 @@
 **MAIN will:** `approvals.exec.targets` mit Telegram-ID in `openclaw.json`  
 **Installer:** Nicht drin — User setzt manuell
 
-**Entscheidung (Photon, 2026-04-10):** Kein Approval-Buttons-Plugin. Stattdessen Pflicht-Regel in AGENTS.md: Jeder Approval-Request als vollständiges Paket (Befehl + Was + Warum + `/approve`-ID) — auf Telegram, WebUI und Discord identisch.
+**Entscheidung (maintainer, 2026-04-10):** Kein Approval-Buttons-Plugin. Stattdessen Pflicht-Regel in AGENTS.md: Jeder Approval-Request als vollständiges Paket (Befehl + Was + Warum + `/approve`-ID) — auf Telegram, WebUI und Discord identisch.
 
 ---
 
@@ -75,4 +75,4 @@ Priorität 2 (mittel):
 
 1. **`LLM_COMPLEX`** → MAIN mappt auf `LLM_STANDARD`
 2. **Telegram Approval Targets** → kein Plugin, stattdessen AGENTS.md-Pflicht-Regel (vollständiges Paket)
-3. **`maxSpawnDepth: 1`** → valide in unserem Setup — in `openclaw.json` aufnehmen
+3. **`maxSpawnDepth: 1`** → valide — in `openclaw.json` aufnehmen
