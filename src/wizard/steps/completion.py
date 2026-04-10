@@ -42,7 +42,7 @@ def show(state: WizardState, image: str) -> None:
 [bold]1. Open Control UI[/bold]
 
   [link={dashboard_url}]{dashboard_url}[/link]
-  → Paste your gateway token (from [cyan]{state.openclaw_dir}/.env[/cyan])
+  → Paste your gateway token (see below ↓)
 
 [bold]2. Check status / logs[/bold]
 
