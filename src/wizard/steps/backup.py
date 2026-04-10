@@ -24,8 +24,9 @@ def run(state: WizardState) -> bool | str:
     console.print()
     console.print(Panel(
         "[bold]Backup setup[/bold]\n\n"
-        "Daily backups protect your workspace, config and memory.\n"
-        "Backup runs at 04:10 daily inside the container.\n\n"
+        "Mon–Sat: [bold]incremental[/bold] backup (changed files only)\n"
+        "Sunday:  [bold]full backup[/bold] + versioned snapshot (30-day retention)\n"
+        "Runs at 04:10 daily inside the container.\n\n"
         "[dim]What is backed up:[/dim] workspace/, openclaw.json, scripts/, exec-approvals.json (token redacted)\n"
         "[dim]What is NOT backed up:[/dim] .env / API keys, session logs, node_modules, dist/",
         border_style="blue",

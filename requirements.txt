@@ -1,0 +1,30 @@
+# requirements.txt — pinned production dependencies (direct + transitive)
+# Tested on: Linux/arm64, Python 3.11-3.13 — OpenClaw installer v0.2.0
+#
+# To regenerate for your platform:
+#   pip install pip-tools
+#   pip-compile pyproject.toml --output-file requirements.txt
+#
+# Direct dependencies are listed first with tested versions.
+# Transitive dependencies are auto-installed by pip from pyproject.toml.
+
+# Core wizard UI
+questionary~=2.1
+rich~=14.3
+typer~=0.24
+
+# Docker integration
+docker~=7.1
+
+# HTTP client (GitHub Releases API)
+httpx~=0.28
+
+# System / platform
+psutil~=7.2
+platformdirs~=4.9
+
+# Templating
+Jinja2~=3.1
+
+# Misc
+send2trash~=1.8

@@ -83,6 +83,17 @@ PROVIDERS: list[dict[str, Any]] = [
         "default_model": "",
     },
     {
+        "id": "deepseek",
+        "label": "DeepSeek",
+        "key_hint": "→  https://platform.deepseek.com/",
+        "key_prefix": "sk-",
+        "models": [
+            ("deepseek/deepseek-chat",    "DeepSeek V3 — recommended"),
+            ("deepseek/deepseek-reasoner","DeepSeek R1 — advanced reasoning"),
+        ],
+        "default_model": "deepseek/deepseek-chat",
+    },
+    {
         "id": "ollama",
         "label": "Ollama (local models, no API key needed)",
         "key_hint": None,
@@ -168,7 +179,8 @@ def run(state: WizardState) -> bool | str:
             return True
 
         while True:
-            key = questionary.password("API key: (required — type 'back' to go back)").ask()
+            console.print("[bold cyan]› Enter API key:[/bold cyan]")
+            key = questionary.password("").ask()
             if key is None:
                 return False
             if key.strip().lower() == "back":
@@ -226,9 +238,8 @@ def run(state: WizardState) -> bool | str:
 
         if want_mistral:
             console.print("[dim]→  https://console.mistral.ai/[/dim]\n")
-            mistral_key = questionary.password(
-                "Mistral API key: (Enter to skip, type 'back' to go back)"
-            ).ask()
+            console.print("[bold cyan]› Enter Mistral API key:[/bold cyan] [dim](Enter to skip, 'back' to go back)[/dim]")
+            mistral_key = questionary.password("").ask()
             if mistral_key is None:
                 _set_fallback_budget(state, primary_model)
             elif mistral_key.strip().lower() == "back":

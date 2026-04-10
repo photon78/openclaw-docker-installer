@@ -18,7 +18,9 @@ class WizardState:
     mistral_api_key: str = ""       # optional, but recommended for skills
     primary_provider_id: str = ""   # e.g. "openai", "google", "xai"
     primary_api_key: str = ""       # key for non-anthropic/non-mistral providers
-    telegram_bot_token: str = ""    # optional, set per channel
+    telegram_bot_token: str = ""    # set when channel == telegram
+    discord_bot_token: str = ""     # set when channel == discord
+    signal_number: str = ""          # set when channel == signal
 
     # Channel
     channel: str = ""              # "telegram" | "discord" | "signal"
@@ -28,11 +30,17 @@ class WizardState:
     agent_name: str = "main"
     agent_emoji: str = "🤖"
 
+    # User profile
+    user_display_name: str = ""        # how the agent addresses the user
+    user_timezone: str = "UTC"         # IANA timezone
+    user_tech_level: str = ""          # free text from wizard
+
     # Persona
     persona_style: str = "direct"   # "direct" | "formal" | "friendly" | "skip"
 
     # Security
     security_profile: str = "strict"   # "strict" | "standard" | "custom"
+    auto_allow_skills: bool = False    # autoAllowSkills in exec-approvals.json (default: off for security)
 
     # Backup
     backup_enabled: bool = True

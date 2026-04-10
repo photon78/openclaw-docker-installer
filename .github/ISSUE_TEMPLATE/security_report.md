@@ -7,7 +7,7 @@ assignees: ''
 ---
 
 > ⚠️ **Vulnerability?** Do not use this template.  
-> Report privately via [GitHub Security Advisories](https://github.com/photon2078/openclaw-docker-installer/security/advisories/new).  
+> Report privately via [GitHub Security Advisories](https://github.com/photon78/openclaw-docker-installer/security/advisories/new).  
 > See [SECURITY.md](../../SECURITY.md) for details.
 
 ---

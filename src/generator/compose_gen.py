@@ -7,42 +7,37 @@ from pathlib import Path
 import httpx
 from wizard.state import WizardState
 
-GHCR_TAGS_URL = "https://ghcr.io/v2/openclaw/openclaw/tags/list"
+GITHUB_RELEASES_URL = "https://api.github.com/repos/openclaw/openclaw/releases/latest"
 FALLBACK_IMAGE = "ghcr.io/openclaw/openclaw:latest"
 
 
 def fetch_latest_version() -> str:
-    """Fetch the latest published tag directly from ghcr.io.
+    """Fetch the latest OpenClaw release version.
 
-    Queries the container registry tag list, picks the most recent
-    version tag (e.g. 2026.4.5). Falls back to :latest on any error.
+    Strategy (hybrid):
+    1. GitHub Releases API — authoritative, always reflects the latest release.
+       Constructs image tag from release tag_name (e.g. v2026.4.8 → 2026.4.8).
+    2. Fallback: ghcr.io/openclaw/openclaw:latest — always pulls newest image,
+       less reproducible but never stale.
     """
+    # Primary: GitHub Releases API
     try:
-        # ghcr.io requires an auth token even for public images — use anonymous token
-        auth_resp = httpx.get(
-            "https://ghcr.io/token?scope=repository:openclaw/openclaw:pull",
-            timeout=10,
-        )
-        auth_resp.raise_for_status()
-        token = auth_resp.json().get("token", "")
-
         resp = httpx.get(
-            GHCR_TAGS_URL,
-            headers={"Authorization": f"Bearer {token}"},
+            GITHUB_RELEASES_URL,
+            headers={"Accept": "application/vnd.github+json"},
             timeout=10,
+            follow_redirects=True,
         )
         resp.raise_for_status()
-        tags = resp.json().get("tags", [])
-
-        # Filter version-like tags (e.g. 2026.4.5 or v2026.4.5), sort descending
-        version_tags = sorted(
-            [t for t in tags if t.replace("v", "").replace(".", "").isdigit()],
-            reverse=True,
-        )
-        if version_tags:
-            return f"ghcr.io/openclaw/openclaw:{version_tags[0]}"
+        tag = resp.json().get("tag_name", "")
+        if tag:
+            # Normalise: strip leading 'v' if present
+            version = tag.lstrip("v")
+            return f"ghcr.io/openclaw/openclaw:{version}"
     except Exception:
         pass
+
+    # Fallback: :latest
     return FALLBACK_IMAGE
 
 
@@ -94,6 +89,16 @@ services:
       - CHOWN
       - SETUID
       - SETGID
+
+    # Resource limits — prevent container from starving the host
+    deploy:
+      resources:
+        limits:
+          memory: 2g       # hard cap: OOM-killed if exceeded
+          cpus: "2.0"      # max 2 CPU cores
+        reservations:
+          memory: 256m     # guaranteed minimum
+          cpus: "0.25"     # guaranteed minimum
 
   openclaw-cli:
     image: {image}

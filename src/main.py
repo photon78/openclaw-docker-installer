@@ -11,16 +11,32 @@ Commands:
 """
 
 import logging
-import typer
-from rich.console import Console
-
+try:
+    import typer
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
+except ImportError:
+    import sys
+    import os
+    _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _venv_sh  = os.path.join(_root, "run.sh")
+    _venv_bat = os.path.join(_root, "run.bat")
+    print("\nError: dependencies not installed.")
+    print("Use the launcher instead of calling main.py directly:\n")
+    if sys.platform == "win32":
+        print(f"  {_venv_bat} install")
+    else:
+        print(f"  chmod +x {_venv_sh} && {_venv_sh} install")
+    print()
+    sys.exit(1)
 
 from checks.docker_check import check_docker
 from checks.gateway_check import check_gateway, DEFAULT_PORT
+from checks.python_check import check_python
 from wizard.wizard import run_wizard
 from generator.generator import run as run_generator
 from installer.docker_start import run as docker_start
-from installer.workspace_bootstrap import run as bootstrap_workspace
 from installer.logging_setup import setup as setup_logging, get_log_file
 from wizard.steps import completion
 
@@ -34,13 +50,43 @@ app = typer.Typer(
 console = Console()
 
 
+ASCII_ART = (
+    "  ___  ____  _____ _   _  ____  _       _     __        __\n"
+    " / _ \\|  _ \\| ____| \\ | |/ ___|| |     / \\   \\ \\  /\\  / /\n"
+    "| | | | |_) |  _| |  \\| | |   | |    / _ \\   \\ \\/  \\/ /\n"
+    "| |_| |  __/| |___| |\\  | |___| |___/ ___ \\   \\  /\\  /\n"
+    " \\___/|_|   |_____|_| \\_|\\____|_____/_/   \\_\\   \\/  \\/\n"
+)
+
+
 @app.command()
 def install() -> None:
     """Run the interactive setup wizard."""
+    console.print()
+    console.print(ASCII_ART, style="bold cyan")
+    info = Text.assemble(
+        ("\U0001f512 Secure by Default", "bold"),
+        "  |  ",
+        ("Multi-Agent AI Setup", "bold"),
+        "\n",
+        "v1.0.0",
+        "  |  ",
+        ("https://openclaw.ai", "cyan underline"),
+    )
+    console.print(Panel(info, style="cyan", expand=False))
+    console.print()
+
     # Setup logging first — before wizard so all output is captured
     log_file = setup_logging()
     console.print(f"[dim]Install log: {log_file}[/dim]\n")
     log.info("=== openclaw-installer: install started ===")
+
+    # Pre-flight: Python version (relevant on Windows)
+    py = check_python()
+    if not py.ready:
+        console.print(f"[red]\u2717 Python 3.11+ required.[/red] {py.error}")
+        raise typer.Exit(code=1)
+    log.info("Python OK: %s (%s)", py.version, py.executable)
 
     state = run_wizard()
     if state is None:
@@ -58,11 +104,6 @@ def install() -> None:
         raise typer.Exit(code=1)
 
     log.info("Config generated — image=%s", result.image)
-
-    # Bootstrap workspace templates
-    console.print("\n[bold]Bootstrapping workspace...[/bold]")
-    bootstrap_workspace(state)
-    log.info("Workspace bootstrapped at %s", state.workspace_dir)
 
     # Start gateway
     start = docker_start(state)
@@ -113,21 +154,70 @@ def stop() -> None:
 
 
 @app.command()
-def uninstall(
-    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+def clean(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ) -> None:
-    """Remove the OpenClaw installation."""
-    if not confirm:
+    """Remove generated OpenClaw files for a fresh install (keeps Docker + repo)."""
+    import shutil
+    import subprocess as sp
+    from pathlib import Path
+
+    openclaw_dir = Path.home() / ".openclaw"
+
+    generated = [
+        openclaw_dir / "docker-compose.yml",
+        openclaw_dir / ".env",
+        openclaw_dir / "openclaw.json",
+        openclaw_dir / "exec-approvals.json",
+        openclaw_dir / "workspace",
+        openclaw_dir / "scripts",
+        openclaw_dir / "logs",
+    ]
+
+    existing = [p for p in generated if p.exists()]
+    if not existing:
+        console.print("[dim]Nothing to clean — no generated files found.[/dim]")
+        raise typer.Exit()
+
+    console.print("[bold]Files to remove:[/bold]")
+    for p in existing:
+        console.print(f"  [red]-[/red] {p}")
+
+    if not yes:
         confirmed = typer.confirm(
-            "This will remove the OpenClaw installation. Are you sure?",
+            "\nRemove all generated files? (Container will be stopped first)",
             default=False,
         )
         if not confirmed:
             console.print("[dim]Aborted.[/dim]")
             raise typer.Exit()
 
-    console.print("[bold red]Uninstall[/bold red]")
-    console.print("[yellow]Not yet implemented.[/yellow]")
+    # Stop container if running
+    compose_file = openclaw_dir / "docker-compose.yml"
+    if compose_file.exists():
+        console.print("[dim]Stopping container...[/dim]")
+        sp.run(
+            ["docker", "compose", "-f", str(compose_file), "down"],
+            capture_output=True,
+        )
+
+    # Remove files
+    for p in existing:
+        if p.is_dir():
+            shutil.rmtree(p)
+        else:
+            p.unlink()
+        console.print(f"  [green]✓[/green] Removed {p}")
+
+    console.print("\n[green]Clean complete.[/green] Run [cyan]python3 src/main.py install[/cyan] to start fresh.")
+
+
+@app.command()
+def uninstall(
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+) -> None:
+    """Remove the OpenClaw installation (alias for clean)."""
+    clean(yes=confirm)
 
 
 def _run_preflight() -> bool:

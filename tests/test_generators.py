@@ -53,23 +53,29 @@ class TestEnvGen:
         assert "hummer" not in content
         assert "/home/" not in content  # no absolute paths in .env
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_file_permissions(self, state: WizardState) -> None:
         path = env_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
 
 
 class TestOpenClawJsonGen:
-    def test_model_primary_from_state(self, state: WizardState) -> None:
+    def test_model_primary_uses_env_var_ref(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
         primary = config["agents"]["defaults"]["model"]["primary"]
-        assert primary == state.llm_standard
+        # primary must use ${LLM_BUDGET} env var ref — model changes only require .env edit
+        assert primary == "${LLM_BUDGET}"
 
-    def test_models_dict_is_object_map(self, state: WizardState) -> None:
-        # models must be a dict of model-id -> object, not model-id -> string
+    def test_model_fallbacks_use_env_var_refs(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
-        models = config["agents"]["defaults"]["models"]
-        for key, val in models.items():
-            assert isinstance(val, dict), f"models[{key!r}] must be an object, got {type(val)}"
+        fallbacks = config["agents"]["defaults"]["model"]["fallbacks"]
+        assert "${LLM_STANDARD}" in fallbacks
+        assert "${LLM_POWER}" in fallbacks
+
+    def test_no_models_alias_block(self, state: WizardState) -> None:
+        # agents.defaults.models is not a valid OpenClaw config key — must not be set
+        config = openclaw_json_gen.generate(state)
+        assert "models" not in config["agents"]["defaults"]
 
     def test_telegram_channel_configured(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
@@ -128,14 +134,41 @@ class TestExecApprovalsGen:
         state.home_dir = fake_home
         state.openclaw_dir = fake_home / ".openclaw"
         content = json.dumps(exec_approvals_gen.generate(state))
-        assert "/opt/octest/.openclaw" in content
-        assert "/home/hummer" not in content
+        # Normalize: on Windows Path uses backslashes, JSON-dumps escapes them
+        # Accept both forward-slash (Linux/macOS) and escaped backslash (Windows)
+        openclaw_path_fwd = "/opt/octest/.openclaw"
+        openclaw_path_win = "\\\\".join(["\\\\opt", "octest", ".openclaw"])
+        assert openclaw_path_fwd in content or openclaw_path_win in content
+        assert "hummer" not in content
 
     def test_main_agent_has_allowlist(self, state: WizardState) -> None:
         config = exec_approvals_gen.generate(state)
         main = config["agents"]["main"]
         assert len(main["allowlist"]) > 0
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_file_permissions(self, state: WizardState) -> None:
         path = exec_approvals_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
+
+    def test_no_shell_tools_in_allowlists(self, state: WizardState) -> None:
+        """Shell tools must never appear in any allowlist."""
+        content = json.dumps(exec_approvals_gen.generate(state))
+        forbidden = ["/usr/bin/bash", "/bin/bash", "/usr/bin/ls",
+                     "/usr/bin/cat", "/usr/bin/grep", "/usr/bin/find",
+                     "/usr/bin/sed", "/usr/bin/awk"]
+        for tool in forbidden:
+            assert tool not in content, f"Shell tool {tool!r} must not be in allowlist"
+
+    def test_auto_allow_skills_default_false(self, state: WizardState) -> None:
+        config = exec_approvals_gen.generate(state)
+        assert config["agents"]["main"]["autoAllowSkills"] is False
+
+
+class TestCronConfig:
+    def test_crons_in_openclaw_json(self, state: WizardState) -> None:
+        # cron.jobs is not injected into openclaw.json — OpenClaw does not
+        # support this key. Crons are managed via the OpenClaw API post-install.
+        config = openclaw_json_gen.generate(state)
+        assert config["cron"]["enabled"] is True
+        assert "jobs" not in config["cron"]

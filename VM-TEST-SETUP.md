@@ -19,7 +19,7 @@ Catches issues that don't appear on the Pi setup (hardcoded paths, missing depen
 | OS | Ubuntu 24.04 LTS or Debian 12 (Bookworm) |
 | RAM | 2 GB minimum, 4 GB recommended |
 | Disk | 20 GB |
-| User | Any username — NOT `hummer` (intentional!) |
+| User | Any username — NOT the developer's own username (intentional!) |
 | Network | Bridged or NAT (internet access needed) |
 
 ---
@@ -61,12 +61,22 @@ git checkout feature/prototype-docker-check
 
 ## Step 4: Python Environment
 
+**Linux/macOS:**
 ```bash
 python3 -m venv .venv --copies
 source .venv/bin/activate
 # Editable install may fail on Ubuntu 24.04 due to setuptools — use direct install instead:
 pip install typer rich questionary httpx psutil platformdirs docker jinja2 pytest
 ```
+
+**Windows:**
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install typer rich questionary httpx psutil platformdirs docker jinja2 pytest
+```
+
+> **Important:** The installer has no bundled dependencies. You must activate the venv before running `python src/main.py install`. A `ModuleNotFoundError` means the venv is not active.
 
 ---
 
@@ -116,9 +126,9 @@ Entfernt: Container, Image (`ghcr.io/openclaw/openclaw:*`), `~/.openclaw/`.
 ## Manuelle Checks
 
 - [ ] Wizard startet ohne Fehler
-- [ ] Platform Detection: korrekter Username (nicht `hummer`)
+- [ ] Platform Detection: korrekter Username (kein hardcoded Dev-Username)
 - [ ] API Key Input funktioniert
-- [ ] `docker-compose.yml` generiert mit korrekten Pfaden (kein `/home/hummer`)
+- [ ] `docker-compose.yml` generiert mit korrekten Pfaden (kein hardcoded Pfad)
 - [ ] `.env` korrekt, keine Duplikate, keine `+`-Zeilen
 - [ ] `openclaw.json` valid — `models` ist Dict von ID→Objekt
 - [ ] `exec-approvals.json` verwendet `Path.home()` korrekt
@@ -129,7 +139,7 @@ Entfernt: Container, Image (`ghcr.io/openclaw/openclaw:*`), `~/.openclaw/`.
 
 ## What to Watch For
 
-- Any hardcoded `/home/hummer` in generated files → bug
+- Any hardcoded `/home/<dev-user>` in generated files → bug
 - Any assumption about username → bug
 - Missing Python dependencies → add to pyproject.toml
 - Docker permission issues → document workaround

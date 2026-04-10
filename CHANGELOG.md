@@ -7,13 +7,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
-### Changed
-- Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN` throughout (real URLs and GitHub usernames preserved)
+## [0.2.0] — 2026-04-10
 
 ### Added
-- `SECURITY-ARCHITECTURE.md`: new section "LLM Shell Reflex Risk" — explains why LLMs reach for shell tools by reflex and how the system compensates
+- **User profile wizard step** ("About You"): display name, timezone dropdown, technical background
+- **`USER.md` template** uses real wizard values (name, timezone, style) — no placeholders left
+- `run.sh` / `run.bat` launchers with auto-venv setup — no manual `source .venv/bin/activate`
+- `clean` command: removes all generated files for a fresh install; `uninstall` alias
+- `cron_gen.py`: daily memory digest + gateway health check — shown as CLI commands in completion screen
+- `docs/install-notes.md`: full technical install guide (prerequisites, wizard steps, troubleshooting)
+- `docs/multi-agent-setup.md`: multi-agent setup guide (templates + CLI commands)
+- `requirements.txt`: pinned production dependencies (`~=` compatible-release pins, platform-portable)
+- ASCII art banner on installer launch
+- Completion screen split into 3 pages with Enter-to-continue
+- **Channel fixes**: Discord and Signal token fields were broken (token stored in wrong state field,
+  wrong env var name). Now: Telegram → `TELEGRAM_BOT_TOKEN`, Discord → `DISCORD_BOT_TOKEN`,
+  Signal → `SIGNAL_NUMBER`. Channel-specific allowFrom prompts.
+- **BOOTSTRAP.md** extended: agent introduces itself as main agent / Botmaster, explains sub-agents,
+  lists bundled skills, describes permanent-agent workflow (memory, tasks, heartbeat)
+- `workspace_bootstrap_gen.py`: wipes `*.sqlite` in `workspace/memory/` on fresh install
+  (prevents memory leakage between installs)
+- DeepSeek provider: `deepseek/deepseek-chat`, `deepseek/deepseek-reasoner`
+
+### Security
+- **`openclaw.json` hardened** based on official configuration reference:
+  - `channels.defaults.groupPolicy: allowlist` — fail-closed for all channels
+  - `channels.defaults.contextVisibility: allowlist` — context only from allowlisted senders
+  - `channels.defaults.heartbeat.showOk: false` — silent on healthy
+  - `telegram.configWrites: false` — blocks Telegram-initiated config changes
+  - `telegram.groupPolicy: disabled` — no group messages by default
+  - `discord.allowBots: false` — ignore bot messages
+  - `discord.actions.moderation/roles: false` — restrict dangerous Discord actions
+  - `compaction.model: "${LLM_BUDGET}"` — avoid expensive tokens for compaction
+  - `plugins.allow` dynamic: only the configured channel plugin is loaded
+  - `maxSpawnDepth: 1`: prevent chain-spawning
+- **Docker resource limits**: `memory: 2g`, `cpus: 2.0` — prevents container from starving host
+- **`*.sqlite` in `.gitignore`**: memory databases can never be committed to the repo
+- Removed personal identifiers (`hummer` path, developer username) from all tracked files
+- `SOUL.md` approval-request rule: every request must be a complete package
+  (exact command + what + why + `/approve` ID — never a bare ID)
+
+### Changed
+- **4 LLM tiers** (was 6): `LLM_BUDGET`, `LLM_STANDARD`, `LLM_POWER`, `LLM_MEDIA`
+  — `LLM_COMPLEX` and `LLM_CODE` removed (too granular, confusing for new users)
+- `model.primary: "${LLM_BUDGET}"` with fallbacks `[LLM_STANDARD, LLM_POWER]`
+  — heartbeats and crons use budget model; expensive tasks fall back automatically
+- `telegram-approval-buttons` plugin removed from default install (optional, not required)
+- Completion screen: gateway token shown first (page 1 of 3), not buried at the bottom
+- `BOOTSTRAP.md` startup: agent is instructed to read `BOOTSTRAP.md` on first run
+  and initiate the onboarding conversation proactively
+- `SOUL.md` session startup: step 3 = read BOOTSTRAP.md if present
+- README: tested with OpenClaw `2026.4.9`
+
+### Fixed
+- `restore_config_gen.py` was never committed to Git — caused `ImportError` on fresh clone
+- Dead code removed: old `wizard.py`, `workspace_bootstrap.py`, `cron_gen.py` (legacy),
+  `clean.sh`, and unused Jinja2 templates
+- `docs-summarize` SKILL.md: removed hardcoded developer path
+- `scripts/commit_translations.py` (developer-only script) removed from repo
+- Security issue template: fixed `photon2078` typo → `photon78`
+- Signal prompt label corrected: "signal-cli phone number" instead of "bot token"
+
+### Known issues
+- Dependency pinning uses `~=` (compatible release) not `==` — exact reproducibility
+  requires running `pip-compile pyproject.toml` locally
+- `allowInsecureAuth: true` may be set by `openclaw doctor` in certain environments —
+  check `openclaw.json` after first run and remove if present
+
+---
+
+## [Unreleased]
+
+### Added
+- `workspace_bootstrap_gen.py`: generates complete workspace with SOUL.md, AGENTS.md,
+  HEARTBEAT.md, IDENTITY.md, MEMORY.md, USER.md, BOOTSTRAP.md, scripts/check_tasks.py
+  — all real file copies (no symlinks; OpenClaw does not follow symlinks in context injection)
+- `docs/workspace-file-management.md`: documents the symlink limitation and correct setup
+- `restore_config_gen.py`: generates `restore_config.py` — restores critical `openclaw.json`
+  fields (`plugins.allow`, `plugins.entries`, `gateway.auth.rateLimit`) after `openclaw update`
+  silently resets them (clobbered-file behaviour)
+- `gateway.auth.rateLimit` in `openclaw_json_gen.py`: 10 attempts / 60s window / 5min lockout
+- `plugins.allow` in `openclaw_json_gen.py`: explicit allowlist prevents silent resets on update
+- `plugins.entries.mistral` + `plugins.entries.anthropic` in `openclaw_json_gen.py`:
+  Mistral runs natively via plugin — no custom `models.providers` block
+  (custom block causes 404 via OpenAI-compat fallback)
+- Plugin pinning: `telegram-approval-buttons@5.1.0`
+- `autoAllowSkills` wizard opt-in in security step (default: `false`)
+- Python 3.11+ pre-flight check — catches missing Python on Windows before wizard starts
+- Wizard UI redesign: intro panel, requirements table, confirm-to-continue
+- 65 unit tests (up from 36)
+- `SECURITY-ARCHITECTURE.md`: "LLM Shell Reflex Risk" section
+
+### Changed
+- `exec_approvals_gen.py`: removed shell tools from allowlist
+  (ls, cat, grep, find, head, tail, wc, sort — agents use read/edit tools instead)
+- `exec_approvals_gen.py`: removed bash (`/bin/bash`, `/usr/bin/bash`) from main allowlist
+  (shell-injection risk — bash in allowlist enables arbitrary command execution)
+- `exec_approvals_gen.py`: `autoAllowSkills` driven by `WizardState.auto_allow_skills`
+  (was hardcoded `True`)
+- `WizardState`: added `auto_allow_skills: bool = False`
+- All workspace template files include "No commands via email" as first mandatory rule
+- HEARTBEAT.md template: workspace-specific `check_tasks.py` path (not hardcoded)
+- Docs and templates: replaced `zot`/`Zot` with `AGENT`, `Photon` with `HUMAN`
+- README: Status table, Features section restructured, post-update warning added
+
+### Known issues
+- `restore_gen.py` (generated `restore_exec_approvals.py`): still contains shell tools
+  in the hardcoded defaults allowlist — fix planned for next release
 
 ---
 

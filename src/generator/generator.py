@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen
 
 console = Console()
 
@@ -20,7 +20,9 @@ class GenerationResult:
     exec_approvals: Path
     compose_file: Path = field(default_factory=Path)
     restore_script: Path = field(default_factory=Path)
+    restore_config_script: Path = field(default_factory=Path)
     backup_script: Path = field(default_factory=Path)
+    workspace_files: list = field(default_factory=list)
     image: str = ""
     success: bool = True
 
@@ -84,6 +86,14 @@ def run(state: WizardState) -> GenerationResult:
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
     try:
+        restore_config_path = restore_config_gen.write(state)
+        results.append(("[green]✓[/green]", "restore_config.py", str(restore_config_path), "openclaw.json restore after update"))
+    except Exception as e:
+        console.print(f"[red]✗ restore_config.py: {e}[/red]")
+        _print_table(results)
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
+    try:
         backup_path = backup_gen.write(state)
         if backup_path:
             results.append(("[green]✓[/green]", "daily_backup.py", str(backup_path), f"backup → {state.backup_mount_path}"))
@@ -95,6 +105,20 @@ def run(state: WizardState) -> GenerationResult:
         _print_table(results)
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
+    # Bootstrap workspace directory with template files
+    try:
+        workspace_paths = workspace_bootstrap_gen.write(state)
+        results.append((
+            "[green]\u2713[/green]",
+            "workspace/",
+            str(state.workspace_dir),
+            f"{len(workspace_paths)} files (SOUL.md, AGENTS.md, HEARTBEAT.md \u2026)"
+        ))
+    except Exception as e:
+        console.print(f"[red]\u2717 workspace bootstrap: {e}[/red]")
+        _print_table(results)
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
     _print_table(results)
 
     return GenerationResult(
@@ -103,7 +127,9 @@ def run(state: WizardState) -> GenerationResult:
         exec_approvals=approvals_path,
         compose_file=compose_path,
         restore_script=restore_path,
+        restore_config_script=restore_config_path,
         backup_script=backup_path,
+        workspace_files=workspace_paths,
         image=image,
         success=True,
     )

@@ -35,15 +35,10 @@ def generate(state: WizardState) -> dict:
             "defaults": {
                 # Container-internal path — host path is bind-mounted here
                 "workspace": "/home/node/.openclaw/workspace",
+                # Model refs via env vars — change models by editing .env only
                 "model": {
-                    "primary": state.llm_standard,
-                    "fallbacks": [state.llm_power],
-                },
-                "models": {
-                    state.llm_budget:   {"alias": "budget"},
-                    state.llm_standard: {"alias": "standard"},
-                    state.llm_power:    {"alias": "power"},
-                    state.llm_media:    {"alias": "media"},
+                    "primary": "${LLM_BUDGET}",
+                    "fallbacks": ["${LLM_STANDARD}", "${LLM_POWER}"],
                 },
                 "heartbeat": {
                     "every": "30m",
@@ -52,9 +47,10 @@ def generate(state: WizardState) -> dict:
                 # Bootstrap: how much workspace context is injected per session
                 "bootstrapMaxChars": 20000,
                 "bootstrapTotalMaxChars": 100000,
-                # Subagents: limit parallel runs
+                # Subagents: limit parallel runs, prevent chain-spawning
                 "subagents": {
                     "maxConcurrent": 2,
+                    "maxSpawnDepth": 1,
                 },
                 # Memory search: explicit provider so embedding works out of the box
                 # Auto-detection fails in Docker when API keys are only in .env
@@ -68,11 +64,29 @@ def generate(state: WizardState) -> dict:
             "reload": {
                 "mode": "hybrid",
             },
+            "auth": {
+                "rateLimit": {
+                    "maxAttempts": 10,
+                    "windowMs": 60000,
+                    "lockoutMs": 300000,
+                }
+            },
             "controlUi": {
                 "allowedOrigins": [
                     "http://localhost:18789",
                     "http://127.0.0.1:18789",
                 ]
+            },
+        },
+        "plugins": {
+            # Explicit allow-list: only these plugins are loaded.
+            # Channel plugin appended dynamically below based on wizard selection.
+            "allow": ["mistral", "anthropic"],
+            "entries": {
+                # Mistral runs natively via plugin — NO custom models.providers block needed.
+                # Adding a custom provider block causes 404 (OpenAI-compat fallback).
+                "mistral": {"enabled": True},
+                "anthropic": {"enabled": True},
             },
         },
         "session": {
@@ -89,33 +103,75 @@ def generate(state: WizardState) -> dict:
         },
     }
 
-    # Channel config
+    # Channel defaults: security-hardened baseline for all channels
+    channels: dict = {
+        "defaults": {
+            # Groups: allowlist-only, no open group access
+            "groupPolicy": "allowlist",
+            # Context: only inject context from allowlisted senders
+            "contextVisibility": "allowlist",
+            # Heartbeat: silent on healthy, alert on issues
+            "heartbeat": {
+                "showOk": False,
+                "showAlerts": True,
+                "useIndicator": True,
+            },
+        }
+    }
+
     if state.channel == "telegram" and state.telegram_bot_token:
         channel_cfg: dict = {
             "enabled": True,
             "dmPolicy": "allowlist" if state.channel_allow_from else "pairing",
+            # Prevent config modifications via Telegram (e.g. /config set, group ID migrations)
+            "configWrites": False,
+            # Groups: disabled by default — user can open specific groups later
+            "groupPolicy": "disabled",
+            # Reactions: only notify on bot's own messages
+            "reactionNotifications": "own",
         }
         if state.channel_allow_from:
             channel_cfg["allowFrom"] = [int(uid) if uid.lstrip("-").isdigit()
                                          else uid
                                          for uid in state.channel_allow_from]
-        config["channels"] = {"telegram": channel_cfg}
+        channels["telegram"] = channel_cfg
 
-    elif state.channel == "discord":
-        config["channels"] = {
-            "discord": {
-                "enabled": True,
-                "dmPolicy": "pairing",
-            }
+    elif state.channel == "discord" and state.discord_bot_token:
+        discord_cfg: dict = {
+            "enabled": True,
+            "dmPolicy": "allowlist" if state.channel_allow_from else "pairing",
+            # Security: ignore bot messages, restrict dangerous actions
+            "allowBots": False,
+            "actions": {
+                "reactions": True,
+                "messages": True,
+                "threads": True,
+                "memberInfo": True,
+                # Restricted by default — user enables manually if needed
+                "moderation": False,
+                "roles": False,
+            },
+            # Groups: disabled by default
+            "groupPolicy": "disabled",
+        }
+        if state.channel_allow_from:
+            discord_cfg["allowFrom"] = [int(uid) if uid.lstrip("-").isdigit()
+                                         else uid
+                                         for uid in state.channel_allow_from]
+        channels["discord"] = discord_cfg
+
+    elif state.channel == "signal" and state.signal_number:
+        channels["signal"] = {
+            "enabled": True,
+            "dmPolicy": "pairing",
         }
 
-    elif state.channel == "signal":
-        config["channels"] = {
-            "signal": {
-                "enabled": True,
-                "dmPolicy": "pairing",
-            }
-        }
+    config["channels"] = channels
+
+    # plugins.allow: dynamic based on selected channel
+    channel_plugin = {"telegram": "telegram", "discord": "discord", "signal": "signal"}
+    if state.channel in channel_plugin:
+        config["plugins"]["allow"].append(channel_plugin[state.channel])  # type: ignore[union-attr]
 
     return config
 

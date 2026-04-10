@@ -50,11 +50,14 @@ def setup(openclaw_dir: Path | None = None) -> Path:
     root.addHandler(fh)
 
     # Rich handler — INFO+ to stdout (pretty, no noise)
+    # markup=False: prevents Rich from swallowing the leading 'I' in 'INFO'
+    # (Rich treats [INFO] as a markup tag, displaying 'NFO' instead)
     rh = RichHandler(
         level=logging.INFO,
         show_time=False,
         show_path=False,
         rich_tracebacks=True,
+        markup=False,
     )
     root.addHandler(rh)
 

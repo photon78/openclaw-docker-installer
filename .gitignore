@@ -37,3 +37,9 @@ Thumbs.db
 KICKOFF.md
 docs/
 # DESIGN-DECISIONS.md bleibt im Repo — gehört zur Architektur
+
+# Never commit memory databases or user data
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm

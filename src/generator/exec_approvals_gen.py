@@ -17,39 +17,35 @@ def _skill(path: str, state: "WizardState") -> str:
 
 
 def _defaults_allowlist(state: WizardState) -> list[dict]:
-    """Minimal allowlist for cron/isolated sessions."""
+    """Minimal allowlist for cron/isolated sessions.
+
+    Shell tools (ls, cat, grep, find, head, tail, wc, sort …) are intentionally
+    excluded. Agents use read/edit/write tools instead of shell commands.
+    Shell tools in the allowlist are an unnecessary attack surface.
+    """
     return [
         {"pattern": "/usr/bin/python3",      "id": "d-python3-01"},
-        {"pattern": "/usr/bin/ls",            "id": "d-ls-01"},
-        {"pattern": "/usr/bin/cat",           "id": "d-cat-01"},
-        {"pattern": "/usr/bin/grep",          "id": "d-grep-01"},
-        {"pattern": "/usr/bin/head",          "id": "d-head-01"},
-        {"pattern": "/usr/bin/tail",          "id": "d-tail-01"},
-        {"pattern": "/usr/bin/find",          "id": "d-find-01"},
-        {"pattern": "/usr/bin/wc",            "id": "d-wc-01"},
         {"pattern": "/usr/bin/df",            "id": "d-df-01"},
         {"pattern": "/usr/bin/curl",          "id": "d-curl-01"},
         {"pattern": _script("health_check.py", state),    "id": "d-health-check-01"},
         {"pattern": _script("morning_briefing.py", state),"id": "d-morning-briefing-01"},
         {"pattern": _script("daily_digest.py", state),    "id": "d-daily-digest-01"},
+        {"pattern": _script("memory_digest.py", state),   "id": "d-memory-digest-01"},
+        {"pattern": _script("hourly_log.py", state),      "id": "d-hourly-log-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "d-audit-integrity-01"},
     ]
 
 
 def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
-    """Allowlist for the main agent (elevated tier)."""
+    """Allowlist for the main agent (elevated tier).
+
+    Shell tools (ls, cat, grep, find, head, tail, wc, sort, bash …) are
+    intentionally excluded. Agents use read/edit/write tools instead.
+    Bash in the allowlist is a shell-injection risk.
+    """
     base = [
         {"pattern": "/usr/bin/python3",   "id": "m-python3-01"},
-        {"pattern": "/bin/bash",          "id": "m-bash-01"},
-        {"pattern": "/usr/bin/bash",      "id": "m-bash-02"},
         {"pattern": "/usr/bin/git",       "id": "m-git-01"},
-        {"pattern": "/usr/bin/ls",        "id": "m-ls-01"},
-        {"pattern": "/usr/bin/cat",       "id": "m-cat-01"},
-        {"pattern": "/usr/bin/find",      "id": "m-find-01"},
-        {"pattern": "/usr/bin/grep",      "id": "m-grep-01"},
-        {"pattern": "/usr/bin/head",      "id": "m-head-01"},
-        {"pattern": "/usr/bin/tail",      "id": "m-tail-01"},
-        {"pattern": "/usr/bin/wc",        "id": "m-wc-01"},
         {"pattern": "/usr/bin/df",        "id": "m-df-01"},
         {"pattern": "/usr/bin/du",        "id": "m-du-01"},
         {"pattern": "/usr/bin/free",      "id": "m-free-01"},
@@ -62,7 +58,6 @@ def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
         {"pattern": "/usr/bin/trash",     "id": "m-trash-01"},
         {"pattern": "/usr/bin/mkdir",     "id": "m-mkdir-01"},
         {"pattern": "/usr/bin/ln",        "id": "m-ln-01"},
-        {"pattern": "/usr/bin/sort",      "id": "m-sort-01"},
         {"pattern": "/usr/bin/jq",        "id": "m-jq-01"},
         {"pattern": _script("health_check.py", state),    "id": "m-health-check-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "m-audit-integrity-01"},
@@ -96,7 +91,7 @@ def generate(state: WizardState) -> dict:
                 "security": "allowlist",
                 "ask": "on-miss",
                 "askFallback": "deny",
-                "autoAllowSkills": True,
+                "autoAllowSkills": state.auto_allow_skills,
                 "allowlist": _main_allowlist(state.security_profile, state),
             }
         },

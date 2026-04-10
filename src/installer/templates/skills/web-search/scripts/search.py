@@ -12,7 +12,6 @@ Requirements:
 import argparse
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 

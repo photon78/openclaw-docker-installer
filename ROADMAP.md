@@ -1,7 +1,15 @@
 # OpenClaw Installer — Roadmap
 
-> Status: 2026-04-06
-> Principle: Every version is stable in itself. Secure by Default. All Python.
+> Status: 2026-04-08
+
+## Principles
+
+1. **Every version is stable in itself** — no "only works with v0.3"
+2. **Secure by Default** — every version, every feature
+3. **Backward compatible** — config from v0.1 works in v0.5
+4. **Wizard prevents poor decisions** — friction for risk
+5. **All Python** — wizard, scripts, skills, tests
+6. **Docker first, Native second** — but native is first-class, not an afterthought
 
 ---
 
@@ -26,18 +34,24 @@
 - [x] docker-compose.yml (bind mounts, .env + scripts read-only, pinned release)
 - [x] .env (API keys, LLM tiers, USER_NAME)
 - [x] openclaw.json (bootstrapMaxChars, subagents, sessions, maintenance)
-- [x] exec-approvals.json (from security profile, per-agent tiers)
+- [x] exec-approvals.json (from security profile, per-agent tiers; shell tools + bash excluded by design)
 - [x] restore_exec_approvals.py (container-internal paths, main agent allowlist)
-- [x] Workspace bootstrapping (AGENTS.md, SOUL.md, USER.md, MEMORY.md, BOOTSTRAP.md templates)
+- [x] restore_config.py (restores plugins.allow, rateLimit after `openclaw update`)
+- [x] `plugins.allow` + Mistral/Anthropic plugin entries (no custom provider block)
+- [x] Plugin pinning: telegram-approval-buttons@5.1.0
+- [x] `gateway.auth.rateLimit` (10 attempts / 5min lockout)
+- [x] `autoAllowSkills` opt-in (default: false)
+- [x] Workspace bootstrapping (SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md, MEMORY.md,
+  USER.md, BOOTSTRAP.md, scripts/check_tasks.py — all real copies, no symlinks)
 
 ### Security Baseline
 - [x] Bundle health_check.py
 - [x] Bundle audit_integrity.py + set baselines
 - [x] API keys only in .env, never in service file
 
-### Backup Setup (Core Feature — not optional)
-- [ ] Wizard: "Where is your backup medium?" (SD card / USB mount path)
-- [ ] Deploy `daily_backup.py` from template (configured with user-defined mount path)
+### Backup Setup (optional — can be configured after install)
+- [x] Wizard: "Where is your backup medium?" (SD card / USB mount path) — skippable, configure later
+- [x] Deploy `daily_backup.py` from template (configured with user-defined mount path)
 - [ ] Crontab entry: daily at 04:10
 - [ ] Generate `restore.md` with concrete paths + token placeholder
 - [ ] What is backed up: workspaces (rsync diff Mon–Sat, full Sun), openclaw.json, scripts (*.py), systemd drop-ins, memory SQLite, exec-approvals.json (token=REDACTED)
@@ -51,13 +65,14 @@
 - [x] start.sh entrypoint — restores exec-approvals.json on every container start
 
 ### Docs & Community
-- [x] README.md (Vision, Quick Start, Screenshots)
+- [x] README.md (Vision, Quick Start, Status table, Features, post-update warning)
 - [x] LICENSE (MIT)
 - [x] CHANGELOG.md (Keep a Changelog)
 - [x] CONTRIBUTING.md (DCO, Code Style, PR process)
 - [x] CODE_OF_CONDUCT.md (Contributor Covenant)
 - [x] SECURITY.md (Responsible Disclosure)
 - [x] GitHub issue templates (Bug / Feature / Security Report)
+- [x] `docs/workspace-file-management.md` (symlink limitation + correct setup)
 
 ---
 
@@ -83,7 +98,7 @@
 - [ ] Per agent: Name, emoji, workspace auto-derived from preset
 - [ ] Generate Telegram group + topic bindings
 - [ ] Generate per-agent allowlist
-- [ ] Automatically create symlinks
+- [ ] Automatically copy workspace files per agent (real copies, NOT symlinks — OpenClaw does not follow symlinks in context injection)
 - [x] Subagent templates: AGENTS-persistent.md + AGENTS-ephemeral.md (in installer)
 
 ### Extended Memory (Opt-in)
@@ -95,8 +110,8 @@
 - [ ] HEARTBEAT.md with guards (line limit, log compactness, digest age)
 
 ### LLM Tiers
-- [ ] Budget / Standard / Power / Media in .env
-- [ ] openclaw.json with ${LLM_*} variables
+- [x] Budget / Standard / Power / Media in .env
+- [x] openclaw.json with ${LLM_*} variables
 
 ### Agent Management
 - [ ] openclaw-installer add-agent (post-installation)
@@ -104,7 +119,29 @@
 
 ---
 
-## v0.3.0 — "Unleash the Beast" 🐧
+## v0.3.0 — "VPS Ready" 🖥️
+*One-command setup for VPS deployments: nginx, HTTPS, firewall.*
+
+### VPS Quick Deploy Mode
+- [ ] Detect fresh Ubuntu/Debian VPS
+- [ ] Install and configure nginx as reverse proxy
+- [ ] Set up Certbot (Let's Encrypt) for HTTPS
+- [ ] Configure basic ufw firewall rules (80, 443, SSH)
+- [ ] Generate nginx config for the OpenClaw gateway
+
+### Resource Limits
+- [ ] Wizard: "How much RAM does your server have?" (1 / 2 / 4+ GB)
+- [ ] Generate docker-compose.yml with memory/CPU caps
+
+### Unattended Updates
+- [ ] Weekly cron: check for new OpenClaw image releases
+- [ ] Pull + restart container automatically
+- [ ] Notify via Telegram after successful update
+- [ ] Rollback on health check failure
+
+---
+
+## v0.4.0 — "Unleash the Beast" 🐧
 *Native Linux, systemd, no Docker.*
 
 ### Native Installation
@@ -125,7 +162,7 @@
 
 ---
 
-## v0.4.0 — "Shape Shifter" 🔄
+## v0.5.0 — "Shape Shifter" 🔄
 *Migration, Updates, Portability.*
 
 - [ ] openclaw-installer migrate docker-to-native
@@ -136,9 +173,11 @@
 
 ---
 
-## v0.5.0 — "All Platforms" 🌐
+## v0.6.0 — "All Platforms" 🌐
 *macOS + Windows Support.*
 
+- [x] Python 3.11+ pre-flight check (catches missing Python on Windows before wizard)
+- [x] Windows venv instructions (`VM-TEST-SETUP.md`)
 - [ ] macOS: launchd service (~/Library/LaunchAgents/)
 - [ ] macOS: Docker Desktop integration
 - [ ] Windows: NSSM Service Manager
@@ -157,13 +196,4 @@
 - [ ] Community Skills Repository integration (ClaWHub)
 - [ ] Cluster mode (multiple servers)
 
----
 
-## Principles
-
-1. **Every version is stable in itself** — no "only works with v0.3"
-2. **Secure by Default** — every version, every feature
-3. **Backward compatible** — config from v0.1 works in v0.5
-4. **Wizard prevents poor decisions** — friction for risk
-5. **All Python** — wizard, scripts, skills, tests
-6. **Docker first, Native second** — but native is first-class, not an afterthought

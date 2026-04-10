@@ -1,18 +1,42 @@
 """
 completion.py — Post-installation instructions screen.
 Shows the user exactly how to start OpenClaw and what to do next.
+Split into 3 pages with press-Enter-to-continue between them.
 """
+import json
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
+from rich.text import Text
 
 from wizard.state import WizardState
+
+
+def _read_gateway_token(state: WizardState) -> str | None:
+    """Read gateway token from openclaw.json after first start."""
+    config_file = state.openclaw_dir / "openclaw.json"
+    try:
+        data = json.loads(config_file.read_text())
+        token = data.get("gateway", {}).get("auth", {}).get("token")
+        if token and not token.startswith("${"):
+            return token
+    except Exception:
+        pass
+    return None
+
+
+def _pause(console: Console, label: str = "next") -> None:
+    """Wait for Enter before showing the next page."""
+    console.print()
+    console.input(f"[dim]  Press Enter for {label} →[/dim]")
+    console.print()
+
 
 console = Console()
 
 
 def show(state: WizardState, image: str) -> None:
-    """Print post-installation next-steps screen."""
+    """Print post-installation next-steps screen (3 pages)."""
     compose_file = state.openclaw_dir / "docker-compose.yml"
     dashboard_url = "http://127.0.0.1:18789"
 
@@ -20,48 +44,38 @@ def show(state: WizardState, image: str) -> None:
     console.print(Rule("[bold green]Installation complete[/bold green]"))
     console.print()
 
-    # Start instructions
-    console.print(Panel(
-        f"""[bold]1. Start OpenClaw[/bold]
-
-  [cyan]docker compose -f {compose_file} up -d[/cyan]
-
-[bold]2. Check status[/bold]
-
-  [cyan]docker compose -f {compose_file} ps[/cyan]
-  [cyan]docker compose -f {compose_file} logs -f[/cyan]
-
-[bold]3. Open Control UI[/bold]
-
-  [link={dashboard_url}]{dashboard_url}[/link]
-  → Paste your gateway token (from [cyan]{state.openclaw_dir}/.env[/cyan])
-
-[bold]4. Add to autostart (optional)[/bold]
-
-  systemd:
-  [cyan]sudo systemctl enable docker[/cyan]
-  Then add a systemd unit or use [cyan]restart: unless-stopped[/cyan] (already set).
-
-[bold]5. Restore exec-approvals (if needed)[/bold]
-
-  If the gateway ever overwrites exec-approvals.json via doctor mode:
-  [cyan]docker compose exec openclaw-gateway python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
-
-[bold]6. Update later[/bold]
-
-  [cyan]openclaw-installer update[/cyan]
-  Pulls the latest image and restarts the container.
-""",
-        title="[bold green]Next steps[/bold green]",
-        border_style="green",
-        padding=(1, 2),
-    ))
-
-    # Image info
+    # ── Page 1: Gateway Token ────────────────────────────────────────────────
     console.print(
-        f"[dim]Pinned image: [cyan]{image}[/cyan] — "
-        f"run [cyan]openclaw-installer update[/cyan] to upgrade.[/dim]"
+        f"[bold green]✓ Gateway is running[/bold green]  "
+        f"[dim]image: {image}[/dim]"
     )
+    console.print()
+
+    token = _read_gateway_token(state)
+    if token:
+        token_text = Text.assemble(
+            ("Your gateway token — keep this secret!\n\n", "bold"),
+            (f"  {token}", "bold cyan"),
+            "\n\n",
+            ("Use this to log into the Control UI and connect mobile apps.\n", "dim"),
+            ("Anyone with this token has full access to your agent.", "red"),
+        )
+        console.print(Panel(
+            token_text,
+            title="[bold yellow]🔑 Gateway Token  (Page 1 / 3)[/bold yellow]",
+            border_style="yellow",
+            padding=(1, 2),
+        ))
+    else:
+        console.print(Panel(
+            "[dim]Token not yet available.\n\n"
+            "Check after first start:\n"
+            "  [cyan]openclaw.json[/cyan] → [cyan]gateway.auth.token[/cyan][/dim]",
+            title="[bold yellow]🔑 Gateway Token  (Page 1 / 3)[/bold yellow]",
+            border_style="yellow",
+            padding=(1, 2),
+        ))
+
     console.print()
 
     # Channel-specific hint
@@ -81,20 +95,84 @@ def show(state: WizardState, image: str) -> None:
             "after the gateway is running."
         )
 
-    # INSTALLER NOTE hint
+    _pause(console, "next steps")
+
+    # ── Page 2: Next Steps ──────────────────────────────────────────────────
+    console.print(Panel(
+        f"""[bold]1. Open Control UI[/bold]
+
+  [link={dashboard_url}]{dashboard_url}[/link]
+  → Paste your gateway token (see above ↑)
+
+[bold]2. Start the onboarding conversation[/bold]
+
+  Send your agent this message:
+  [cyan]Lies bitte BOOTSTRAP.md und mach den Onboarding-Ablauf.[/cyan]
+  (or in English: [cyan]Please read BOOTSTRAP.md and start the onboarding.[/cyan])
+  The agent will introduce itself, explain its skills, and set up your profile.
+
+[bold]3. Check status / logs[/bold]
+
+  [cyan]docker compose -f {compose_file} ps[/cyan]
+  [cyan]docker compose -f {compose_file} logs -f[/cyan]
+
+[bold]4. Add to autostart (optional)[/bold]
+
+  Docker restarts the container automatically ([cyan]restart: unless-stopped[/cyan]).
+  Make sure Docker itself starts on boot:
+  [cyan]sudo systemctl enable docker[/cyan]
+
+[bold]5. Restore exec-approvals (if needed)[/bold]
+
+  If the gateway overwrites exec-approvals.json via doctor mode:
+  [cyan]docker compose exec openclaw-gateway \\
+    python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
+
+[bold]6. Restart / stop[/bold]
+
+  [cyan]docker compose -f {compose_file} restart[/cyan]
+  [cyan]docker compose -f {compose_file} down[/cyan]
+""",
+        title="[bold green]Next steps  (Page 2 / 3)[/bold green]",
+        border_style="green",
+        padding=(1, 2),
+    ))
+
+    _pause(console, "cron jobs & customization")
+
+    # ── Page 3: Cron + Customize ────────────────────────────────────────────
+    console.print(Panel(
+        """Cron jobs are managed via the OpenClaw CLI [italic]after[/italic] the gateway is running.
+Run these once to set up automated memory digests and health checks:
+
+[bold]Daily memory digest[/bold] (runs at 03:05):
+  [cyan]openclaw cron add --name "Daily Memory Digest" --cron "5 3 * * *" \\
+    --session main --system-event "HEARTBEAT: generate daily memory digest"[/cyan]
+
+[bold]Gateway health check[/bold] (every 2h):
+  [cyan]openclaw cron add --name "Gateway Health Check" --cron "0 */2 * * *" \\
+    --session main --system-event "HEARTBEAT: gateway health check"[/cyan]
+
+[dim]Or let your agent set these up automatically on first run.[/dim]""",
+        title="[bold cyan]⏰ Recommended cron jobs  (Page 3 / 3)[/bold cyan]",
+        border_style="cyan",
+        padding=(1, 2),
+    ))
+
+    console.print()
+
     soul_path = state.workspace_dir / "SOUL.md"
     agents_path = state.workspace_dir / "AGENTS.md"
     console.print(Panel(
         f"""Your workspace files contain [bold]<!-- INSTALLER NOTE -->[/bold] comments.
 
-They explain what each section does and what to customize.
-Read and edit these files to make your agent truly yours:
+Read and edit these to make your agent truly yours:
 
   [cyan]{soul_path}[/cyan]
   [cyan]{agents_path}[/cyan]
 
 The agent will walk you through the rest on first run ([cyan]BOOTSTRAP.md[/cyan]).""",
-        title="📝 Customize your agent",
+        title="[bold yellow]📝 Customize your agent[/bold yellow]",
         border_style="yellow",
         padding=(1, 2),
     ))

@@ -36,7 +36,7 @@ reinstalling from scratch. Variables make the system auditable, updatable, and p
 
 ```python
 # ❌ Wrong
-path = "/home/hummer/.openclaw/scripts/health_check.py"
+path = "/home/user/.openclaw/scripts/health_check.py"
 
 # ✅ Right
 path = str(Path.home() / ".openclaw" / "scripts" / "health_check.py")
