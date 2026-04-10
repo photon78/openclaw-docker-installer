@@ -81,6 +81,25 @@ def show(state: WizardState, image: str) -> None:
             "after the gateway is running."
         )
 
+    # Cron setup hint
+    console.print(Panel(
+        """Cron jobs are managed via the OpenClaw CLI [italic]after[/italic] the gateway is running.
+Run these two commands once to set up automated memory digests and health checks:
+
+[bold]Daily memory digest[/bold] (runs at 03:05, silent):
+  [cyan]openclaw cron add --name "Daily Memory Digest" --cron "5 3 * * *" \\\
+    --session main --system-event "HEARTBEAT: generate daily memory digest"[/cyan]
+
+[bold]Gateway health check[/bold] (every 2h, notifies on failure):
+  [cyan]openclaw cron add --name "Gateway Health Check" --cron "0 */2 * * *" \\\
+    --session main --system-event "HEARTBEAT: gateway health check"[/cyan]
+
+[dim]Or let your agent set these up automatically on first run.[/dim]""",
+        title="⏰ Recommended cron jobs",
+        border_style="cyan",
+        padding=(1, 2),
+    ))
+
     # INSTALLER NOTE hint
     soul_path = state.workspace_dir / "SOUL.md"
     agents_path = state.workspace_dir / "AGENTS.md"

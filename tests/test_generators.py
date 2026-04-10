@@ -59,19 +59,22 @@ class TestEnvGen:
 
 
 class TestOpenClawJsonGen:
-    def test_model_primary_from_state(self, state: WizardState) -> None:
+    def test_model_primary_uses_env_var_ref(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
         primary = config["agents"]["defaults"]["model"]["primary"]
-        # Default primary must be the budget tier (cheapest) so heartbeats/crons
-        # don't burn expensive tokens unnecessarily.
-        assert primary == state.llm_budget
+        # primary must use ${LLM_BUDGET} env var ref — model changes only require .env edit
+        assert primary == "${LLM_BUDGET}"
 
-    def test_models_dict_is_object_map(self, state: WizardState) -> None:
-        # models must be a dict of model-id -> object, not model-id -> string
+    def test_model_fallbacks_use_env_var_refs(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
-        models = config["agents"]["defaults"]["models"]
-        for key, val in models.items():
-            assert isinstance(val, dict), f"models[{key!r}] must be an object, got {type(val)}"
+        fallbacks = config["agents"]["defaults"]["model"]["fallbacks"]
+        assert "${LLM_STANDARD}" in fallbacks
+        assert "${LLM_POWER}" in fallbacks
+
+    def test_no_models_alias_block(self, state: WizardState) -> None:
+        # agents.defaults.models is not a valid OpenClaw config key — must not be set
+        config = openclaw_json_gen.generate(state)
+        assert "models" not in config["agents"]["defaults"]
 
     def test_telegram_channel_configured(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)

@@ -35,15 +35,10 @@ def generate(state: WizardState) -> dict:
             "defaults": {
                 # Container-internal path — host path is bind-mounted here
                 "workspace": "/home/node/.openclaw/workspace",
+                # Model refs via env vars — change models by editing .env only
                 "model": {
-                    "primary": state.llm_budget,
-                    "fallbacks": [state.llm_standard, state.llm_power],
-                },
-                "models": {
-                    state.llm_budget:   {"alias": "budget"},
-                    state.llm_standard: {"alias": "standard"},
-                    state.llm_power:    {"alias": "power"},
-                    state.llm_media:    {"alias": "media"},
+                    "primary": "${LLM_BUDGET}",
+                    "fallbacks": ["${LLM_STANDARD}", "${LLM_POWER}"],
                 },
                 "heartbeat": {
                     "every": "30m",
