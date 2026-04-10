@@ -104,24 +104,31 @@ def show(state: WizardState, image: str) -> None:
   [link={dashboard_url}]{dashboard_url}[/link]
   → Paste your gateway token (see above ↑)
 
-[bold]2. Check status / logs[/bold]
+[bold]2. Start the onboarding conversation[/bold]
+
+  Send your agent this message:
+  [cyan]Lies bitte BOOTSTRAP.md und mach den Onboarding-Ablauf.[/cyan]
+  (or in English: [cyan]Please read BOOTSTRAP.md and start the onboarding.[/cyan])
+  The agent will introduce itself, explain its skills, and set up your profile.
+
+[bold]3. Check status / logs[/bold]
 
   [cyan]docker compose -f {compose_file} ps[/cyan]
   [cyan]docker compose -f {compose_file} logs -f[/cyan]
 
-[bold]3. Add to autostart (optional)[/bold]
+[bold]4. Add to autostart (optional)[/bold]
 
   Docker restarts the container automatically ([cyan]restart: unless-stopped[/cyan]).
   Make sure Docker itself starts on boot:
   [cyan]sudo systemctl enable docker[/cyan]
 
-[bold]4. Restore exec-approvals (if needed)[/bold]
+[bold]5. Restore exec-approvals (if needed)[/bold]
 
   If the gateway overwrites exec-approvals.json via doctor mode:
   [cyan]docker compose exec openclaw-gateway \\
     python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
 
-[bold]5. Restart / stop[/bold]
+[bold]6. Restart / stop[/bold]
 
   [cyan]docker compose -f {compose_file} restart[/cyan]
   [cyan]docker compose -f {compose_file} down[/cyan]
