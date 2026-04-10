@@ -151,6 +151,8 @@ Your agent starts its first session automatically. It will introduce itself and 
 | macOS | 🔜 Planned |
 | Windows 11 | 🔜 In progress |
 
+**Tested with OpenClaw `2026.4.9`**
+
 ---
 
 ## Roadmap
