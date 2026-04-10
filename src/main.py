@@ -13,6 +13,8 @@ Commands:
 import logging
 import typer
 from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
 
 
 from checks.docker_check import check_docker
@@ -35,25 +37,31 @@ app = typer.Typer(
 console = Console()
 
 
-BANNER = (
-    "\n"
-    "   ___  ____  _____ _   _  ____  _       _    __      __\n"
-    "  / _ \\|  _ \\| ____| \\ | |/ ___|| |     / \\   \\ \\    / /\n"
-    " | | | | |_) |  _| |  \\| | |   | |    / _ \\   \\ \\/\\/ /\n"
-    " | |_| |  __/| |___| |\\  | |___| |___/ ___ \\   \\    /\n"
-    "  \\___/|_|   |_____|_| \\_|\\____|_____/_/   \\_\\   \\__/\n"
-    "\n"
-    "  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n"
-    "  \u2502  \U0001f512 Secure by Default  \u2502  Multi-Agent AI Setup          \u2502\n"
-    "  \u2502  v1.0.0                    \u2502  https://openclaw.ai          \u2502\n"
-    "  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
+ASCII_ART = (
+    "   ___  ____  _____ _   _  ____  _       _    __    __\n"
+    "  / _ \\|  _ \\| ____| \\ | |/ ___|| |     / \\   \\ \\  / /\n"
+    " | | | | |_) |  _| |  \\| | |   | |    / _ \\   \\ \\/ /\n"
+    " | |_| |  __/| |___| |\\  | |___| |___/ ___ \\   \\  /\n"
+    "  \\___/|_|   |_____|_| \\_|\\____|_____/_/   \\_\\   \\/\n"
 )
 
 
 @app.command()
 def install() -> None:
     """Run the interactive setup wizard."""
-    console.print(BANNER, style="bold cyan")
+    console.print()
+    console.print(ASCII_ART, style="bold cyan")
+    info = Text.assemble(
+        ("\U0001f512 Secure by Default", "bold"),
+        "  |  ",
+        ("Multi-Agent AI Setup", "bold"),
+        "\n",
+        "v1.0.0",
+        "  |  ",
+        ("https://openclaw.ai", "cyan underline"),
+    )
+    console.print(Panel(info, style="cyan", expand=False))
+    console.print()
 
     # Setup logging first — before wizard so all output is captured
     log_file = setup_logging()
