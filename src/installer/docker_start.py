@@ -39,6 +39,15 @@ def run(state: WizardState) -> StartResult:
 
     console.print("\n[bold]Starting OpenClaw gateway...[/bold]")
 
+    # Pull image first — show progress to user
+    console.print("[dim]Pulling OpenClaw image...[/dim]")
+    pull = subprocess.run(
+        ["docker", "compose", "-f", str(compose_file), "pull"],
+        # No capture_output — let Docker show pull progress directly
+    )
+    if pull.returncode != 0:
+        log.warning("docker compose pull failed (non-fatal) — will try up anyway")
+
     # docker compose up -d
     result = subprocess.run(
         ["docker", "compose", "-f", str(compose_file), "up", "-d"],
