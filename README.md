@@ -12,12 +12,14 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.1.0-alpha** | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
-| feature/windows-compat | 🔧 In progress | Windows path handling, security hardening |
+| **v0.2.0** | ✅ Stable | Full install wizard, Docker deploy, Telegram/Discord/Signal, security hardening, BOOTSTRAP onboarding |
+| v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
+
+> ✅ **The installer works end-to-end.** After running the wizard, you get a fully functional, security-hardened OpenClaw instance running in Docker — ready to use via Telegram (or your chosen channel). The agent introduces itself, explains its capabilities, and is ready to work.
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.1.0-alpha https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.2.0 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
