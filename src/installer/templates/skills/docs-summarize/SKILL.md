@@ -21,7 +21,7 @@ usage: |
 
   Examples:
     python3 summarize.py https://docs.example.com/api --permanent --name myapi
-    python3 summarize.py /home/hummer/docs/manual.md --task myproject
+    python3 summarize.py /home/user/docs/manual.md --task myproject
     python3 summarize.py https://api.example.com/openapi.json --name openapi
 ---
 
