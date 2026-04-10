@@ -2,11 +2,26 @@
 completion.py — Post-installation instructions screen.
 Shows the user exactly how to start OpenClaw and what to do next.
 """
+import json
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
+from rich.text import Text
 
 from wizard.state import WizardState
+
+
+def _read_gateway_token(state: WizardState) -> str | None:
+    """Read gateway token from openclaw.json after first start."""
+    config_file = state.openclaw_dir / "openclaw.json"
+    try:
+        data = json.loads(config_file.read_text())
+        token = data.get("gateway", {}).get("auth", {}).get("token")
+        if token and not token.startswith("${"):
+            return token
+    except Exception:
+        pass
+    return None
 
 console = Console()
 
@@ -77,6 +92,29 @@ def show(state: WizardState, image: str) -> None:
         console.print(
             "[yellow]Signal:[/yellow] Link your Signal account via the Control UI "
             "after the gateway is running."
+        )
+
+    # Gateway token
+    token = _read_gateway_token(state)
+    if token:
+        token_text = Text.assemble(
+            ("Your gateway token (keep this secret!):\n\n", "bold"),
+            (f"  {token}", "bold cyan"),
+            "\n\n",
+            ("Use this to log into the Control UI and connect mobile apps.", "dim"),
+            "\n",
+            ("Anyone with this token has full access to your agent.", "red"),
+        )
+        console.print(Panel(
+            token_text,
+            title="[bold yellow]🔑 Gateway Token[/bold yellow]",
+            border_style="yellow",
+            padding=(1, 2),
+        ))
+    else:
+        console.print(
+            "[dim]Gateway token: check [cyan]openclaw.json[/cyan] → "
+            "gateway.auth.token after first start.[/dim]"
         )
 
     # Cron setup hint
