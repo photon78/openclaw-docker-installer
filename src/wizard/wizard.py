@@ -6,17 +6,18 @@ Steps return True (continue), False (abort), or "back" (go to previous step).
 from rich.console import Console
 
 from wizard.state import WizardState
-from wizard.steps import welcome, api_keys, persona, channel, security, backup
+from wizard.steps import welcome, api_keys, user_profile, persona, channel, security, backup
 
 console = Console()
 
 STEPS = [
-    ("Welcome",   welcome.run),
-    ("API Keys",  api_keys.run),
-    ("Persona",   persona.run),
-    ("Channel",   channel.run),
-    ("Security",  security.run),
-    ("Backup",    backup.run),
+    ("Welcome",      welcome.run),
+    ("API Keys",     api_keys.run),
+    ("About You",    user_profile.run),
+    ("Persona",      persona.run),
+    ("Channel",      channel.run),
+    ("Security",     security.run),
+    ("Backup",       backup.run),
 ]
 
 

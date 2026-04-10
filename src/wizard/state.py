@@ -28,6 +28,11 @@ class WizardState:
     agent_name: str = "main"
     agent_emoji: str = "🤖"
 
+    # User profile
+    user_display_name: str = ""        # how the agent addresses the user
+    user_timezone: str = "UTC"         # IANA timezone
+    user_tech_level: str = ""          # free text from wizard
+
     # Persona
     persona_style: str = "direct"   # "direct" | "formal" | "friendly" | "skip"
 

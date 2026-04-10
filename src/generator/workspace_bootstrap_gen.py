@@ -168,16 +168,25 @@ The agent writes to it during sessions. You can edit it manually too. -->
 
 
 def _user_md(state: WizardState) -> str:
+    name = state.user_display_name or state.username
+    tz = state.user_timezone or "UTC"
+    tech = state.user_tech_level or "<!-- add your technical background -->"
+    style_map = {
+        "direct": "Direct and technical — no dumbing down",
+        "formal": "Formal and professional",
+        "friendly": "Warm and approachable",
+        "skip": "Neutral",
+    }
+    style = style_map.get(state.persona_style, "Neutral")
     return f"""\
 # USER.md — {state.agent_name}
 
-<!-- INSTALLER NOTE: Facts about the person using this agent.
-Update with timezone, communication preferences, technical background, etc. -->
+<!-- INSTALLER NOTE: Facts about the person using this agent. Edit freely. -->
 
-- **Name:** {state.username}
-- **Timezone:** <!-- add your timezone, e.g. Europe/Zurich -->
-- **Technical background:** <!-- e.g. Linux user, developer, non-technical -->
-- **Communication style:** <!-- e.g. direct, formal, casual -->
+- **Name:** {name}
+- **Timezone:** {tz}
+- **Technical background:** {tech}
+- **Communication style:** {style}
 """
 
 
