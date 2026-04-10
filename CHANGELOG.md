@@ -69,8 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signal prompt label corrected: "signal-cli phone number" instead of "bot token"
 
 ### Known issues
-- `compaction.model` removed: not a valid key in OpenClaw 2026.4.9 — caused gateway startup failure
-  (`Unrecognized key: "compaction"`). Will be re-added if/when OpenClaw exposes a compaction config surface.
 - Dependency pinning uses `~=` (compatible release) not `==` — exact reproducibility
   requires running `pip-compile pyproject.toml` locally
 - `allowInsecureAuth: true` may be set by `openclaw doctor` in certain environments —
