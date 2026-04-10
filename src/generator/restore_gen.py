@@ -74,18 +74,13 @@ APPROVALS = {{
         "askFallback": "deny",
         "allowlist": [
             {{"pattern": "/usr/bin/python3",    "id": "d-python3-01"}},
-            {{"pattern": "/usr/bin/ls",         "id": "d-ls-01"}},
-            {{"pattern": "/usr/bin/cat",        "id": "d-cat-01"}},
-            {{"pattern": "/usr/bin/grep",       "id": "d-grep-01"}},
-            {{"pattern": "/usr/bin/head",       "id": "d-head-01"}},
-            {{"pattern": "/usr/bin/tail",       "id": "d-tail-01"}},
-            {{"pattern": "/usr/bin/find",       "id": "d-find-01"}},
-            {{"pattern": "/usr/bin/wc",         "id": "d-wc-01"}},
             {{"pattern": "/usr/bin/df",         "id": "d-df-01"}},
             {{"pattern": "/usr/bin/curl",       "id": "d-curl-01"}},
             {{"pattern": "{_SCRIPTS}/health_check.py",     "id": "d-health-check-01"}},
             {{"pattern": "{_SCRIPTS}/morning_briefing.py", "id": "d-morning-briefing-01"}},
             {{"pattern": "{_SCRIPTS}/daily_digest.py",     "id": "d-daily-digest-01"}},
+            {{"pattern": "{_SCRIPTS}/memory_digest.py",    "id": "d-memory-digest-01"}},
+            {{"pattern": "{_SCRIPTS}/hourly_log.py",       "id": "d-hourly-log-01"}},
             {{"pattern": "{_SCRIPTS}/audit_integrity.py",  "id": "d-audit-integrity-01"}},
         ]
     }},
@@ -109,42 +104,34 @@ if __name__ == "__main__":
 
 
 def _agents_block(state: WizardState) -> str:
-    """Generate the agents dict as a Python literal string."""
+    """Generate the agents dict as a Python literal string.
+
+    Shell tools (ls, cat, grep, find, bash, sed, awk …) are intentionally
+    excluded — same policy as exec_approvals_gen.py.
+    Agents use read/edit/write tools instead of shell commands.
+    """
     main_allowlist = [
         {"pattern": "/usr/bin/python3",    "id": "m-py-01"},
         {"pattern": "/usr/bin/git",        "id": "m-git-01"},
-        {"pattern": "/usr/bin/bash",       "id": "m-bash-01"},
-        {"pattern": "/bin/bash",           "id": "m-bash-02"},
-        {"pattern": "/usr/bin/ls",         "id": "m-ls-01"},
-        {"pattern": "/usr/bin/cat",        "id": "m-cat-01"},
-        {"pattern": "/usr/bin/find",       "id": "m-find-01"},
-        {"pattern": "/usr/bin/grep",       "id": "m-grep-01"},
-        {"pattern": "/usr/bin/head",       "id": "m-head-01"},
-        {"pattern": "/usr/bin/tail",       "id": "m-tail-01"},
-        {"pattern": "/usr/bin/wc",         "id": "m-wc-01"},
         {"pattern": "/usr/bin/df",         "id": "m-df-01"},
         {"pattern": "/usr/bin/du",         "id": "m-du-01"},
         {"pattern": "/usr/bin/free",       "id": "m-free-01"},
         {"pattern": "/usr/bin/ps",         "id": "m-ps-01"},
         {"pattern": "/usr/bin/uptime",     "id": "m-uptime-01"},
         {"pattern": "/usr/bin/curl",       "id": "m-curl-01"},
+        {"pattern": "/usr/bin/systemctl",  "id": "m-systemctl-01"},
+        {"pattern": "/usr/bin/journalctl", "id": "m-journalctl-01"},
         {"pattern": "/usr/bin/rsync",      "id": "m-rsync-01"},
         {"pattern": "/usr/bin/trash",      "id": "m-trash-01"},
         {"pattern": "/usr/bin/mkdir",      "id": "m-mkdir-01"},
         {"pattern": "/usr/bin/ln",         "id": "m-ln-01"},
-        {"pattern": "/usr/bin/sort",       "id": "m-sort-01"},
         {"pattern": "/usr/bin/jq",         "id": "m-jq-01"},
-        {"pattern": "/usr/bin/diff",       "id": "m-diff-01"},
-        {"pattern": "/usr/bin/stat",       "id": "m-stat-01"},
-        {"pattern": "/usr/bin/echo",       "id": "m-echo-01"},
-        {"pattern": "/usr/bin/env",        "id": "m-env-01"},
-        {"pattern": "/usr/bin/which",      "id": "m-which-01"},
-        {"pattern": "/usr/bin/sed",        "id": "m-sed-01"},
-        {"pattern": "/usr/bin/awk",        "id": "m-awk-01"},
         {"pattern": f"{_SCRIPTS}/health_check.py",    "id": "m-health-check-01"},
         {"pattern": f"{_SCRIPTS}/audit_integrity.py", "id": "m-audit-integrity-01"},
-        {"pattern": f"{_WORKSPACE}/skills/web-search/search.py",       "id": "m-web-search-01"},
-        {"pattern": f"{_WORKSPACE}/skills/docs-summarize/summarize.py","id": "m-docs-summarize-01"},
+        {"pattern": f"{_SCRIPTS}/memory_digest.py",   "id": "m-memory-digest-01"},
+        {"pattern": f"{_SCRIPTS}/hourly_log.py",      "id": "m-hourly-log-01"},
+        {"pattern": f"{_WORKSPACE}/skills/web-search/search.py",        "id": "m-web-search-01"},
+        {"pattern": f"{_WORKSPACE}/skills/docs-summarize/summarize.py", "id": "m-docs-summarize-01"},
     ]
 
     import json as _json
@@ -154,7 +141,7 @@ def _agents_block(state: WizardState) -> str:
             "security": "allowlist",
             "ask": "on-miss",
             "askFallback": "deny",
-            "autoAllowSkills": True,
+            "autoAllowSkills": False,
             "allowlist": main_allowlist,
         }
     }

@@ -5,6 +5,7 @@ Uses ${LLM_*} env var references — no hardcoded model names.
 import json
 from pathlib import Path
 from wizard.state import WizardState
+from generator import cron_gen
 
 
 def _memory_search_config(state: WizardState) -> dict:
@@ -36,8 +37,8 @@ def generate(state: WizardState) -> dict:
                 # Container-internal path — host path is bind-mounted here
                 "workspace": "/home/node/.openclaw/workspace",
                 "model": {
-                    "primary": state.llm_standard,
-                    "fallbacks": [state.llm_power],
+                    "primary": state.llm_budget,
+                    "fallbacks": [state.llm_standard, state.llm_power],
                 },
                 "models": {
                     state.llm_budget:   {"alias": "budget"},
@@ -83,11 +84,18 @@ def generate(state: WizardState) -> dict:
             },
         },
         "plugins": {
+            # Explicit allow-list: only these plugins are loaded.
+            # Without this, openclaw update may reset plugin config silently.
+            "allow": ["mistral", "anthropic", "telegram"],
             "entries": {
+                # Mistral runs natively via plugin — NO custom models.providers block needed.
+                # Adding a custom provider block causes 404 (OpenAI-compat fallback).
+                "mistral": {"enabled": True},
+                "anthropic": {"enabled": True},
                 "telegram-approval-buttons": {
                     "spec": "telegram-approval-buttons@5.1.0",
-                }
-            }
+                },
+            },
         },
         "session": {
             "dmScope": "per-channel-peer",
@@ -100,6 +108,7 @@ def generate(state: WizardState) -> dict:
         },
         "cron": {
             "enabled": True,
+            "jobs": cron_gen.generate(state),
         },
     }
 

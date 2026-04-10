@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, cron_gen
 
 
 @pytest.fixture
@@ -62,7 +62,9 @@ class TestOpenClawJsonGen:
     def test_model_primary_from_state(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
         primary = config["agents"]["defaults"]["model"]["primary"]
-        assert primary == state.llm_standard
+        # Default primary must be the budget tier (cheapest) so heartbeats/crons
+        # don't burn expensive tokens unnecessarily.
+        assert primary == state.llm_budget
 
     def test_models_dict_is_object_map(self, state: WizardState) -> None:
         # models must be a dict of model-id -> object, not model-id -> string
@@ -139,3 +141,54 @@ class TestExecApprovalsGen:
     def test_file_permissions(self, state: WizardState) -> None:
         path = exec_approvals_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
+
+    def test_no_shell_tools_in_allowlists(self, state: WizardState) -> None:
+        """Shell tools must never appear in any allowlist."""
+        content = json.dumps(exec_approvals_gen.generate(state))
+        forbidden = ["/usr/bin/bash", "/bin/bash", "/usr/bin/ls",
+                     "/usr/bin/cat", "/usr/bin/grep", "/usr/bin/find",
+                     "/usr/bin/sed", "/usr/bin/awk"]
+        for tool in forbidden:
+            assert tool not in content, f"Shell tool {tool!r} must not be in allowlist"
+
+    def test_auto_allow_skills_default_false(self, state: WizardState) -> None:
+        config = exec_approvals_gen.generate(state)
+        assert config["agents"]["main"]["autoAllowSkills"] is False
+
+
+class TestCronGen:
+    def test_generates_two_crons(self, state: WizardState) -> None:
+        crons = cron_gen.generate(state)
+        assert len(crons) == 2
+
+    def test_cron_names(self, state: WizardState) -> None:
+        names = [c["name"] for c in cron_gen.generate(state)]
+        assert "Daily Memory Digest" in names
+        assert "Gateway Health Check" in names
+
+    def test_crons_use_budget_model(self, state: WizardState) -> None:
+        for cron in cron_gen.generate(state):
+            assert cron["payload"]["model"] == state.llm_budget
+
+    def test_health_check_notifies_telegram_user(self, state: WizardState) -> None:
+        crons = cron_gen.generate(state)
+        health = next(c for c in crons if c["name"] == "Gateway Health Check")
+        assert health["delivery"]["mode"] == "announce"
+        assert health["delivery"]["to"] == "8620748747"
+
+    def test_digest_delivery_is_none(self, state: WizardState) -> None:
+        crons = cron_gen.generate(state)
+        digest = next(c for c in crons if c["name"] == "Daily Memory Digest")
+        assert digest["delivery"]["mode"] == "none"
+
+    def test_crons_in_openclaw_json(self, state: WizardState) -> None:
+        config = openclaw_json_gen.generate(state)
+        assert len(config["cron"]["jobs"]) == 2
+
+    def test_no_hardcoded_model_names_in_cron_prompts(self, state: WizardState) -> None:
+        """Cron prompts must not contain hardcoded model names."""
+        hardcoded = ["claude", "mistral-large", "codestral", "gpt-"]
+        for cron in cron_gen.generate(state):
+            msg = cron["payload"]["message"]
+            for name in hardcoded:
+                assert name not in msg, f"Hardcoded model name {name!r} in cron prompt"
