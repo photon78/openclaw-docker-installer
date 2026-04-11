@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] — 2026-04-11
+
+### Fixed
+- **health_check.py Pfad-Fehler (#23)**: Kopiere `health_check.py` nach `~/.openclaw/scripts/` während der Installation, um "No such file or directory" Fehler im Container zu verhindern.
+
+---
+
 ## [0.1.0-alpha] — 2026-04-06
 
 ### Added
