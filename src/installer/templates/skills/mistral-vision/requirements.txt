@@ -1,0 +1,6 @@
+mistralai>=1.0.0
+Pillow>=10.0.0
+pyzbar>=0.1.9
+httpx>=0.25.0
+opencv-python>=4.8.0
+numpy>=1.24.0

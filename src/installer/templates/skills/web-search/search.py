@@ -5,6 +5,7 @@ Usage: python3 search.py "<query>" [--max-results N] [--type web|news|images|vid
 """
 import sys
 import os
+import subprocess
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()

@@ -134,7 +134,7 @@ def call_mistral(content: str, model: str) -> str:
                 "Content-Type": "application/json",
             },
             json=payload,
-            timeout=120,
+            timeout=240,
         )
         resp.raise_for_status()
         data = resp.json()

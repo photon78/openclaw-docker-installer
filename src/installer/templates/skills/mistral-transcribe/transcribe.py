@@ -20,7 +20,7 @@ def transcribe(input_path, lang=None):
         sys.exit(1)
 
     # Multipart form-data bauen
-    boundary = "----AGENTBoundary"
+    boundary = "----ZotBoundary"
     ext = input_path.lower().split(".")[-1]
     mime_map = {
         "mp3": "audio/mpeg",
