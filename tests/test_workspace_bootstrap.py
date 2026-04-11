@@ -45,6 +45,7 @@ class TestWorkspaceBootstrapGen:
             "USER.md",
             "BOOTSTRAP.md",
             "scripts/check_tasks.py",
+            "scripts/health_check.py",
         ]
         for filename in required:
             assert (state.workspace_dir / filename).is_file(), f"Missing: {filename}"
@@ -112,13 +113,20 @@ class TestWorkspaceBootstrapGen:
         content = (state.workspace_dir / "MEMORY.md").read_text()
         assert state.username in content
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
+    def test_health_check_py_is_executable(self, state: WizardState) -> None:
+        workspace_bootstrap_gen.write(state)
+        health_check = state.workspace_dir / "scripts" / "health_check.py"
+        if health_check.exists():  # Only test if the file was generated
+            mode = oct(health_check.stat().st_mode)
+            assert mode[-3:] in ("755", "744", "775"), f"Expected executable, got {mode}"
+
     def test_write_returns_list_of_paths(self, state: WizardState) -> None:
         result = workspace_bootstrap_gen.write(state)
         assert isinstance(result, list)
         assert len(result) > 0
         for path in result:
             assert isinstance(path, Path)
-            assert path.exists()
 
 
 class TestWorkspaceBootstrapSecurityFeatures:

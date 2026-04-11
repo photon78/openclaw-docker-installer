@@ -463,6 +463,301 @@ https://docs.openclaw.ai/cron
 """
 
 
+def _health_check_py(state: WizardState) -> str:
+    """Generate health_check.py — system health monitor for OpenClaw.
+
+    Checks:
+    - Disk usage
+    - Gateway health (via session_status tool, not HTTP)
+    - Backup log
+    - System errors (journalctl)
+    - Package changes
+    - Brute force attempts
+    - API keys in service file
+    - Gateway restarts
+    - Pi uptime
+    - Successful logins
+    - Integrity audit (exec-approvals + scripts)
+
+    Paths are resolved from WizardState — no hardcoded /home/hummer.
+    """
+    openclaw_dir = state.openclaw_dir
+    template = '''\
+#!/usr/bin/env python3
+"""
+OpenClaw Health Check
+Usage: python3 health_check.py [--silent]
+--silent: Nur ausgeben wenn Probleme oder relevante Ereignisse
+"""
+
+import sys
+import subprocess
+import pathlib
+import datetime
+import re
+import json
+
+try:
+    import psutil
+except ImportError:
+    print("ERROR: psutil nicht installiert. pip install psutil", file=sys.stderr)
+    sys.exit(1)
+
+SILENT = "--silent" in sys.argv
+BACKUP_LOG = pathlib.Path("{openclaw_dir}") / "logs" / "daily-backup.log"
+EXEC_APPROVALS = pathlib.Path("{openclaw_dir}") / "exec-approvals.json"
+SCRIPTS_DIR = pathlib.Path("{openclaw_dir}") / "workspace" / "scripts"
+SERVICE_FILE = pathlib.Path("{openclaw_dir}") / "gateway.service"  # Docker: kein systemd
+DPKG_LOGS = [pathlib.Path("/var/log/dpkg.log"), pathlib.Path("/var/log/dpkg.log.1")]
+
+report = []
+has_alert = False
+has_info = False
+now = datetime.datetime.now()
+date_str = now.strftime("%d.%m.%Y %H:%M")
+
+
+def add(line):
+    report.append(line)
+
+
+def flag_alert():
+    global has_alert
+    has_alert = True
+
+
+def flag_info():
+    global has_info
+    has_info = True
+
+
+# 1. Disk
+disk = psutil.disk_usage("/")
+pct = disk.percent
+free_gb = disk.free / (1024 ** 3)
+if pct > 85:
+    add(f"⚠️ Disk: {{pct:.0f}}% belegt, {{free_gb:.1f}}GB frei — ALARM >85%")
+    flag_alert()
+else:
+    add(f"✅ Disk: {{pct:.0f}}% belegt, {{free_gb:.1f}}GB frei")
+
+
+# 2. Gateway (via session_status tool, not HTTP)
+try:
+    result = subprocess.run(
+        ["openclaw", "session_status"],
+        capture_output=True, text=True, timeout=5
+    )
+    if result.returncode == 0:
+        # Parse JSON output for "healthy: true"
+        data = json.loads(result.stdout)
+        if data.get("healthy", False):
+            add("✅ Gateway: Healthy (via session_status)")
+        else:
+            add("⚠️ Gateway: Unhealthy (via session_status)")
+            flag_alert()
+    else:
+        add(f"⚠️ Gateway: session_status failed — {{result.stderr.strip()}}")
+        flag_alert()
+except Exception as e:
+    add(f"⚠️ Gateway: session_status nicht verfügbar — {{e}}")
+    flag_alert()
+
+
+# 3. Backup
+if BACKUP_LOG.exists():
+    lines = BACKUP_LOG.read_text(encoding="utf-8").splitlines()
+    last_ts = None
+    last_date_str = None
+    for line in reversed(lines):
+        m = re.search(r'(\\d{{4}}-\\d{{2}}-\\d{{2}} \\d{{2}}:\\d{{2}}:\\d{{2}})', line)
+        if m:
+            last_ts = datetime.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
+            break
+        m2 = re.search(r'Backup Ende: (\\d{{4}}-\\d{{2}}-\\d{{2}})', line)
+        if m2:
+            last_date_str = m2.group(1)
+            break
+    last_line = lines[-1] if lines else ""
+    if last_ts:
+        diff_h = (now - last_ts).total_seconds() / 3600
+        if diff_h > 26:
+            add(f"⚠️ Backup: Letzter Run vor {{diff_h:.0f}}h — ALARM")
+            flag_alert()
+        elif re.search(r'error|fail', last_line, re.IGNORECASE):
+            add("⚠️ Backup: Fehler im Log")
+            flag_alert()
+        else:
+            add(f"✅ Backup: Letzter Run vor {{diff_h:.0f}}h — OK")
+    elif last_date_str:
+        if last_date_str == now.strftime("%Y-%m-%d"):
+            add(f"✅ Backup: Heute — OK (kein Zeit-Timestamp im Log)")
+        else:
+            add(f"ℹ️ Backup: Letzter Run {{last_date_str}} (kein Zeit-Timestamp)")
+            flag_info()
+    else:
+        add("⚠️ Backup: Kein Timestamp im Log")
+        flag_alert()
+else:
+    add("ℹ️ Backup: Noch kein Log (erster Lauf ausstehend)")
+
+
+# 4. System Errors (journalctl — Linux only)
+HARMLESS = ['blkmapd', 'nfs pipe file', 'wpa_supplicant', 'bgscan', 'nl80211',
+            'CTRL-EVENT', 'bcm2708_fb', 'alsa_restore_std', 'GOTO=',
+            'brcmf_proto_bcdc', 'ieee80211', 'brcmfmac']
+try:
+    result = subprocess.run(
+        ["journalctl", "--since", "24 hours ago", "-p", "err", "-q", "--no-pager"],
+        capture_output=True, text=True, timeout=10
+    )
+    errors = [l for l in result.stdout.splitlines()
+              if l and not any(h in l for h in HARMLESS)]
+    if errors:
+        add(f"⚠️ System Errors: {{len(errors)}} unbekannte Fehler in 24h")
+        add("\\n".join(errors[-3:]))
+        flag_alert()
+    else:
+        add("✅ System Errors: Keine")
+except Exception:
+    add("ℹ️ System Errors: journalctl nicht verfügbar")
+
+
+# 5. Paket-Änderungen
+yesterday = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+today = now.strftime("%Y-%m-%d")
+pkg_lines = []
+for log in DPKG_LOGS:
+    if log.exists():
+        for line in log.read_text(encoding="utf-8").splitlines():
+            if any(a in line for a in [' install ', ' upgrade ', ' remove ']):
+                if line.startswith(today) or line.startswith(yesterday):
+                    pkg_lines.append(line)
+if pkg_lines:
+    add(f"ℹ️ Pakete: {{len(pkg_lines)}} Änderungen in 24h")
+    add("\\n".join(pkg_lines[-5:]))
+    flag_info()
+else:
+    add("✅ Pakete: Keine Änderungen")
+
+
+# 6. Einbruchsversuche
+try:
+    result = subprocess.run(
+        ["journalctl", "--since", "24 hours ago", "-q", "--no-pager"],
+        capture_output=True, text=True, timeout=15
+    )
+    brute = sum(1 for l in result.stdout.splitlines()
+                if re.search(r'failed password|invalid user|authentication failure', l, re.IGNORECASE))
+    if brute > 4:
+        add(f"⚠️ Einbruchsversuche: {{brute}} — ALARM (>4)")
+        flag_alert()
+    else:
+        add(f"✅ Einbruchsversuche: {{brute}}")
+except Exception:
+    add("ℹ️ Einbruchsversuche: journalctl nicht verfügbar")
+
+
+# 7. API-Keys im Service-File
+if SERVICE_FILE.exists():
+    content = SERVICE_FILE.read_text(encoding="utf-8")
+    if 'ANTHROPIC_API_KEY' in content or 'MISTRAL_API_KEY' in content:
+        add("⚠️ Security: API-Keys im Service-File — sofort entfernen!")
+        flag_alert()
+    else:
+        add("✅ Service-File: Keine API-Keys")
+else:
+    add("ℹ️ Service-File: Nicht gefunden")
+
+
+# 8. Gateway-Restarts (Docker: kein systemd, stattdessen Logs prüfen)
+GATEWAY_LOG = pathlib.Path("{openclaw_dir}") / "logs" / "gateway.log"
+if GATEWAY_LOG.exists():
+    lines = GATEWAY_LOG.read_text(encoding="utf-8").splitlines()
+    restarts = sum(1 for l in lines if "Gateway started" in l)
+    if restarts > 1:
+        add(f"⚠️ Gateway-Restarts: {{restarts}} — erhöht")
+        flag_alert()
+    else:
+        add("✅ Gateway-Restarts: 0")
+else:
+    add("ℹ️ Gateway-Restarts: Log nicht gefunden")
+
+
+# 9. Pi-Reboots (psutil)
+boot_time = datetime.datetime.fromtimestamp(psutil.boot_time())
+since_boot_h = (now - boot_time).total_seconds() / 3600
+if since_boot_h < 24:
+    add(f"ℹ️ Pi-Reboot: Letzter Boot vor {{since_boot_h:.1f}}h ({{boot_time.strftime('%d.%m %H:%M')}})")
+    flag_info()
+else:
+    add(f"✅ Pi-Uptime: {{since_boot_h:.0f}}h (kein Reboot in 24h)")
+
+
+# 10. Erfolgreiche Logins
+try:
+    result = subprocess.run(
+        ["journalctl", "--since", "24 hours ago", "-q", "--no-pager"],
+        capture_output=True, text=True, timeout=15
+    )
+    logins = [l for l in result.stdout.splitlines()
+              if re.search(r'accepted password|accepted publickey', l, re.IGNORECASE)]
+    if logins:
+        add(f"ℹ️ Logins (erfolgreich): {{len(logins)}}")
+        add("\\n".join(logins[-5:]))
+        flag_info()
+    else:
+        add("✅ Logins: Keine in 24h")
+except Exception:
+    add("ℹ️ Logins: journalctl nicht verfügbar")
+
+
+# 11. Integrity Audit (exec-approvals + Scripts)
+AUDIT_SCRIPT = pathlib.Path("{openclaw_dir}") / "scripts" / "audit_integrity.py"
+if AUDIT_SCRIPT.exists():
+    try:
+        audit_result = subprocess.run(
+            ["python3", str(AUDIT_SCRIPT), "--silent"],
+            capture_output=True, text=True, timeout=10
+        )
+        audit_output = audit_result.stdout.strip()
+        if audit_result.returncode == 1:
+            for line in audit_output.splitlines():
+                line = line.strip()
+                if line and not line.startswith("🔒"):
+                    add(line)
+            flag_alert()
+        elif audit_result.returncode == 2:
+            add("🚨 Integrity Audit: Kritischer Fehler")
+            if audit_output:
+                for line in audit_output.splitlines():
+                    line = line.strip()
+                    if line and not line.startswith("🔒"):
+                        add(line)
+            flag_alert()
+        elif audit_output:
+            for line in audit_output.splitlines():
+                line = line.strip()
+                if line and not line.startswith("🔒"):
+                    add(line)
+            flag_info()
+        else:
+            add("✅ Integrity Audit: Alles OK")
+    except Exception as e:
+        add(f"⚠️ Integrity Audit: Fehler — {{e}}")
+        flag_alert()
+else:
+    add("ℹ️ Integrity Audit: audit_integrity.py nicht gefunden")
+
+
+# Ausgabe
+if not SILENT or has_alert or has_info:
+    print(f"📊 System Health — {{date_str}}\\n")
+    print("\\n".join(report))
+'''
+    return template.format(openclaw_dir=str(openclaw_dir))
+
+
 def _post_gateway_fix_py(state: WizardState) -> str:
     """Generate post_gateway_fix.py — patches models.json after gateway start.
 
@@ -615,6 +910,7 @@ def generate(state: WizardState) -> list[Path]:
         "HEARTBEAT.md":             _heartbeat_md(state),
         "IDENTITY.md":              _identity_md(state),
         "MEMORY.md":                _memory_md(state),
+        "scripts/health_check.py":   _health_check_py(state),
         "USER.md":                  _user_md(state),
         "BOOTSTRAP.md":             _bootstrap_md(state),
         "TOOLS.md":                 _tools_md(state),
@@ -633,6 +929,7 @@ def generate(state: WizardState) -> list[Path]:
     # make scripts executable
     (workspace / "scripts" / "check_tasks.py").chmod(0o755)
     (workspace / "scripts" / "post_gateway_fix.py").chmod(0o755)
+    (workspace / "scripts" / "health_check.py").chmod(0o755)
 
     # Copy bundled skills (idempotent — skip if already present)
     if _SKILLS_SRC.exists():
@@ -644,6 +941,9 @@ def generate(state: WizardState) -> list[Path]:
                 if not target.exists():
                     shutil.copytree(skill_dir, target)
                     written.append(target)
+
+    # Generate health_check.py
+    files_to_write["scripts/health_check.py"] = _health_check_py(state)
 
     return written
 
