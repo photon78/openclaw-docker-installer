@@ -82,6 +82,7 @@ def run(state: WizardState) -> StartResult:
                     progress.stop()
                     log.info("Gateway healthy at %s", HEALTHZ_URL)
                     console.print("[green]✓[/green] Gateway is healthy.")
+                    _run_post_gateway_fix(state)
                     return StartResult(ok=True, message="Gateway ready.")
             except Exception:
                 pass
@@ -92,6 +93,28 @@ def run(state: WizardState) -> StartResult:
                   f"{STARTUP_TIMEOUT}s. Last logs:")
     _show_logs(compose_file, lines=20)
     return StartResult(ok=False, message="Gateway startup timeout.")
+
+
+def _run_post_gateway_fix(state: WizardState) -> None:
+    """Run post_gateway_fix.py in background to patch models.json after gateway start.
+
+    Runs as a background process (non-blocking) — watches models.json for 30s.
+    Non-fatal if script is missing or fails.
+    """
+    import sys
+    script = state.workspace_dir / "scripts" / "post_gateway_fix.py"
+    if not script.exists():
+        log.warning("post_gateway_fix.py not found at %s — skipping", script)
+        return
+    try:
+        subprocess.Popen(
+            [sys.executable, str(script)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        log.info("post_gateway_fix.py started in background")
+    except Exception as exc:
+        log.warning("post_gateway_fix.py failed to start (non-fatal): %s", exc)
 
 
 def _fix_permissions(openclaw_dir: Path) -> None:

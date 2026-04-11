@@ -463,6 +463,134 @@ https://docs.openclaw.ai/cron
 """
 
 
+def _post_gateway_fix_py(state: WizardState) -> str:
+    """Generate post_gateway_fix.py — patches models.json after gateway start.
+
+    OpenClaw may overwrite the LLM_BUDGET provider entry in models.json with
+    an 'api' key and/or an unresolved 'apiKey' literal. This breaks the budget
+    model fallback silently. Script watches models.json for 30s after startup
+    and removes these invalid keys.
+
+    Provider is resolved dynamically from LLM_BUDGET in .env — not hardcoded.
+    """
+    env_file = state.openclaw_dir / ".env"
+    agents_dir = state.openclaw_dir / "agents"
+    template = '''\
+#!/usr/bin/env python3
+"""post_gateway_fix.py — Fix LLM_BUDGET provider entry in models.json.
+
+OpenClaw sometimes writes an invalid 'api' key or unresolved 'apiKey' into
+the budget provider config in agents/*/agent/models.json at startup.
+This script monitors that file for 30 seconds and removes those keys.
+
+Run once after gateway startup (Docker: via docker_start.py).
+"""
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+ENV_FILE = Path("{env_file}")
+AGENTS_DIR = Path("{agents_dir}")
+WATCH_SECONDS = 30
+POLL_INTERVAL = 1
+
+
+def _budget_provider() -> str:
+    """Read LLM_BUDGET from .env and extract provider name.
+
+    LLM_BUDGET format: 'provider/model-name' (e.g. 'mistral/mistral-large-latest').
+    Returns provider portion (e.g. 'mistral') or empty string if unset/invalid.
+    """
+    if not ENV_FILE.exists():
+        return ""
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line.startswith("LLM_BUDGET=") and not line.startswith("#"):
+            value = line.split("=", 1)[1].strip().strip("'\"")
+            if "/" in value:
+                return value.split("/")[0]
+    return ""
+
+
+def _fix_models_file(path: Path, provider: str) -> bool:
+    """Remove invalid keys from the given provider in models.json.
+
+    Returns True if the file was modified.
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+
+    entry = data.get("providers", {{}}).get(provider, {{}})
+    if not entry:
+        return False
+
+    changed = False
+    if "api" in entry:
+        del entry["api"]
+        changed = True
+    if "apiKey" in entry and "${{" not in str(entry["apiKey"]):
+        del entry["apiKey"]
+        changed = True
+    for model in entry.get("models", []):
+        if "api" in model:
+            del model["api"]
+            changed = True
+
+    if changed:
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return changed
+
+
+def main() -> None:
+    provider = _budget_provider()
+    if not provider:
+        print("post_gateway_fix: LLM_BUDGET not set or no provider — skipping.", flush=True)
+        return
+
+    targets = sorted(AGENTS_DIR.glob("*/agent/models.json"))
+    if not targets:
+        print("post_gateway_fix: no models.json found in {{AGENTS_DIR}} — skipping.", flush=True)
+        return
+
+    print(f"post_gateway_fix: watching {{len(targets)}} models.json file(s) for {{WATCH_SECONDS}}s (provider: {{provider}})", flush=True)
+
+    last_mtime = {{p: p.stat().st_mtime if p.exists() else 0 for p in targets}}
+    deadline = time.monotonic() + WATCH_SECONDS
+    fixes = 0
+
+    for p in targets:
+        if p.exists() and _fix_models_file(p, provider):
+            fixes += 1
+            last_mtime[p] = p.stat().st_mtime
+
+    while time.monotonic() < deadline:
+        time.sleep(POLL_INTERVAL)
+        for p in targets:
+            if not p.exists():
+                continue
+            mtime = p.stat().st_mtime
+            if mtime != last_mtime.get(p, 0):
+                last_mtime[p] = mtime
+                if _fix_models_file(p, provider):
+                    fixes += 1
+                    last_mtime[p] = p.stat().st_mtime
+
+    if fixes:
+        print(f"post_gateway_fix: {{fixes}} fix(es) applied to provider '{{provider}}'.", flush=True)
+    else:
+        print(f"post_gateway_fix: no changes needed for provider '{{provider}}'.", flush=True)
+
+
+if __name__ == "__main__":
+    main()
+'''
+    return template.format(env_file=str(env_file), agents_dir=str(agents_dir))
+
+
 def generate(state: WizardState) -> list[Path]:
     """Create workspace directory structure and all template files.
 
@@ -490,7 +618,8 @@ def generate(state: WizardState) -> list[Path]:
         "USER.md":                  _user_md(state),
         "BOOTSTRAP.md":             _bootstrap_md(state),
         "TOOLS.md":                 _tools_md(state),
-        "scripts/check_tasks.py":   _check_tasks_py(state),
+        "scripts/check_tasks.py":      _check_tasks_py(state),
+        "scripts/post_gateway_fix.py":  _post_gateway_fix_py(state),
         "tasks/cron-setup.md":          _cron_setup_task_md(state),
     }
 
@@ -501,8 +630,9 @@ def generate(state: WizardState) -> list[Path]:
         target.write_text(content, encoding="utf-8")
         written.append(target)
 
-    # scripts/check_tasks.py: make executable
+    # make scripts executable
     (workspace / "scripts" / "check_tasks.py").chmod(0o755)
+    (workspace / "scripts" / "post_gateway_fix.py").chmod(0o755)
 
     # Copy bundled skills (idempotent — skip if already present)
     if _SKILLS_SRC.exists():
