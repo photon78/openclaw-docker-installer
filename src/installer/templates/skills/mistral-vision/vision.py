@@ -12,11 +12,22 @@ Aufruf:
   python3 vision.py --image <pfad> --prompt "Was ist auf diesem Bild?"
 """
 
+import sys
+from pathlib import Path
+
+# Auto-restart with venv python if mistralai is not available
+_VENV_PY = Path(__file__).resolve().parent / ".venv" / "bin" / "python3"
+if _VENV_PY.exists() and Path(sys.executable).resolve() != _VENV_PY:
+    try:
+        import mistralai  # noqa: F401
+    except ImportError:
+        import os
+        os.execv(str(_VENV_PY), [str(_VENV_PY)] + sys.argv)
+
 import argparse
 import base64
 import json
 import os
-from pathlib import Path
 from typing import Any
 
 try:
