@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openclaw-docker-installer"
-version = "0.0.1"
+version = "0.3.0"
 description = "OpenClaw in a Box – cross-platform setup wizard"
 requires-python = ">=3.11"
 license = { text = "MIT" }

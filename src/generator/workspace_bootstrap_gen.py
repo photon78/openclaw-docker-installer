@@ -193,6 +193,21 @@ Nächster Schritt: <Empfehlung oder None>
 Wichtige Ergebnisse immer via:
 `sessions_send(sessionKey="agent:main:telegram:direct:<OPERATOR_ID>", message="...")`
 
+## Neuer Agent erstellen (8-Schritte-Checkliste)
+
+1. SOUL.md erstellen (Rolle, Charakter, Hard Limits)
+2. AGENTS.md erstellen — mit ALLEN Pflicht-Sektionen aus diesem Dokument
+   **Kritisch:** Subagenten sehen nur AGENTS.md + TOOLS.md, nicht SOUL.md.
+   Alle Sicherheitsregeln müssen in AGENTS.md stehen.
+3. TOOLS.md erstellen (Skills, Scripts, Pfade)
+4. HEARTBEAT.md erstellen (was der Agent bei jedem Heartbeat tut)
+5. exec-approvals Sektion anlegen (`autoAllowSkills: false` — immer, keine Ausnahme)
+6. `allowAgents` in openclaw.json konfigurieren (Whitelist-Prinzip — nie leer lassen)
+7. Crons anpassen (Heartbeat-Intervall, Monitoring)
+8. Gateway-Reload — Operator informieren wenn neuer Agent aktiv
+
+**Echte Kopien, keine Symlinks** — OpenClaw Context-Inject folgt keine Symlinks.
+
 ## Task Check
 `python3 {check_tasks}`
 """
@@ -866,6 +881,39 @@ if not SILENT or has_alert or has_info:
     return template.format(openclaw_dir=str(openclaw_dir))
 
 
+def _boot_md(state: WizardState) -> str:
+    check_tasks = state.workspace_dir / "scripts" / "check_tasks.py"
+    return f"""\
+# BOOT.md — {state.agent_name}
+
+<!-- Startup-Checkliste nach Gateway-Restart oder Container-Neustart. -->
+<!-- Nach Abarbeitung: keine Antwort nötig wenn alles OK. -->
+
+## Nach jedem Gateway-Restart
+
+1. **SOUL.md lesen** — Rolle und Grenzen prüfen
+2. **AGENTS.md lesen** — Regeln und Routing prüfen
+3. **Heutiges Daily Log lesen** (`memory/YYYY-MM-DD.md`) — Kontext wiederherstellen
+4. **Tasks prüfen:** `python3 {check_tasks}`
+5. **exec-approvals prüfen** — falls Anomalie: Operator informieren
+6. **Wenn alles OK:** BOOT_OK (kein Bericht nötig)
+
+## Anomalien melden
+
+Falls bei einem der Punkte etwas nicht stimmt:
+- Vollständige Fehlermeldung ausgeben
+- Operator informieren via `sessions_send`
+- Auf Anweisung warten — kein Workaround
+
+## Nach Update (neue OpenClaw-Version)
+
+1. `restore_config.py` prüfen — wurde openclaw.json korrekt wiederhergestellt?
+2. `restore_exec_approvals.py` prüfen — exec-approvals.json intakt?
+3. Gateway-Log auf unbekannte Fehler prüfen
+4. Operator kurz informieren: Version, Status, eventuelle Anomalien
+"""
+
+
 def _clean_exec_approvals_py(state: WizardState) -> str:
     """Generate clean_exec_approvals.py — weekly hygiene for exec-approvals.json.
 
@@ -1167,6 +1215,7 @@ def generate(state: WizardState) -> list[Path]:
         "BOOTSTRAP.md":             _bootstrap_md(state),
         "TOOLS.md":                 _tools_md(state),
         "scripts/check_tasks.py":      _check_tasks_py(state),
+        "BOOT.md":                           _boot_md(state),
         "scripts/post_gateway_fix.py":       _post_gateway_fix_py(state),
         "scripts/clean_exec_approvals.py":   _clean_exec_approvals_py(state),
         "tasks/cron-setup.md":               _cron_setup_task_md(state),

@@ -47,10 +47,12 @@ def generate(state: WizardState) -> dict:
                 # Bootstrap: how much workspace context is injected per session
                 "bootstrapMaxChars": 20000,
                 "bootstrapTotalMaxChars": 100000,
-                # Subagents: limit parallel runs, prevent chain-spawning
+                # Subagents: limit parallel runs, prevent deep chain-spawning
+                # maxSpawnDepth 2 = main -> subagent -> research (enough for most setups)
+                # Never set memoryFlush here — not a valid config key, blocks gateway start
                 "subagents": {
                     "maxConcurrent": 2,
-                    "maxSpawnDepth": 1,
+                    "maxSpawnDepth": 2,
                 },
                 # Memory search: explicit provider so embedding works out of the box
                 # Auto-detection fails in Docker when API keys are only in .env

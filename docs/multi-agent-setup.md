@@ -21,9 +21,10 @@ MAIN (orchestrator)
 
 **Rules that never change:**
 - Always ask HUMAN before adding a new agent or changing spawn permissions
-- `maxSpawnDepth: 1` — spawned agents cannot spawn further agents
+- `maxSpawnDepth: 2` — main → subagent → research (never higher, exponential complexity)
 - RESEARCH_AGENT (or any pure worker) has `allowAgents: []`
 - New agent = new exec-approvals section (no exceptions)
+- `autoAllowSkills: false` — always, no exceptions (see SECURITY-ARCHITECTURE.md)
 
 ---
 
@@ -41,14 +42,16 @@ Copy and customize the workspace files (all must be real copies, not symlinks):
 | File | Action |
 |------|--------|
 | `SOUL.md` | Define role, model routing, hard limits, no-email rule |
-| `AGENTS.md` | Tool rules, communication norms, spawning policy |
+| `AGENTS.md` | Tool rules, communication norms, spawning policy, Stop-Regel, Approval-Format |
 | `HEARTBEAT.md` | What to do on each heartbeat wake |
+| `BOOT.md` | Startup checklist after gateway restart / container reboot |
 | `IDENTITY.md` | Name, emoji, avatar |
 | `MEMORY.md` | Start empty, agent fills it over time |
 | `USER.md` | Copy from main workspace (same HUMAN) |
 | `TOOLS.md` | Skills, scripts, git remotes, deploy targets |
 | `BOOTSTRAP.md` | First-run guide (delete after first session) |
 | `scripts/check_tasks.py` | Copy and update `TASKS_DIR` path |
+| `scripts/clean_exec_approvals.py` | Weekly hygiene (generated, run via cron) |
 
 **Skills:** Symlink the shared skills directory:
 ```bash
@@ -99,7 +102,7 @@ Add the new agent to `agents.list`. Use the existing MAIN entry as reference.
     "defaults": {
       "subagents": {
         "maxConcurrent": 2,
-        "maxSpawnDepth": 1
+        "maxSpawnDepth": 2
       }
     }
   }
@@ -235,7 +238,7 @@ sub-agents that need to know who else is running.
 - [ ] `scripts/check_tasks.py` has correct `TASKS_DIR` path
 - [ ] Agent registered in `openclaw.json` → `agents.list`
 - [ ] `allowAgents` configured for all relevant agents (ask HUMAN first)
-- [ ] `maxSpawnDepth: 1` in `agents.defaults.subagents` *(check your OpenClaw version — key may vary)*
+- [ ] `maxSpawnDepth: 2` in `agents.defaults.subagents` (main → subagent → research)
 - [ ] exec-approvals section added with `autoAllowSkills: false`
 - [ ] Allowlist complete (every script the agent needs, explicitly listed)
 - [ ] Telegram bot created and token added to `.env`

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-04-13
+
+### Added
+- **Multi-Agent-ready workspace**: generierter Agent kennt seine Rolle als Orchestrator
+- **AGENTS.md-Template** massiv erweitert:
+  - Stop-Regel (absolut)
+  - Tool-Fehler-Pflicht (vollständige Ausgabe, Stopp, Melden, Warten)
+  - Edge-Case-Regeln (Wenn-Dann für alle Anomalie-Szenarien)
+  - Delegation-Check (vor jedem Task: richtiger Agent?)
+  - Memory-nach-Task (Daily Log Pflicht)
+  - Approval-Format (keine stillen Approvals, nie mit ":" stehen lassen)
+  - A2A-Messaging-Restriktionen
+  - Handoff-Format (strukturierter Task-Abschluss)
+  - Neuer-Agent-Checkliste (8 Schritte)
+- **SOUL.md-Template** erweitert: Hard Limits um Pipes/Redirects-Verbot,
+  keine erfundenen Tool-Capabilities, keine stillen Approvals
+- **TOOLS.md-Template**: Tool-Zweck-Warnung, shared-output Dokumentation
+- **BOOT.md** neu generiert: Startup-Checkliste nach Gateway-Restart / Container-Neustart
+- **`clean_exec_approvals.py`** generiert: wöchentliche exec-approvals Hygiene
+  (Shell-Tools entfernen, Duplikate, Backup)
+- **`shared-output/`** Verzeichnis wird bei Setup angelegt (`.gitkeep`)
+- **Wöchentlicher Hygiene-Cron** in cron-setup Task dokumentiert (Montag 02:00)
+- **`maxSpawnDepth: 2`** in openclaw.json (main → subagent → research)
+
+### Fixed
+- `maxSpawnDepth` war `1` — für Multi-Agent-Setup zu flach
+
+### Notes
+- Wizard-Step "Multi-Agent" mit Rollen-Presets → v0.4.0
+- Template-Bibliothek (coding/research/content-agent) → v0.4.0
+
+---
+
 ## [0.2.0] — 2026-04-10
 
 ### Added

@@ -344,15 +344,18 @@ Rules in `AGENTS.md` help, but they fight against training. The more reliable ap
 ## Installer Checklist
 
 ```
-[ ] exec-approvals.json generated (per agent, per tier)
+[ ] exec-approvals.json generated (per agent, per tier, autoAllowSkills: false)
 [ ] restore_exec_approvals.py generated (from wizard config)
-[ ] systemd ExecStartPost / Docker ENTRYPOINT configured
+[ ] Docker docker_start.py runs post_gateway_fix.py after gateway health
+[ ] clean_exec_approvals.py generated (weekly hygiene cron, Monday 02:00)
 [ ] audit_integrity.py installed + baselines set
 [ ] health_check.py with audit integration
 [ ] .env created (secrets, LLM tiers)
 [ ] .env mounted read-only (Docker)
 [ ] scripts/ mounted read-only (Docker)
 [ ] Service file without API keys
-[ ] sudoers entry (only specific commands via NOPASSWD)
 [ ] Approval buttons active (Telegram/Discord)
+[ ] No silent approvals — all exec requests: full command + explanation + /approve
+[ ] BOOT.md generated in workspace
+[ ] shared-output/ directory created
 ```
