@@ -19,7 +19,10 @@ import os
 from pathlib import Path
 from typing import Any
 
-from mistralai import Mistral
+try:
+    from mistralai import Mistral          # SDK v1.x
+except ImportError:
+    from mistralai.client import Mistral   # SDK v2.x
 
 # --- Config ---
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
