@@ -1,7 +1,11 @@
 # Install Notes — OpenClaw Docker Installer
 
-**Version:** v0.2.0  
+**Version:** v0.2.1  
 **Audience:** Technical — assumes Docker knowledge, no OpenClaw prior knowledge required
+
+**Tested on:**
+- Raspberry Pi (ARM64, Linux) — primary platform
+- Windows 11 Home 25H2 (Docker Desktop + WSL2) — tested 2026-04-15
 
 ---
 
