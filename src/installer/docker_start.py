@@ -120,13 +120,15 @@ def _run_post_gateway_fix(state: WizardState) -> None:
 def _fix_permissions(openclaw_dir: Path) -> None:
     """Ensure ~/.openclaw is owned by uid 1000 (node user inside container).
 
-    The OpenClaw Docker image runs as the 'node' user (uid 1000, gid 1000).
-    Mounted volumes must be owned by that uid so the container can write to them.
-
-    Side effect: if the host user has a different uid, they may lose direct
-    write access to openclaw_dir. This is intentional — the installer and
-    generated scripts are the only writers.
+    Linux/macOS only: Docker Desktop on Windows manages volume permissions
+    automatically via its WSL2 backend — chown via busybox is not needed
+    and os.getuid() does not exist on Windows.
     """
+    import sys
+    if sys.platform == "win32":
+        log.info("_fix_permissions: skipped on Windows (Docker Desktop handles this)")
+        return
+
     import os
     host_uid = os.getuid()
     if host_uid != 1000:
