@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] — 2026-04-15
+
+### Fixed
+- **Windows compatibility: CRLF line endings** — all files consumed by Docker/WSL2
+  (`docker-compose.yml`, `.env`, `start.sh`, `restore_exec_approvals.py`, `openclaw.json`,
+  `daily_backup.py`) now written with `write_bytes()` to force LF endings on Windows.
+  CRLF in `docker-compose.yml` entrypoint path caused `start.sh: no such file or directory`.
+- **Windows: `os.getuid()` crash** — `_fix_permissions()` in `docker_start.py` now skips
+  on Windows (`sys.platform == 'win32'`). Docker Desktop on Windows handles volume
+  permissions via WSL2 automatically.
+- **Windows: username default showing 'agent'** — `WizardState.username` now uses
+  `getpass.getuser()` instead of `Path.home().name` for correct cross-platform username.
+- **`.env` parser error: key cannot contain a space** — removed comment lines with `=`
+  at end-of-line and `${...}` syntax that confused Docker Compose's env_file parser.
+- **Telegram/Discord user ID visible during input** — user ID prompt now uses
+  `questionary.password()` (masked input) instead of `questionary.text()`.
+- **Banner version string** — corrected from `v1.0.0` to `v0.2.0`.
+- **Heartbeat architecture** — generated `HEARTBEAT.md` template updated to match new
+  isolated-session heartbeat model (`isolatedSession: true`, `lightContext: true`,
+  `model: mistral/mistral-large-latest`). Template now correctly reads daily log and
+  updates `MEMORY.md` (not the other way around).
+- **Dead `hourly_log.py` references** removed from `exec_approvals_gen.py`,
+  `restore_gen.py`, and `workspace_bootstrap_gen.py` (Hourly Log Writer cron replaced
+  by Heartbeat Memory Sync).
+
+---
+
 ## [0.2.0] — 2026-04-10
 
 ### Added
