@@ -204,6 +204,6 @@ def write(state: WizardState) -> Path | None:
     scripts_dir = state.openclaw_dir / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
     target = scripts_dir / "daily_backup.py"
-    target.write_text(generate(state), encoding="utf-8")
+    target.write_bytes(generate(state).encode("utf-8"))
     target.chmod(0o755)
     return target

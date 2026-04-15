@@ -183,5 +183,6 @@ def write(state: WizardState) -> Path:
     """Write openclaw.json to openclaw_dir. Returns path."""
     target = state.openclaw_dir / "openclaw.json"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(generate(state), indent=2) + "\n", encoding="utf-8")
+    # write_bytes: forces LF endings (read by OpenClaw gateway on Linux/WSL2)
+    target.write_bytes((json.dumps(generate(state), indent=2) + "\n").encode("utf-8"))
     return target
