@@ -119,11 +119,14 @@ def run(state: WizardState) -> bool | str:
             )
             id_hint = "Your Discord user ID (e.g. 123456789012345678):"
 
-        allow_from = questionary.text(
-            id_hint,
-            validate=lambda v: True if not v or v.strip().lstrip("-").isdigit()
-            else "Must be a numeric ID or empty",
-        ).ask()
+        console.print(f"[bold cyan]\u203a {id_hint}[/bold cyan] [dim](optional, leave empty to skip)[/dim]")
+        while True:
+            allow_from = questionary.password("").ask()
+            if allow_from is None:
+                return False
+            if not allow_from.strip() or allow_from.strip().lstrip("-").isdigit():
+                break
+            console.print("[yellow]Must be a numeric ID or leave empty.[/yellow]")
 
         if allow_from and allow_from.strip():
             state.channel_allow_from = [allow_from.strip()]
