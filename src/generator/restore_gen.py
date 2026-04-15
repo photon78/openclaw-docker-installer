@@ -154,12 +154,14 @@ def write(state: WizardState) -> Path:
 
     # restore script
     restore = scripts_dir / "restore_exec_approvals.py"
-    restore.write_text(generate(state), encoding="utf-8")
+    # write_bytes: forces LF line endings on Windows (text mode uses CRLF,
+    # which breaks shebang lines and shell scripts inside the Linux container)
+    restore.write_bytes(generate(state).encode("utf-8"))
     restore.chmod(0o755)
 
     # entrypoint wrapper — runs restore then launches gateway
     start_sh = scripts_dir / "start.sh"
-    start_sh.write_text(_start_sh(), encoding="utf-8")
+    start_sh.write_bytes(_start_sh().encode("utf-8"))
     start_sh.chmod(0o755)
 
     return restore
