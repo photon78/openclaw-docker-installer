@@ -80,7 +80,6 @@ APPROVALS = {{
             {{"pattern": "{_SCRIPTS}/morning_briefing.py", "id": "d-morning-briefing-01"}},
             {{"pattern": "{_SCRIPTS}/daily_digest.py",     "id": "d-daily-digest-01"}},
             {{"pattern": "{_SCRIPTS}/memory_digest.py",    "id": "d-memory-digest-01"}},
-            {{"pattern": "{_SCRIPTS}/hourly_log.py",       "id": "d-hourly-log-01"}},
             {{"pattern": "{_SCRIPTS}/audit_integrity.py",  "id": "d-audit-integrity-01"}},
         ]
     }},
@@ -92,9 +91,9 @@ def main() -> None:
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     log.info("START: restore exec-approvals.json")
     time.sleep(2)  # brief wait for gateway socket
-    TARGET.write_text(json.dumps(APPROVALS, indent=2))
+    TARGET.write_text(json.dumps(APPROVALS, indent=2), encoding="utf-8")
     log.info("OK: exec-approvals.json restored at %s", str(TARGET))
-    print("✓ exec-approvals.json restored")
+    print("[OK] exec-approvals.json restored")
 
 
 if __name__ == "__main__":
@@ -129,7 +128,6 @@ def _agents_block(state: WizardState) -> str:
         {"pattern": f"{_SCRIPTS}/health_check.py",    "id": "m-health-check-01"},
         {"pattern": f"{_SCRIPTS}/audit_integrity.py", "id": "m-audit-integrity-01"},
         {"pattern": f"{_SCRIPTS}/memory_digest.py",   "id": "m-memory-digest-01"},
-        {"pattern": f"{_SCRIPTS}/hourly_log.py",      "id": "m-hourly-log-01"},
         {"pattern": f"{_WORKSPACE}/skills/web-search/search.py",        "id": "m-web-search-01"},
         {"pattern": f"{_WORKSPACE}/skills/docs-summarize/summarize.py", "id": "m-docs-summarize-01"},
     ]
@@ -156,12 +154,12 @@ def write(state: WizardState) -> Path:
 
     # restore script
     restore = scripts_dir / "restore_exec_approvals.py"
-    restore.write_text(generate(state))
+    restore.write_text(generate(state), encoding="utf-8")
     restore.chmod(0o755)
 
     # entrypoint wrapper — runs restore then launches gateway
     start_sh = scripts_dir / "start.sh"
-    start_sh.write_text(_start_sh())
+    start_sh.write_text(_start_sh(), encoding="utf-8")
     start_sh.chmod(0o755)
 
     return restore
@@ -173,9 +171,9 @@ def _start_sh() -> str:
 # Restores exec-approvals.json on every start, then launches the gateway.
 set -e
 
-echo "[✓] Restoring exec-approvals.json..."
+echo "[OK] Restoring exec-approvals.json..."
 python3 {_SCRIPTS}/restore_exec_approvals.py
 
-echo "[✓] Starting OpenClaw gateway..."
+echo "[OK] Starting OpenClaw gateway..."
 exec node /app/dist/index.js gateway
 '''

@@ -130,5 +130,5 @@ def write(state: WizardState, image: str) -> Path:
     """Write docker-compose.yml to openclaw_dir. Returns path."""
     target = state.openclaw_dir / "docker-compose.yml"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(generate(state, image))
+    target.write_text(generate(state, image), encoding="utf-8")
     return target

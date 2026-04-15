@@ -52,7 +52,7 @@ def write(state: WizardState) -> Path:
     """Write .env to openclaw_dir. Returns path."""
     env_file = state.env_file
     env_file.parent.mkdir(parents=True, exist_ok=True)
-    env_file.write_text(generate(state))
+    env_file.write_text(generate(state), encoding="utf-8")
     env_file.chmod(0o600)  # owner read/write only
     return env_file
 

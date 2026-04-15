@@ -141,7 +141,7 @@ def backup_config() -> None:
             data = json.loads(approvals_src.read_text())
             if "socket" in data and "token" in data["socket"]:
                 data["socket"]["token"] = "REDACTED"
-            (dst / "exec-approvals.json").write_text(json.dumps(data, indent=2))
+            (dst / "exec-approvals.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
             log.info("Backed up: exec-approvals.json (token redacted)")
         except Exception as exc:
             log.warning("exec-approvals.json backup failed: %s", exc)
@@ -204,6 +204,6 @@ def write(state: WizardState) -> Path | None:
     scripts_dir = state.openclaw_dir / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
     target = scripts_dir / "daily_backup.py"
-    target.write_text(generate(state))
+    target.write_text(generate(state), encoding="utf-8")
     target.chmod(0o755)
     return target
