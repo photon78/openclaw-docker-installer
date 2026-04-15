@@ -2,15 +2,24 @@
 WizardState — carries all user input through the wizard steps.
 Everything user-specific lives here as variables, never hardcoded.
 """
+import getpass
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _default_username() -> str:
+    """Return the current OS username (cross-platform)."""
+    try:
+        return getpass.getuser()
+    except Exception:
+        return Path.home().name
 
 
 @dataclass
 class WizardState:
     # System
     home_dir: Path = field(default_factory=Path.home)
-    username: str = field(default_factory=lambda: Path.home().name)
+    username: str = field(default_factory=_default_username)
     openclaw_dir: Path = field(init=False)
 
     # API Keys
