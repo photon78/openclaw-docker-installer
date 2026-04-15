@@ -69,7 +69,7 @@ def install() -> None:
         "  |  ",
         ("Multi-Agent AI Setup", "bold"),
         "\n",
-        "v1.0.0",
+        "v0.2.0",
         "  |  ",
         ("https://openclaw.ai", "cyan underline"),
     )
