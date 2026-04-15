@@ -122,21 +122,27 @@ def _heartbeat_md(state: WizardState) -> str:
     return f"""\
 # HEARTBEAT.md — {state.agent_name}
 
-<!-- INSTALLER NOTE: What to do on each heartbeat wake. -->
+<!-- INSTALLER NOTE: What to do on each heartbeat wake.
+Each heartbeat runs in an ISOLATED session with lightContext.
+Only this file is injected — no SOUL.md, MEMORY.md, or session history.
+Read everything from files. No prior session context is available. -->
 
 ## On Every Heartbeat
 
-1. Read today's daily log (`memory/YYYY-MM-DD.md`) if it exists
-2. Check tasks: `python3 {check_tasks}`
-3. If activity since last heartbeat: update daily log
-4. If nothing to report: HEARTBEAT_OK
+1. Read today's daily log: `memory/YYYY-MM-DD.md` (today's date, local timezone).
+   If it doesn't exist: skip to step 2.
+2. If the daily log contains new stable facts (decisions, commits, resolved issues):
+   Read MEMORY.md and append relevant entries — never overwrite existing content.
+3. Check tasks: `python3 {check_tasks}`
+   Blocked or overdue tasks → report to user via `sessions_send`.
+4. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
 
 ## Core Principle
 Only report if something is wrong — errors, blocked tasks, warnings.
-Silence = everything fine.
+Silence (HEARTBEAT_OK) = everything is fine.
 
 ## Proactive Messages
-Important results via `sessions_send` to the user's channel.
+Use `sessions_send` to notify the user if action is needed.
 """
 
 
@@ -350,8 +356,6 @@ def _tools_md(state: WizardState) -> str:
 | Script | Purpose |
 |--------|---------|
 | `python3 {scripts_dir}/check_tasks.py` | List open tasks |
-| `python3 {scripts_dir}/memory_digest.py` | Daily memory digest |
-| `python3 {scripts_dir}/hourly_log.py` | Agent activity log |
 | `python3 {scripts_dir}/health_check.py` | Gateway health check |
 
 ## Git

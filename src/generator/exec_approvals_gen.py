@@ -31,7 +31,6 @@ def _defaults_allowlist(state: WizardState) -> list[dict]:
         {"pattern": _script("morning_briefing.py", state),"id": "d-morning-briefing-01"},
         {"pattern": _script("daily_digest.py", state),    "id": "d-daily-digest-01"},
         {"pattern": _script("memory_digest.py", state),   "id": "d-memory-digest-01"},
-        {"pattern": _script("hourly_log.py", state),      "id": "d-hourly-log-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "d-audit-integrity-01"},
     ]
 

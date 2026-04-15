@@ -43,6 +43,9 @@ def generate(state: WizardState) -> dict:
                 "heartbeat": {
                     "every": "30m",
                     "target": "last",
+                    "model": "mistral/mistral-large-latest",
+                    "isolatedSession": True,
+                    "lightContext": True,
                 },
                 # Bootstrap: how much workspace context is injected per session
                 "bootstrapMaxChars": 20000,

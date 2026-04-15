@@ -143,17 +143,15 @@ def show(state: WizardState, image: str) -> None:
     # ── Page 3: Cron + Customize ────────────────────────────────────────────
     console.print(Panel(
         """Cron jobs are managed via the OpenClaw CLI [italic]after[/italic] the gateway is running.
-Run these once to set up automated memory digests and health checks:
 
-[bold]Daily memory digest[/bold] (runs at 03:05):
-  [cyan]openclaw cron add --name "Daily Memory Digest" --cron "5 3 * * *" \\
-    --session main --system-event "HEARTBEAT: generate daily memory digest"[/cyan]
+[bold]Memory sync is handled automatically by the heartbeat[/bold] — no extra cron needed.
+The heartbeat runs in an isolated session, reads the daily log, and updates MEMORY.md.
 
-[bold]Gateway health check[/bold] (every 2h):
+[bold]Gateway health check[/bold] (every 2h — recommended):
   [cyan]openclaw cron add --name "Gateway Health Check" --cron "0 */2 * * *" \\
     --session main --system-event "HEARTBEAT: gateway health check"[/cyan]
 
-[dim]Or let your agent set these up automatically on first run.[/dim]""",
+[dim]Or let your agent set this up automatically on first run.[/dim]""",
         title="[bold cyan]⏰ Recommended cron jobs  (Page 3 / 3)[/bold cyan]",
         border_style="cyan",
         padding=(1, 2),
