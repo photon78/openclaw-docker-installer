@@ -182,6 +182,19 @@ See [ROADMAP.md](ROADMAP.md) for details.
 
 ---
 
+## Architecture & Documentation
+
+| Document | What it covers |
+|----------|----------------|
+| [AGENTS-ARCHITECTURE.md](AGENTS-ARCHITECTURE.md) | Multi-agent design, spawn rules, agent roles |
+| [MEMORY-ARCHITECTURE.md](MEMORY-ARCHITECTURE.md) | Memory system, topics, daily logs, digest cron |
+| [docs/security-architecture.md](docs/security-architecture.md) | Exec allowlist, security tiers, A2A communication |
+| [docs/multi-agent-setup.md](docs/multi-agent-setup.md) | Step-by-step guide for adding specialist agents |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [ROADMAP.md](ROADMAP.md) | What's planned |
+
+---
+
 ## Contributing
 
 PRs go against the active feature branch, not directly against `main`.
