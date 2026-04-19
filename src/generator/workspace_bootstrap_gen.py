@@ -356,13 +356,16 @@ Note: OCR, translate, and transcribe require a Mistral API key in `.env`.
 
 ---
 
-## 3. Learn About the User
+## 3. Check and Complete USER.md
 
-Ask and note in `USER.md`:
-- Their name and preferred way to be addressed
-- Timezone (if not already set)
-- What they mainly want to use the agent for
-- Any recurring tasks or domains they work in
+Read `USER.md` now — the installer already filled in name, timezone, and communication style
+from the wizard. **Do not ask again for info that is already there.**
+
+Only ask about things that are genuinely missing or marked as a placeholder:
+- Main use cases / domains (if not yet filled in)
+- Recurring tasks they want you to handle
+
+If USER.md looks complete, skip the questions and move on.
 
 ---
 
