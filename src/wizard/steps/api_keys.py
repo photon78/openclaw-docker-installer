@@ -43,28 +43,6 @@ PROVIDERS: list[dict[str, Any]] = [
         "default_model": "openai/gpt-4o",
     },
     {
-        "id": "google",
-        "label": "Google (Gemini)",
-        "key_hint": "→  https://aistudio.google.com/",
-        "key_prefix": None,
-        "models": [
-            ("google/gemini-2.5-pro",   "Gemini 2.5 Pro — recommended"),
-            ("google/gemini-2.5-flash", "Gemini 2.5 Flash — fast & cheap"),
-        ],
-        "default_model": "google/gemini-2.5-pro",
-    },
-    {
-        "id": "xai",
-        "label": "xAI (Grok)",
-        "key_hint": "→  https://console.x.ai/",
-        "key_prefix": "xai-",
-        "models": [
-            ("xai/grok-3",      "Grok 3 — recommended"),
-            ("xai/grok-3-mini", "Grok 3 Mini — fast & cheap"),
-        ],
-        "default_model": "xai/grok-3",
-    },
-    {
         "id": "mistral",
         "label": "Mistral",
         "key_hint": "→  https://console.mistral.ai/",

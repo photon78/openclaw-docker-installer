@@ -59,7 +59,7 @@ def _active_memory_config(state: WizardState) -> dict:
 
 # Providers with confirmed native OpenClaw plugins (enabled: true is sufficient).
 # DeepSeek, OpenRouter = OpenAI-compat, not in installer wizard — use openclaw configure.
-_NATIVE_PLUGINS = {"anthropic", "mistral", "openai", "google", "xai"}
+_NATIVE_PLUGINS = {"anthropic", "mistral", "openai"}
 
 
 def _plugins_config(state: WizardState) -> dict:
