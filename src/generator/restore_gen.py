@@ -91,9 +91,32 @@ def main() -> None:
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     log.info("START: restore exec-approvals.json")
     time.sleep(2)  # brief wait for gateway socket
-    TARGET.write_text(json.dumps(APPROVALS, indent=2), encoding="utf-8")
-    log.info("OK: exec-approvals.json restored at %s", str(TARGET))
-    print("[OK] exec-approvals.json restored")
+
+    # Merge strategy: preserve agents added by add_agent.py
+    if TARGET.exists():
+        try:
+            existing = json.loads(TARGET.read_text(encoding="utf-8"))
+            existing_agents = existing.get("agents", {{}})
+        except Exception:
+            existing_agents = {{}}
+    else:
+        existing_agents = {{}}
+
+    # Start from baseline
+    merged = json.loads(json.dumps(APPROVALS))
+
+    # Merge: baseline agents are authoritative, but preserve additional agents
+    baseline_agents = merged.get("agents", {{}})
+    for agent_name, agent_config in existing_agents.items():
+        if agent_name not in baseline_agents:
+            # Agent added after install (e.g. by add_agent.py) — preserve it
+            baseline_agents[agent_name] = agent_config
+            log.info("PRESERVED: agent '%s' (not in baseline)", agent_name)
+    merged["agents"] = baseline_agents
+
+    TARGET.write_text(json.dumps(merged, indent=2), encoding="utf-8")
+    log.info("OK: exec-approvals.json restored (merge) at %s", str(TARGET))
+    print("[OK] exec-approvals.json restored (baseline + preserved agents)")
 
 
 if __name__ == "__main__":
