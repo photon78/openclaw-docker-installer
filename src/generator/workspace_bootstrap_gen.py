@@ -406,6 +406,20 @@ _Good luck out there._
 def _tools_md(state: WizardState) -> str:
     skills_dir = state.workspace_dir / "skills"
     scripts_dir = state.workspace_dir / "scripts"
+    mistral_block = ""
+    if state.mistral_api_key:
+        mistral_block = f"""\
+
+### Mistral Skills
+
+| Skill | Command | Purpose |
+|-------|---------|--------|
+| **mistral-translate** | `python3 {skills_dir}/mistral-translate/translate.py` | Translations |
+| **mistral-ocr** | `python3 {skills_dir}/mistral-ocr/ocr.py` | Image → text |
+| **mistral-transcribe** | `python3 {skills_dir}/mistral-transcribe/transcribe.py` | Audio → text |
+| **mistral-vision** | `python3 {skills_dir}/mistral-vision/vision.py` | Image analysis |
+
+> Mistral skills require MISTRAL_API_KEY in .env. Always prefer for media tasks."""
     return f"""\
 # TOOLS.md — {state.agent_name}
 
@@ -418,13 +432,7 @@ def _tools_md(state: WizardState) -> str:
 |-------|---------|--------|
 | **web-search** | `python3 {skills_dir}/web-search/search.py "<query>"` | DuckDuckGo search |
 | **docs-summarize** | `python3 {skills_dir}/docs-summarize/summarize.py <url>` | Summarize docs/URLs |
-| **mistral-translate** | `python3 {skills_dir}/mistral-translate/translate.py` | Translations (Mistral) |
-| **mistral-ocr** | `python3 {skills_dir}/mistral-ocr/ocr.py` | Image → text (Mistral) |
-| **mistral-transcribe** | `python3 {skills_dir}/mistral-transcribe/transcribe.py` | Audio → text (Mistral) |
-
-> ⚠️ Mistral skills require MISTRAL_API_KEY in .env.
-> Mistral excels at media tasks (OCR, translation, transcription) — fast, accurate,
-> and cost-efficient. Always prefer these skills for media processing.
+{mistral_block}
 
 ## Scripts
 
@@ -945,15 +953,26 @@ def generate(state: WizardState) -> list[Path]:
     (workspace / "scripts" / "health_check.py").chmod(0o755)
 
     # Copy bundled skills (idempotent — skip if already present)
+    # Structure: templates/skills/always/ (always copied)
+    #            templates/skills/mistral/ (only if Mistral API key present)
     if _SKILLS_SRC.exists():
         skills_dst = workspace / "skills"
         skills_dst.mkdir(exist_ok=True)
-        for skill_dir in sorted(_SKILLS_SRC.iterdir()):
-            if skill_dir.is_dir():
-                target = skills_dst / skill_dir.name
-                if not target.exists():
-                    shutil.copytree(skill_dir, target)
-                    written.append(target)
+
+        def _copy_skill_group(group: str) -> None:
+            group_dir = _SKILLS_SRC / group
+            if not group_dir.exists():
+                return
+            for skill_dir in sorted(group_dir.iterdir()):
+                if skill_dir.is_dir():
+                    target = skills_dst / skill_dir.name
+                    if not target.exists():
+                        shutil.copytree(skill_dir, target)
+                        written.append(target)
+
+        _copy_skill_group("always")
+        if state.mistral_api_key:
+            _copy_skill_group("mistral")
 
     # Generate health_check.py
     files_to_write["scripts/health_check.py"] = _health_check_py(state)
