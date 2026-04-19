@@ -57,6 +57,52 @@ def _active_memory_config(state: WizardState) -> dict:
     }
 
 
+# Providers that have a native OpenClaw plugin (enabled: true is sufficient)
+_NATIVE_PLUGINS = {"anthropic", "mistral", "openai", "google", "xai",
+                   "openrouter", "deepseek", "groq"}
+
+
+def _plugins_config(state: WizardState) -> dict:
+    """Build plugins block dynamically based on which API keys are configured.
+
+    Rules:
+    - Primary provider plugin: always included if key is set
+    - Mistral plugin: included if mistral_api_key is set (even as secondary, for skills)
+    - active-memory: always included
+    - No plugin added without a configured key (avoids 404 / auth errors at boot)
+    """
+    allow: list[str] = []
+    entries: dict = {}
+
+    # Collect active providers
+    active_providers: set[str] = set()
+
+    if state.anthropic_api_key:
+        active_providers.add("anthropic")
+    if state.mistral_api_key:
+        active_providers.add("mistral")
+    if state.primary_api_key and state.primary_provider_id not in ("anthropic", "mistral"):
+        active_providers.add(state.primary_provider_id)
+
+    # Add plugin entries for each active provider
+    for provider in sorted(active_providers):
+        if provider in _NATIVE_PLUGINS:
+            allow.append(provider)
+            entries[provider] = {"enabled": True}
+        # Unknown providers: skip (no plugin available)
+
+    # active-memory always last
+    allow.append("active-memory")
+    entries["active-memory"] = _active_memory_config(state)
+
+    return {
+        # Explicit allow-list: only these plugins are loaded.
+        # Channel plugin appended dynamically below based on wizard selection.
+        "allow": allow,
+        "entries": entries,
+    }
+
+
 def generate(state: WizardState) -> dict:
     """Return openclaw.json content as dict."""
     config: dict = {
@@ -110,21 +156,7 @@ def generate(state: WizardState) -> dict:
                 ]
             },
         },
-        "plugins": {
-            # Explicit allow-list: only these plugins are loaded.
-            # Channel plugin appended dynamically below based on wizard selection.
-            "allow": ["mistral", "anthropic", "active-memory"],
-            "entries": {
-                # Mistral runs natively via plugin — NO custom models.providers block needed.
-                # Adding a custom provider block causes 404 (OpenAI-compat fallback).
-                "mistral": {"enabled": True},
-                "anthropic": {"enabled": True},
-                # Active Memory: auto memory_search before every reply.
-                # agents list is derived from WizardState — never hardcoded.
-                # WARNING: do NOT add enabled:true inside config{} — invalid property.
-                "active-memory": _active_memory_config(state),
-            },
-        },
+        "plugins": _plugins_config(state),
         "session": {
             "dmScope": "per-channel-peer",
             "maintenance": {
