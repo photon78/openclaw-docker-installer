@@ -149,7 +149,31 @@ Never silently proceed past a security signal. The user can always override — 
 
 ## Task Check
 `python3 {check_tasks}`
+
+## Adding a Sub-Agent (Checklist)
+Before adding a new agent, ask the user for confirmation.
+Then use `add_agent.py` from the installer scripts:
+
+```
+python3 src/scripts/add_agent.py --name <name> --type <coding|research|content|custom>
+```
+
+**Checklist (in order):**
+1. Confirm with user: name, role, channel
+2. Run `add_agent.py --dry-run` first — review output
+3. Run `add_agent.py` — creates workspace, SOUL.md, AGENTS.md, exec-approvals entry
+4. Register Telegram bot token in `.env` if new channel
+5. Reload Gateway: `openclaw gateway reload`
+6. Verify: `/status` shows new agent active
+7. Set `allowAgents` in `openclaw.json` for spawn permissions
+
+**Rules (never skip):**
+- `autoAllowSkills: false` — always, no exceptions
+- `maxSpawnDepth: 1` — no chain-spawning
+- Each agent gets its own exec-approvals section
+- Sub-agents do NOT automatically see main topics (use `extraPaths` if needed)
 """
+
 
 
 def _heartbeat_md(state: WizardState) -> str:

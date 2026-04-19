@@ -20,6 +20,12 @@ def _memory_search_config(state: WizardState) -> dict:
         return {
             "provider": "mistral",
             "model": "mistral-embed",
+            "query": {
+                "hybrid": {
+                    "mmr": {"enabled": True},
+                    "temporalDecay": {"enabled": True},
+                },
+            },
         }
     if state.anthropic_api_key:
         # Anthropic does not offer embeddings — fall through to disabled
