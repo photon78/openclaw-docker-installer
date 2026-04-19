@@ -9,6 +9,7 @@ from rich.table import Table
 
 from wizard.state import WizardState
 from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen
+from installer import systemd_gen
 
 console = Console()
 
@@ -23,6 +24,7 @@ class GenerationResult:
     restore_config_script: Path = field(default_factory=Path)
     backup_script: Path = field(default_factory=Path)
     workspace_files: list = field(default_factory=list)
+    systemd_service: Path | None = None
     image: str = ""
     success: bool = True
 
@@ -119,6 +121,14 @@ def run(state: WizardState) -> GenerationResult:
         _print_table(results)
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
+    # systemd user service (Linux only, non-fatal)
+    systemd_path = systemd_gen.write(state)
+    if systemd_path:
+        enabled = systemd_gen.try_enable(systemd_path)
+        status = "[green]✓[/green]" if enabled else "[yellow]⚠[/yellow]"
+        desc = "enabled" if enabled else "written (enable manually — see completion screen)"
+        results.append((status, "openclaw.service", str(systemd_path), desc))
+
     _print_table(results)
 
     return GenerationResult(
@@ -130,6 +140,7 @@ def run(state: WizardState) -> GenerationResult:
         restore_config_script=restore_config_path,
         backup_script=backup_path,
         workspace_files=workspace_paths,
+        systemd_service=systemd_path,
         image=image,
         success=True,
     )
