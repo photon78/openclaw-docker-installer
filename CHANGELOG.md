@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — v0.3.0 "The Crew"
+
+### Added
+- **Active Memory Plugin** — automatic `memory_search` before every reply, out of the box. Agents no longer need a manual recall step at session start.
+- **Multi-Agent Templates** — `add_agent.py` + archetypes (`coding`, `research`, `content`, `custom`) for main-agent-driven sub-agent setup.
+- **AGENTS.md Sub-Agent Checklist** — 7-step guide for adding specialist agents, including exec-approvals, spawn rules, and security requirements.
+- **MMR + Temporal Decay** — memory search now uses Maximal Marginal Relevance and temporal decay for better recall quality (requires Mistral key).
+- **Restore Merge Strategy** — `restore_exec_approvals.py` merges instead of overriding: baseline agents always restored, additional agents preserved.
+- **A2A Security Rationale** — documented why task-files are preferred over direct agent-to-agent messaging (LLM context leak prevention).
+- **`check_tasks.py` in exec-approvals** — registered in defaults + main allowlist, no approval needed.
+
+### Removed
+- **`daily_digest.py` / `memory_digest.py`** — OpenClaw indexes `memory/topics/` recursively and automatically; no digest step needed.
+- **Daily Digest cron** — removed from BOOTSTRAP.md template.
+- **VPS support** — removed from scope (issues #7, #15 closed).
+
+### Documentation
+- `MEMORY-ARCHITECTURE.md` — Active Memory Plugin, digest decision, automation table updated.
+- `docs/security-architecture.md` — A2A communication security section.
+- `docs/multi-agent-setup.md` — security note on task-files.
+- `README.md` — Architecture & Documentation section added.
+
+---
+
 ## [0.2.1] — 2026-04-15
 
 ### Fixed

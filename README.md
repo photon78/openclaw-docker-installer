@@ -176,7 +176,7 @@ Your agent starts its first session automatically. It will introduce itself and 
 | **v0.1.0-alpha** | First Light | Single agent, Docker, security baseline |
 | **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
 | **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
-| v0.3.0 | TBD | Under discussion |
+| v0.3.0 | The Crew | Multi-agent ready: add_agent.py, Active Memory, MMR search, task-file system |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 
