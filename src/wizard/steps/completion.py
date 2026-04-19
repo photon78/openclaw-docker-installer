@@ -122,13 +122,20 @@ def show(state: WizardState, image: str) -> None:
   Make sure Docker itself starts on boot:
   [cyan]sudo systemctl enable docker[/cyan]
 
-[bold]5. Restore exec-approvals (if needed)[/bold]
+[bold]5. Change providers / add API keys later[/bold]
+
+  Run OpenClaw's native configure wizard inside the container:
+  [cyan]docker compose exec -it openclaw-gateway openclaw configure[/cyan]
+  This handles provider changes, model tiers, and new channels
+  without re-running the installer.
+
+[bold]6. Restore exec-approvals (if needed)[/bold]
 
   If the gateway overwrites exec-approvals.json via doctor mode:
   [cyan]docker compose exec openclaw-gateway \\
     python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
 
-[bold]6. Restart / stop[/bold]
+[bold]7. Restart / stop[/bold]
 
   [cyan]docker compose -f {compose_file} restart[/cyan]
   [cyan]docker compose -f {compose_file} down[/cyan]
