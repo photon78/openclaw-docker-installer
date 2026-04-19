@@ -86,6 +86,20 @@ task, warn before proceeding. Never silently accept insecure patterns.
 <!-- INSTALLER NOTE: Use sessions_send to notify the user proactively. -->
 Important results or blockers → report immediately, don't wait to be asked.
 
+## Important Paths
+<!-- These are read-only for the agent — do NOT modify these files directly. -->
+- **Gateway config:** `{state.openclaw_dir}/openclaw.json`
+- **Secrets:** `{state.openclaw_dir}/.env` (never read or log this file)
+- **Security policy:** `{state.openclaw_dir}/exec-approvals.json`
+- **This workspace:** `{state.workspace_dir}/`
+- **Memory:** `{state.workspace_dir}/memory/`
+- **Tasks:** `{state.workspace_dir}/tasks/`
+- **Scripts:** `{state.workspace_dir}/scripts/`
+- **Skills:** `{state.workspace_dir}/skills/`
+
+> `.env` and `exec-approvals.json` are in the openclaw root — NOT in this workspace.
+> Never create, overwrite, or suggest recreating these files. They were set up by the installer.
+
 ## Skills (always use these — never re-implement)
 - **web-search** → `python3 {skills_dir}/web-search/search.py "<query>"`
 - **docs-summarize** → `python3 {skills_dir}/docs-summarize/summarize.py <url>`
