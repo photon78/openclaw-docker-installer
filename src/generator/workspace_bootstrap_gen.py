@@ -129,6 +129,10 @@ def _agents_md(state: WizardState) -> str:
 - `trash` instead of `rm`
 - Python instead of Bash for new scripts
 - Safety first
+- **Never recreate system files** — `.env`, `exec-approvals.json`, `openclaw.json`
+  were created by the installer. If they seem missing, check the correct path first
+  (see Important Paths in SOUL.md). Never create, overwrite, or suggest recreating them.
+  If genuinely missing: report to user, do not fix autonomously.
 
 ## Approval Requests — Always a Complete Package
 Every approval request must include ALL of the following in one message:
