@@ -948,6 +948,28 @@ if __name__ == "__main__":
     return template.format(env_file=str(env_file), agents_dir=str(agents_dir))
 
 
+def _memory_topic_template(state: WizardState) -> str:  # noqa: ARG001
+    return """\
+# Topic: <title>
+
+<!-- Template for memory/topics/ files.
+     One file per topic. OpenClaw indexes these automatically.
+     Use memory_search to retrieve, memory_get for exact excerpts. -->
+
+**Last updated:** <!-- YYYY-MM-DD -->
+**Summary:** <!-- One sentence -->
+
+## Key Facts
+- 
+
+## Decisions
+- 
+
+## Open Questions
+- 
+"""
+
+
 def generate(state: WizardState) -> list[Path]:
     """Create workspace directory structure and all template files.
 
@@ -979,6 +1001,7 @@ def generate(state: WizardState) -> list[Path]:
         "scripts/check_tasks.py":      _check_tasks_py(state),
         "scripts/post_gateway_fix.py":  _post_gateway_fix_py(state),
         "tasks/cron-setup.md":          _cron_setup_task_md(state),
+        "memory/topics/_template.md":   _memory_topic_template(state),
     }
 
     written: list[Path] = []
