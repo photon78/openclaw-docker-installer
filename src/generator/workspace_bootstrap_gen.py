@@ -187,10 +187,10 @@ Never silently proceed past a security signal. The user can always override — 
 
 ## Adding a Sub-Agent (Checklist)
 Before adding a new agent, ask the user for confirmation.
-Then use `add_agent.py` from the installer scripts:
+Then use `add_agent.py` from the scripts directory:
 
 ```
-python3 src/scripts/add_agent.py --name <name> --type <coding|research|content|custom>
+python3 {check_tasks.parent}/add_agent.py --name <name> --type <coding|research|content|custom>
 ```
 
 **Checklist (in order):**
@@ -992,6 +992,17 @@ def generate(state: WizardState) -> list[Path]:
     (workspace / "scripts" / "check_tasks.py").chmod(0o755)
     (workspace / "scripts" / "post_gateway_fix.py").chmod(0o755)
     (workspace / "scripts" / "health_check.py").chmod(0o755)
+
+    # Copy add_agent.py from installer source into workspace/scripts/
+    _ADD_AGENT_SRC = Path(__file__).parent.parent / "scripts" / "add_agent.py"
+    _add_agent_dst = workspace / "scripts" / "add_agent.py"
+    if _ADD_AGENT_SRC.exists():
+        import shutil as _shutil
+        _shutil.copy2(_ADD_AGENT_SRC, _add_agent_dst)
+        _add_agent_dst.chmod(0o755)
+        written.append(_add_agent_dst)
+    else:
+        print(f"  [warn] add_agent.py not found at {_ADD_AGENT_SRC} — skipping")
 
     # Copy bundled skills (idempotent — skip if already present)
     # Structure: templates/skills/always/ (always copied)

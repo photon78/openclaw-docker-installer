@@ -87,5 +87,10 @@ class WizardState:
 
     @property
     def container_scripts_dir(self) -> Path:
-        """Path to scripts as seen from INSIDE the Docker container."""
-        return self.CONTAINER_OPENCLAW_DIR / "scripts"
+        """Path to agent scripts inside the container (workspace/scripts/).
+
+        NOTE: /home/node/.openclaw/scripts/ is the SYSTEM scripts dir (read-only mount).
+        Agent scripts (check_tasks.py, health_check.py, add_agent.py) live in
+        workspace/scripts/ which is read-write.
+        """
+        return self.CONTAINER_OPENCLAW_DIR / "workspace" / "scripts"
