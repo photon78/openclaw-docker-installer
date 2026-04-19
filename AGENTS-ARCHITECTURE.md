@@ -84,8 +84,7 @@ workspace-<agent>/
   MEMORY.md             ← Long-term memory (unique per agent)
   memory/
     YYYY-MM-DD.md       ← Daily logs
-    digest-latest.md    ← Cross-agent digest (written by cron)
-    topics/             ← Condensed knowledge per topic
+    topics/             ← Condensed knowledge, indexed automatically by OpenClaw
     docs/               ← Permanent documentation references
   tasks/                ← Tasks from HUMAN or other agents
   work/                 ← Active work directories
