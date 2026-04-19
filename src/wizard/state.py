@@ -61,6 +61,10 @@ class WizardState:
     llm_power: str = "anthropic/claude-opus-4-6"
     llm_media: str = "mistral/mistral-large-latest"
 
+    # Container-side paths (Docker maps host openclaw_dir → /home/node/.openclaw)
+    # Scripts and agent templates that run INSIDE the container must use these.
+    CONTAINER_OPENCLAW_DIR: Path = Path("/home/node/.openclaw")
+
     def __post_init__(self) -> None:
         self.openclaw_dir = self.home_dir / ".openclaw"
 
@@ -75,3 +79,13 @@ class WizardState:
     @property
     def env_file(self) -> Path:
         return self.openclaw_dir / ".env"
+
+    @property
+    def container_workspace_dir(self) -> Path:
+        """Path to workspace as seen from INSIDE the Docker container."""
+        return self.CONTAINER_OPENCLAW_DIR / "workspace"
+
+    @property
+    def container_scripts_dir(self) -> Path:
+        """Path to scripts as seen from INSIDE the Docker container."""
+        return self.CONTAINER_OPENCLAW_DIR / "scripts"
