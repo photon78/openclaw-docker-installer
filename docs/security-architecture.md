@@ -194,6 +194,33 @@ volumes:
 
 ---
 
+## Agent-zu-Agent-Kommunikation: Task-Files statt Message-Kanäle
+
+**Direktes A2A-Messaging ist ein Sicherheitsrisiko.**
+
+Wenn Agents direkt miteinander kommunizieren (z.B. via sessions_send mit strukturierten Daten), können sensible Informationen — API-Keys, Nutzerdaten, interner State — unkontrolliert in fremde LLM-Kontexte gelangen. Das LLM auf der Empfängerseite sieht alles was gesendet wird, und das ist nicht immer was gewünscht ist.
+
+**Die Alternative: Task-Files.**
+
+Agents kommunizieren über strukturierte Dateien in `workspace/tasks/YYYY-MM-DD-<name>.md`:
+- Jeder Agent liest nur was er braucht, wann er es braucht
+- Keine Daten überqueren unbeabsichtigt die Kontextgrenze
+- Die Kommunikation ist asynchron, auditierbar und im Dateisystem nachvollziehbar
+- Der sendende Agent schreibt den Task — der empfangende Agent liest ihn via `check_tasks.py`
+
+```
+# Faustregel
+Kein direktes A2A-Messaging für strukturierte Aufgaben.
+Task-Files statt Message-Kanäle.
+
+# sessions_send ist erlaubt für:
+- Kurze Status-Updates ("Task erledigt")
+- Eskalationen an den Operator
+- Nicht für: strukturierte Daten, interne State, Credentials
+```
+
+---
+
 ## Installer-Checkliste
 
 ```

@@ -245,5 +245,20 @@ sub-agents that need to know who else is running.
 
 ---
 
+## Sicherheitshinweis: Task-Files statt direktem A2A-Messaging
+
+**Direktes Agent-zu-Agent-Messaging über Message-Kanäle ist ein Sicherheitsrisiko.**
+
+Wenn Agents strukturierte Daten direkt per `sessions_send` austauschen, können sensible Informationen — API-Keys, Nutzerdaten, interner State — unkontrolliert in fremde LLM-Kontexte gelangen. Das empfangende LLM sieht den gesamten Nachrichteninhalt.
+
+**Empfohlen: Task-Files** in `workspace/tasks/YYYY-MM-DD-<name>.md`
+- Strukturierte Aufgabenübergabe ohne LLM-Kontextleak
+- Asynchron, auditierbar, im Dateisystem nachvollziehbar
+- Empfangender Agent liest via `check_tasks.py` nur was er braucht
+
+`sessions_send` bleibt erlaubt für kurze Status-Updates und Eskalationen an den Operator — nicht für strukturierte Daten oder Credentials.
+
+---
+
 *This guide is maintained by the installer project. Re-run the installer after
 major OpenClaw version upgrades to regenerate base configs.*
