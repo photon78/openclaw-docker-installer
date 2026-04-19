@@ -479,21 +479,10 @@ def _cron_setup_task_md(state: WizardState) -> str:  # noqa: ARG001
 
 ## What to do
 
-Run these two commands once to activate automated memory digests and health checks.
+Run this command once to activate the automated gateway health check.
 Crons must be set via CLI — they cannot be defined in openclaw.json.
 
-### 1. Daily Memory Digest
-
-Runs at 03:05 every night, triggers your memory digest routine:
-
-```bash
-openclaw cron add --name "Daily Memory Digest" \\
-  --cron "5 3 * * *" \\
-  --session main \\
-  --system-event "HEARTBEAT: generate daily memory digest"
-```
-
-### 2. Gateway Health Check
+### Gateway Health Check
 
 Runs every 2 hours, triggers a gateway health check:
 
@@ -510,7 +499,11 @@ openclaw cron add --name "Gateway Health Check" \\
 openclaw cron list
 ```
 
-Both jobs should appear as active.
+The job should appear as active.
+
+> **Note:** No daily digest cron needed. OpenClaw indexes all `.md` files in
+> `memory/topics/` recursively and automatically — `memory_search` always finds
+> the latest topics without a separate digest step.
 
 ## Docs
 
