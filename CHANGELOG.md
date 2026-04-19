@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — v0.3.0 "The Crew"
+## [0.3.0] — 2026-04-19 "The Crew"
 
 ### Added
 - **Active Memory Plugin** — automatic `memory_search` before every reply, out of the box. Agents no longer need a manual recall step at session start.
