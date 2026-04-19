@@ -515,22 +515,20 @@ https://docs.openclaw.ai/cron
 
 
 def _health_check_py(state: WizardState) -> str:
-    """Generate health_check.py — system health monitor for OpenClaw.
+    """Generate health_check.py — system health monitor for OpenClaw (Docker-compatible).
 
-    Checks:
+    Checks (Docker-safe only):
     - Disk usage
-    - Gateway health (via session_status tool, not HTTP)
+    - Gateway health
     - Backup log
-    - System errors (journalctl)
-    - Package changes
-    - Brute force attempts
-    - API keys in service file
     - Gateway restarts
-    - Pi uptime
-    - Successful logins
-    - Integrity audit (exec-approvals + scripts)
+    - Container uptime
+    - Integrity audit
+    - exec-approvals autoAllowSkills
+    - .env permissions
 
-    Paths are resolved from WizardState — no hardcoded /home/hummer.
+    journalctl, dpkg, systemd and SSH host checks omitted — not available in Docker.
+    Paths are resolved from WizardState — no hardcoded paths.
     """
     openclaw_dir = state.openclaw_dir
     template = '''\
@@ -557,9 +555,6 @@ except ImportError:
 SILENT = "--silent" in sys.argv
 BACKUP_LOG = pathlib.Path("{openclaw_dir}") / "logs" / "daily-backup.log"
 EXEC_APPROVALS = pathlib.Path("{openclaw_dir}") / "exec-approvals.json"
-SCRIPTS_DIR = pathlib.Path("{openclaw_dir}") / "workspace" / "scripts"
-SERVICE_FILE = pathlib.Path("{openclaw_dir}") / "gateway.service"  # Docker: kein systemd
-DPKG_LOGS = [pathlib.Path("/var/log/dpkg.log"), pathlib.Path("/var/log/dpkg.log.1")]
 
 report = []
 has_alert = False
@@ -653,75 +648,7 @@ else:
     add("ℹ️ Backup: Noch kein Log (erster Lauf ausstehend)")
 
 
-# 4. System Errors (journalctl — Linux only)
-HARMLESS = ['blkmapd', 'nfs pipe file', 'wpa_supplicant', 'bgscan', 'nl80211',
-            'CTRL-EVENT', 'bcm2708_fb', 'alsa_restore_std', 'GOTO=',
-            'brcmf_proto_bcdc', 'ieee80211', 'brcmfmac']
-try:
-    result = subprocess.run(
-        ["journalctl", "--since", "24 hours ago", "-p", "err", "-q", "--no-pager"],
-        capture_output=True, text=True, timeout=10
-    )
-    errors = [l for l in result.stdout.splitlines()
-              if l and not any(h in l for h in HARMLESS)]
-    if errors:
-        add(f"⚠️ System Errors: {{len(errors)}} unbekannte Fehler in 24h")
-        add("\\n".join(errors[-3:]))
-        flag_alert()
-    else:
-        add("✅ System Errors: Keine")
-except Exception:
-    add("ℹ️ System Errors: journalctl nicht verfügbar")
-
-
-# 5. Paket-Änderungen
-yesterday = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-today = now.strftime("%Y-%m-%d")
-pkg_lines = []
-for log in DPKG_LOGS:
-    if log.exists():
-        for line in log.read_text(encoding="utf-8").splitlines():
-            if any(a in line for a in [' install ', ' upgrade ', ' remove ']):
-                if line.startswith(today) or line.startswith(yesterday):
-                    pkg_lines.append(line)
-if pkg_lines:
-    add(f"ℹ️ Pakete: {{len(pkg_lines)}} Änderungen in 24h")
-    add("\\n".join(pkg_lines[-5:]))
-    flag_info()
-else:
-    add("✅ Pakete: Keine Änderungen")
-
-
-# 6. Einbruchsversuche
-try:
-    result = subprocess.run(
-        ["journalctl", "--since", "24 hours ago", "-q", "--no-pager"],
-        capture_output=True, text=True, timeout=15
-    )
-    brute = sum(1 for l in result.stdout.splitlines()
-                if re.search(r'failed password|invalid user|authentication failure', l, re.IGNORECASE))
-    if brute > 4:
-        add(f"⚠️ Einbruchsversuche: {{brute}} — ALARM (>4)")
-        flag_alert()
-    else:
-        add(f"✅ Einbruchsversuche: {{brute}}")
-except Exception:
-    add("ℹ️ Einbruchsversuche: journalctl nicht verfügbar")
-
-
-# 7. API-Keys im Service-File
-if SERVICE_FILE.exists():
-    content = SERVICE_FILE.read_text(encoding="utf-8")
-    if 'ANTHROPIC_API_KEY' in content or 'MISTRAL_API_KEY' in content:
-        add("⚠️ Security: API-Keys im Service-File — sofort entfernen!")
-        flag_alert()
-    else:
-        add("✅ Service-File: Keine API-Keys")
-else:
-    add("ℹ️ Service-File: Nicht gefunden")
-
-
-# 8. Gateway-Restarts (Docker: kein systemd, stattdessen Logs prüfen)
+# 4. Gateway-Restarts
 GATEWAY_LOG = pathlib.Path("{openclaw_dir}") / "logs" / "gateway.log"
 if GATEWAY_LOG.exists():
     lines = GATEWAY_LOG.read_text(encoding="utf-8").splitlines()
@@ -735,35 +662,17 @@ else:
     add("ℹ️ Gateway-Restarts: Log nicht gefunden")
 
 
-# 9. Pi-Reboots (psutil)
+# 5. Container-Uptime (psutil)
 boot_time = datetime.datetime.fromtimestamp(psutil.boot_time())
 since_boot_h = (now - boot_time).total_seconds() / 3600
 if since_boot_h < 24:
-    add(f"ℹ️ Pi-Reboot: Letzter Boot vor {{since_boot_h:.1f}}h ({{boot_time.strftime('%d.%m %H:%M')}})")
+    add(f"ℹ️ Uptime: Letzter Boot vor {{since_boot_h:.1f}}h ({{boot_time.strftime('%d.%m %H:%M')}})")
     flag_info()
 else:
-    add(f"✅ Pi-Uptime: {{since_boot_h:.0f}}h (kein Reboot in 24h)")
+    add(f"✅ Uptime: {{since_boot_h:.0f}}h")
 
 
-# 10. Erfolgreiche Logins
-try:
-    result = subprocess.run(
-        ["journalctl", "--since", "24 hours ago", "-q", "--no-pager"],
-        capture_output=True, text=True, timeout=15
-    )
-    logins = [l for l in result.stdout.splitlines()
-              if re.search(r'accepted password|accepted publickey', l, re.IGNORECASE)]
-    if logins:
-        add(f"ℹ️ Logins (erfolgreich): {{len(logins)}}")
-        add("\\n".join(logins[-5:]))
-        flag_info()
-    else:
-        add("✅ Logins: Keine in 24h")
-except Exception:
-    add("ℹ️ Logins: journalctl nicht verfügbar")
-
-
-# 11. Integrity Audit (exec-approvals + Scripts)
+# 6. Integrity Audit (exec-approvals + Scripts)
 AUDIT_SCRIPT = pathlib.Path("{openclaw_dir}") / "scripts" / "audit_integrity.py"
 if AUDIT_SCRIPT.exists():
     try:
@@ -801,7 +710,7 @@ else:
     add("ℹ️ Integrity Audit: audit_integrity.py nicht gefunden")
 
 
-# 12. exec-approvals autoAllowSkills check
+# 7. exec-approvals autoAllowSkills check
 if EXEC_APPROVALS.exists():
     try:
         data = json.loads(EXEC_APPROVALS.read_text(encoding="utf-8"))
@@ -819,7 +728,7 @@ else:
     add("ℹ️ exec-approvals: Datei nicht gefunden")
 
 
-# 13. .env file permissions
+# 8. .env file permissions
 env_file = pathlib.Path("{openclaw_dir}") / ".env"
 if env_file.exists():
     perms = oct(env_file.stat().st_mode)[-3:]
@@ -831,26 +740,6 @@ if env_file.exists():
 else:
     add("ℹ️ .env: Datei nicht gefunden")
 
-
-# 14. SSH authorized_keys integrity
-import hashlib
-AUTH_KEYS = pathlib.Path.home() / ".ssh" / "authorized_keys"
-AUTH_KEYS_HASH_FILE = pathlib.Path("{openclaw_dir}") / "security_baseline_ssh.txt"
-if AUTH_KEYS.exists():
-    current_hash = hashlib.sha256(AUTH_KEYS.read_bytes()).hexdigest()
-    if AUTH_KEYS_HASH_FILE.exists():
-        stored_hash = AUTH_KEYS_HASH_FILE.read_text().strip()
-        if current_hash != stored_hash:
-            add("🚨 SSH authorized_keys: GEÄNDERT seit letztem Baseline — sofort prüfen!")
-            flag_alert()
-        else:
-            add("✅ SSH authorized_keys: Unverändert")
-    else:
-        AUTH_KEYS_HASH_FILE.write_text(current_hash)
-        add("ℹ️ SSH authorized_keys: Baseline erstellt")
-        flag_info()
-else:
-    add("ℹ️ SSH authorized_keys: Nicht vorhanden")
 
 
 # Ausgabe
