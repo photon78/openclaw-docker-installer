@@ -3,6 +3,7 @@ Step 1: Welcome, requirements overview, and pre-flight checks.
 """
 import questionary
 from rich.console import Console
+from wizard.ui import confirm_select  # noqa: F401 (used below)
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.table import Table
@@ -62,10 +63,7 @@ def run(state: WizardState) -> bool:
     ))
     console.print()
 
-    cont = questionary.confirm(
-        "Ready to start?",
-        default=True,
-    ).ask()
+    cont = confirm_select("Ready to start?", default=True)
     if not cont:
         return False
 
@@ -85,10 +83,7 @@ def run(state: WizardState) -> bool:
     console.print(table)
     console.print()
 
-    cont2 = questionary.confirm(
-        "Got everything? Continue to pre-flight checks?",
-        default=True,
-    ).ask()
+    cont2 = confirm_select("Got everything? Continue to pre-flight checks?", default=True)
     if not cont2:
         return False
 

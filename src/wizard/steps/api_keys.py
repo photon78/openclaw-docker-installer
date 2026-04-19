@@ -8,6 +8,7 @@ for skills (translate, OCR, transcribe) and budget/media tasks.
 from typing import Any
 import questionary
 from rich.console import Console
+from wizard.ui import confirm_select
 from rich.panel import Panel
 from rich.table import Table
 
@@ -228,10 +229,10 @@ def run(state: WizardState) -> bool | str:
         ))
         console.print()
 
-        want_mistral = questionary.confirm(
-            "Add Mistral as skills/budget provider? (recommended) [Enter=yes, n=no, b=back]",
+        want_mistral = confirm_select(
+            "Add Mistral as skills/budget provider? (recommended)",
             default=True,
-        ).ask()
+        )
 
         if want_mistral is None:
             return BACK

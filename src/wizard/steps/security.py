@@ -6,6 +6,7 @@ import questionary
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from wizard.ui import confirm_select
 
 from wizard.state import WizardState
 
@@ -92,10 +93,10 @@ def run(state: WizardState) -> bool | str:
         "[dim]Auto-allow skills: automatically trusts scripts inside the skills/ directory.\n"
         "Recommended: [bold]No[/bold] (you can whitelist specific skill scripts later).[/dim]\n"
     )
-    auto_allow = questionary.confirm(
+    auto_allow = confirm_select(
         "Enable auto-allow for skill scripts? (not recommended)",
         default=False,
-    ).ask()
+    )
     if auto_allow is None:
         return False
     state.auto_allow_skills = auto_allow
