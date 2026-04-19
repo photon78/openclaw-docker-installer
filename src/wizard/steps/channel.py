@@ -28,9 +28,15 @@ def run(state: WizardState) -> bool | str:
     """
     console.print(Panel.fit(
         "[bold]Channel Setup[/bold]\n\n"
-        "Choose how you'll communicate with your OpenClaw agent.\n"
-        "[dim]You can add more channels later via openclaw.json.[/dim]",
-        border_style="blue",
+        "Choose how you'll communicate with your OpenClaw agent.\n\n"
+        "[bold yellow]⚠ Headless Docker setup:[/bold yellow]\n"
+        "This gateway runs without a display. If you skip channel setup,\n"
+        "[bold]you will have no way to reach your agent[/bold] — no WebUI,\n"
+        "no Telegram, no remote access at all.\n\n"
+        "[dim]Telegram is the recommended option for headless setups.\n"
+        "Additional channels can be added later via openclaw.json or\n"
+        "[bold]docker compose exec openclaw-gateway openclaw configure[/bold][/dim]",
+        border_style="yellow",
     ))
     console.print()
 
