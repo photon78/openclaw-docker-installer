@@ -18,12 +18,6 @@ CHANNELS = {
                  "2. Send /newbot → follow instructions\n"
                  "3. Copy the token (looks like 123456:ABC-DEF...)",
     },
-    "discord": {
-        "label": "Discord",
-        "description": "Good for team setups. Requires a bot application.",
-        "guide": "1. Go to https://discord.com/developers/applications\n"
-                 "2. Create application → Bot → copy token",
-    },
 }
 
 
@@ -57,7 +51,15 @@ def run(state: WizardState) -> bool | str:
     if channel_choice == "__back__":
         return "back"
     if channel_choice == "__skip__":
-        console.print("[dim]Channel skipped. Add it later in openclaw.json.[/dim]")
+        console.print()
+        console.print(
+            "[yellow]⚠ No channel configured.[/yellow]\n\n"
+            "You can still use your agent via the [bold]OpenClaw WebUI[/bold]:\n"
+            "  http://localhost:3000  (or your server's IP)\n\n"
+            "[bold red]Headless setup?[/bold red] Without a channel you have NO way to reach\n"
+            "your agent remotely. Configure Telegram before going headless:\n"
+            "  https://docs.openclaw.ai/channels/telegram\n"
+        )
         state.channel = None
         return True
 
@@ -73,7 +75,6 @@ def run(state: WizardState) -> bool | str:
     # Token / credential input — required, loop until valid or back
     _labels = {
         "telegram": "Telegram bot token",
-        "discord": "Discord bot token",
     }
     _prompt = _labels.get(channel_choice, f"{info['label']} token")
     while True:
@@ -91,11 +92,9 @@ def run(state: WizardState) -> bool | str:
     # Save token to the correct field
     if channel_choice == "telegram":
         state.telegram_bot_token = token.strip()
-    elif channel_choice == "discord":
-        state.discord_bot_token = token.strip()
 
     # allowFrom — who can talk to the agent
-    if channel_choice in ("telegram", "discord"):
+    if channel_choice == "telegram":
         console.print()
         console.print("[bold]Who should be able to reach the agent?[/bold]")
         if channel_choice == "telegram":
