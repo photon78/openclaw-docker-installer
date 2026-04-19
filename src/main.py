@@ -60,7 +60,12 @@ ASCII_ART = (
 
 
 @app.command()
-def install() -> None:
+def install(
+    dry_run: bool = typer.Option(
+        False, "--dry-run",
+        help="Preview generated config files in a temp dir — no files written to ~/.openclaw, Docker not started."
+    ),
+) -> None:
     """Run the interactive setup wizard."""
     console.print()
     console.print(ASCII_ART, style="bold cyan")
@@ -93,8 +98,9 @@ def install() -> None:
         log.info("Installation aborted by user.")
         raise typer.Exit(code=1)
 
-    log.info("Wizard complete — channel=%s security=%s backup=%s",
-             state.channel, state.security_profile, state.backup_mount_path)
+    state.dry_run = dry_run
+    log.info("Wizard complete — channel=%s security=%s backup=%s dry_run=%s",
+             state.channel, state.security_profile, state.backup_mount_path, dry_run)
 
     result = run_generator(state)
     if not result.success:
@@ -104,6 +110,13 @@ def install() -> None:
         raise typer.Exit(code=1)
 
     log.info("Config generated — image=%s", result.image)
+
+    if dry_run:
+        console.print()
+        console.print("[bold yellow]🔍 Dry run complete.[/bold yellow] No files were written to [cyan]~/.openclaw[/cyan].")
+        console.print(f"Generated files are in: [cyan]{state.openclaw_dir}[/cyan]")
+        console.print("[dim]Inspect the files, then re-run without --dry-run to install.[/dim]")
+        raise typer.Exit()
 
     # Start gateway
     start = docker_start(state)

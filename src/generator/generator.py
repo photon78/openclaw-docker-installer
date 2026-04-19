@@ -2,6 +2,7 @@
 generator.py — Orchestrates config file generation from WizardState.
 Calls all individual generators and reports what was written.
 """
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from rich.console import Console
@@ -39,7 +40,14 @@ def _print_table(results: list) -> None:
 
 def run(state: WizardState) -> GenerationResult:
     """Generate all config files. Returns GenerationResult."""
-    console.print("\n[bold]Generating configuration files...[/bold]\n")
+    if state.dry_run:
+        # Redirect all writes to a temporary directory
+        tmp = Path(tempfile.mkdtemp(prefix="openclaw-dry-run-"))
+        state.openclaw_dir = tmp
+        console.print(f"\n[bold yellow]🔍 DRY RUN[/bold yellow] — writing to temp dir: [cyan]{tmp}[/cyan]")
+        console.print("[dim]No files will be written to ~/.openclaw. Docker will not be started.[/dim]\n")
+    else:
+        console.print("\n[bold]Generating configuration files...[/bold]\n")
 
     results = []
 
@@ -121,8 +129,8 @@ def run(state: WizardState) -> GenerationResult:
         _print_table(results)
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
-    # systemd user service (Linux only, non-fatal)
-    systemd_path = systemd_gen.write(state)
+    # systemd user service (Linux only, non-fatal, skipped in dry-run)
+    systemd_path = None if state.dry_run else systemd_gen.write(state)
     if systemd_path:
         enabled = systemd_gen.try_enable(systemd_path)
         status = "[green]✓[/green]" if enabled else "[yellow]⚠[/yellow]"

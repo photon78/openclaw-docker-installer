@@ -55,6 +55,9 @@ class WizardState:
     backup_enabled: bool = True
     backup_mount_path: str = ""        # e.g. "/mnt/backup"
 
+    # Dry-run mode — write to tempdir, skip Docker and systemd
+    dry_run: bool = False
+
     # LLM tiers
     llm_budget: str = "mistral/mistral-large-latest"
     llm_standard: str = "anthropic/claude-sonnet-4-6"
