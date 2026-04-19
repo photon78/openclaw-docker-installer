@@ -9,11 +9,13 @@ from pathlib import Path
 from wizard.state import WizardState
 
 def _script(name: str, state: "WizardState") -> str:
-    return str(state.scripts_dir / name)
+    """Path to an agent script as seen from INSIDE the container (workspace/scripts/)."""
+    return str(state.container_workspace_dir / "scripts" / name)
 
 
 def _skill(path: str, state: "WizardState") -> str:
-    return str(state.workspace_dir / "skills" / path)
+    """Path to a skill script as seen from INSIDE the container."""
+    return str(state.container_workspace_dir / "skills" / path)
 
 
 def _defaults_allowlist(state: WizardState) -> list[dict]:
@@ -61,6 +63,7 @@ def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
         {"pattern": _script("audit_integrity.py", state), "id": "m-audit-integrity-01"},
         {"pattern": _script("morning_briefing.py", state),"id": "m-morning-briefing-01"},
         {"pattern": _script("check_tasks.py", state),     "id": "m-check-tasks-01"},
+        {"pattern": _script("add_agent.py", state),         "id": "m-add-agent-01"},
         {"pattern": _skill("web-search/search.py", state),     "id": "m-web-search-01"},
         {"pattern": _skill("docs-summarize/summarize.py", state), "id": "m-docs-summarize-01"},
     ]
