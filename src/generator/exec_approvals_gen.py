@@ -32,6 +32,7 @@ def _defaults_allowlist(state: WizardState) -> list[dict]:
         {"pattern": _script("daily_digest.py", state),    "id": "d-daily-digest-01"},
         {"pattern": _script("memory_digest.py", state),   "id": "d-memory-digest-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "d-audit-integrity-01"},
+        {"pattern": _script("check_tasks.py", state),     "id": "d-check-tasks-01"},
     ]
 
 
@@ -61,6 +62,7 @@ def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
         {"pattern": _script("health_check.py", state),    "id": "m-health-check-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "m-audit-integrity-01"},
         {"pattern": _script("morning_briefing.py", state),"id": "m-morning-briefing-01"},
+        {"pattern": _script("check_tasks.py", state),     "id": "m-check-tasks-01"},
         {"pattern": _skill("web-search/search.py", state),     "id": "m-web-search-01"},
         {"pattern": _skill("docs-summarize/summarize.py", state), "id": "m-docs-summarize-01"},
     ]
