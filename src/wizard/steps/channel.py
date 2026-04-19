@@ -24,11 +24,6 @@ CHANNELS = {
         "guide": "1. Go to https://discord.com/developers/applications\n"
                  "2. Create application → Bot → copy token",
     },
-    "signal": {
-        "label": "Signal",
-        "description": "Most private. Requires signal-cli setup.",
-        "guide": "See: https://docs.openclaw.ai/channels/signal",
-    },
 }
 
 
@@ -79,7 +74,6 @@ def run(state: WizardState) -> bool | str:
     _labels = {
         "telegram": "Telegram bot token",
         "discord": "Discord bot token",
-        "signal": "signal-cli phone number (e.g. +41791234567)",
     }
     _prompt = _labels.get(channel_choice, f"{info['label']} token")
     while True:
@@ -99,10 +93,8 @@ def run(state: WizardState) -> bool | str:
         state.telegram_bot_token = token.strip()
     elif channel_choice == "discord":
         state.discord_bot_token = token.strip()
-    elif channel_choice == "signal":
-        state.signal_number = token.strip()
 
-    # allowFrom — who can talk to the agent (Telegram + Discord only)
+    # allowFrom — who can talk to the agent
     if channel_choice in ("telegram", "discord"):
         console.print()
         console.print("[bold]Who should be able to reach the agent?[/bold]")
