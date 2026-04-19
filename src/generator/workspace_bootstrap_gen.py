@@ -28,6 +28,15 @@ def _soul_md(state: WizardState) -> str:
     persona_desc = _PERSONA_DESCRIPTIONS.get(state.persona_style, "Neutral assistant.")
     channel_hint = state.channel if state.channel else "your configured channel"
     check_tasks = state.workspace_dir / "scripts" / "check_tasks.py"
+    skills_dir = state.workspace_dir / "skills"
+    mistral_skills_hint = ""
+    if state.mistral_api_key:
+        mistral_skills_hint = (
+            f"- **mistral-ocr** → `python3 {skills_dir}/mistral-ocr/ocr.py`\n"
+            f"- **mistral-translate** → `python3 {skills_dir}/mistral-translate/translate.py`\n"
+            f"- **mistral-transcribe** → `python3 {skills_dir}/mistral-transcribe/transcribe.py`\n"
+            f"- **mistral-vision** → `python3 {skills_dir}/mistral-vision/vision.py`\n"
+        )
     return f"""\
 # SOUL.md — {state.agent_name} {state.agent_emoji}
 
@@ -76,6 +85,12 @@ task, warn before proceeding. Never silently accept insecure patterns.
 ## Proactive Messages
 <!-- INSTALLER NOTE: Use sessions_send to notify the user proactively. -->
 Important results or blockers → report immediately, don't wait to be asked.
+
+## Skills (always use these — never re-implement)
+- **web-search** → `python3 {skills_dir}/web-search/search.py "<query>"`
+- **docs-summarize** → `python3 {skills_dir}/docs-summarize/summarize.py <url>`
+{mistral_skills_hint}
+Full reference: `TOOLS.md`
 
 ## Character
 <!-- INSTALLER NOTE: How should the agent communicate? -->
