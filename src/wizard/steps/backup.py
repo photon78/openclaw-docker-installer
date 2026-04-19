@@ -2,6 +2,8 @@
 backup.py — Wizard step: backup medium configuration.
 Backup is a core feature — not optional.
 """
+from pathlib import Path
+
 import questionary
 from rich.console import Console
 from rich.panel import Panel
@@ -53,15 +55,42 @@ def run(state: WizardState) -> bool | str:
         return True
 
     if choice == "Custom path...":
-        custom = questionary.text(
-            "Enter mount path:",
-            default="/mnt/backup",
-        ).ask()
-        if not custom:
-            return False
-        state.backup_mount_path = custom.strip()
+        while True:
+            custom = questionary.text(
+                "Enter mount path:",
+                default="/mnt/backup",
+            ).ask()
+            if not custom:
+                return False
+            path = Path(custom.strip())
+            if path.exists() and path.is_dir():
+                state.backup_mount_path = str(path)
+                break
+            console.print(f"[yellow]⚠[/yellow]  Path [cyan]{custom.strip()}[/cyan] does not exist or is not a directory.")
+            console.print("[dim]Make sure the backup medium is mounted before continuing, or choose Skip.[/dim]")
     else:
-        state.backup_mount_path = choice
+        # Predefined path — validate before accepting
+        path = Path(choice)
+        if not path.exists() or not path.is_dir():
+            console.print(f"[yellow]⚠[/yellow]  [cyan]{choice}[/cyan] is not mounted or does not exist.")
+            console.print("[dim]Mount your backup medium first, or choose a different path.[/dim]")
+            retry = questionary.select(
+                "What would you like to do?",
+                choices=[
+                    questionary.Choice("Enter a custom path", value="custom"),
+                    questionary.Choice(“⏭  Skip backup for now", value="skip"),
+                ],
+            ).ask()
+            if retry == "skip":
+                state.backup_mount_path = None
+                return True
+            # Fall through to custom input
+            custom = questionary.text("Enter mount path:", default="/mnt/backup").ask()
+            if not custom:
+                return False
+            state.backup_mount_path = custom.strip()
+        else:
+            state.backup_mount_path = str(path)
 
     console.print(f"[green]✓[/green] Backup mount: [cyan]{state.backup_mount_path}[/cyan]")
 

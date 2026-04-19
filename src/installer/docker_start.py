@@ -21,8 +21,8 @@ log = logging.getLogger("installer.docker_start")
 console = Console()
 
 HEALTHZ_URL = "http://127.0.0.1:18789/readyz"  # readiness probe (gateway fully up)
-POLL_INTERVAL = 2      # seconds between health checks
-STARTUP_TIMEOUT = 90   # max seconds to wait (Docker image may need to initialize)
+POLL_INTERVAL = 2       # seconds between health checks
+STARTUP_TIMEOUT = 180   # max seconds to wait — SD-card Pi on first pull can be slow
 
 
 @dataclass
@@ -90,7 +90,8 @@ def run(state: WizardState) -> StartResult:
 
     # Timeout — show last logs
     console.print("[yellow]⚠[/yellow] Gateway did not become healthy within "
-                  f"{STARTUP_TIMEOUT}s. Last logs:")
+                  f"{STARTUP_TIMEOUT}s. On Raspberry Pi with SD card the first "
+                  "pull can take longer — try: docker compose up -d && openclaw-installer status\nLast logs:")
     _show_logs(compose_file, lines=20)
     return StartResult(ok=False, message="Gateway startup timeout.")
 
