@@ -25,6 +25,11 @@ git clone --branch v0.2.1 https://github.com/photon78/openclaw-docker-installer.
 
 ---
 
+## Take a look
+
+[![Demo Video](https://img.youtube.com/vi/xqD69RweAjc/0.jpg)](https://youtu.be/xqD69RweAjc)
+
+---
 ## What is this?
 
 OpenClaw is a powerful self-hosted AI agent platform. It's flexible, extensible — and by default, it gives the agent a lot of power.
