@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.1-blue)](CHANGELOG.md)
 
 ---
 
@@ -12,14 +12,15 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.2.0** | ✅ Stable | Full install wizard, Docker deploy, Telegram/Discord/Signal, security hardening, BOOTSTRAP onboarding |
+| **v0.2.1** | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
+| v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram/Discord/Signal, security hardening, BOOTSTRAP onboarding |
 | v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
 
 > ✅ **The installer works end-to-end.** After running the wizard, you get a fully functional, security-hardened OpenClaw instance running in Docker — ready to use via Telegram (or your chosen channel). The agent introduces itself, explains its capabilities, and is ready to work.
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.2.0 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.2.1 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
@@ -162,7 +163,7 @@ Your agent starts its first session automatically. It will introduce itself and 
 | Ubuntu 24.04 LTS | ✅ Tested |
 | Raspberry Pi OS (64-bit) | ✅ Tested |
 | macOS | 🔜 Planned |
-| Windows 11 | 🔜 In progress |
+| Windows 11 | ✅ Tested (v0.2.1) |
 
 **Tested with OpenClaw `2026.4.9`**
 
@@ -173,8 +174,9 @@ Your agent starts its first session automatically. It will introduce itself and 
 | Version | Codename | Focus |
 |---------|----------|-------|
 | **v0.1.0-alpha** | First Light | Single agent, Docker, security baseline |
-| v0.2.0 | The Pack | Multi-agent, extended memory, Telegram topics |
-| v0.3.0 | VPS Ready | nginx + HTTPS + ufw auto-setup for VPS deployments |
+| **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
+| **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
+| v0.3.0 | TBD | Under discussion |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 
