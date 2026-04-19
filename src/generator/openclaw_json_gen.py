@@ -28,6 +28,29 @@ def _memory_search_config(state: WizardState) -> dict:
     return {"enabled": False}
 
 
+def _active_memory_config(state: WizardState) -> dict:
+    """Return active-memory plugin config.
+
+    agents: derived from WizardState — never hardcoded.
+    modelFallback: always via ${LLM_BUDGET} env ref.
+    Note: enabled:true must NOT appear inside config{} — only at plugin level.
+    """
+    return {
+        "enabled": True,
+        "config": {
+            "agents": [state.agent_name],
+            "allowedChatTypes": ["direct"],
+            "modelFallback": "${LLM_BUDGET}",
+            "queryMode": "recent",
+            "promptStyle": "balanced",
+            "timeoutMs": 15000,
+            "maxSummaryChars": 220,
+            "persistTranscripts": False,
+            "logging": True,
+        },
+    }
+
+
 def generate(state: WizardState) -> dict:
     """Return openclaw.json content as dict."""
     config: dict = {
@@ -84,12 +107,16 @@ def generate(state: WizardState) -> dict:
         "plugins": {
             # Explicit allow-list: only these plugins are loaded.
             # Channel plugin appended dynamically below based on wizard selection.
-            "allow": ["mistral", "anthropic"],
+            "allow": ["mistral", "anthropic", "active-memory"],
             "entries": {
                 # Mistral runs natively via plugin — NO custom models.providers block needed.
                 # Adding a custom provider block causes 404 (OpenAI-compat fallback).
                 "mistral": {"enabled": True},
                 "anthropic": {"enabled": True},
+                # Active Memory: auto memory_search before every reply.
+                # agents list is derived from WizardState — never hardcoded.
+                # WARNING: do NOT add enabled:true inside config{} — invalid property.
+                "active-memory": _active_memory_config(state),
             },
         },
         "session": {

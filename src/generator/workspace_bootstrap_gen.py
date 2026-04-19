@@ -69,6 +69,10 @@ task, warn before proceeding. Never silently accept insecure patterns.
 4. Read memory/YYYY-MM-DD.md (today + yesterday if exists)
 5. Check tasks: `python3 {check_tasks}`
 
+> **Active Memory is enabled.** Memory recall runs automatically before every reply —
+> no manual memory_search needed at session start. MEMORY.md is injected as Project Context.
+> Use `memory_search` only when you need deeper or targeted recall beyond the automatic summary.
+
 ## Proactive Messages
 <!-- INSTALLER NOTE: Use sessions_send to notify the user proactively. -->
 Important results or blockers → report immediately, don't wait to be asked.
