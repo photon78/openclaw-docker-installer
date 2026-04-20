@@ -1,9 +1,8 @@
 """
 Step 1: Welcome, requirements overview, and pre-flight checks.
 """
-import questionary
 from rich.console import Console
-from wizard.ui import confirm_select  # noqa: F401 (used below)
+from wizard.ui import confirm_select
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.table import Table

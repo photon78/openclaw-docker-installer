@@ -78,7 +78,7 @@ def run(state: WizardState) -> bool | str:
                 "What would you like to do?",
                 choices=[
                     questionary.Choice("Enter a custom path", value="custom"),
-                    questionary.Choice(“⏭  Skip backup for now", value="skip"),
+                    questionary.Choice("⏭  Skip backup for now", value="skip"),
                 ],
             ).ask()
             if retry == "skip":
