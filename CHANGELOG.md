@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+---
+
+## [0.3.1] — 2026-04-20 "The Crew (patch)"
+
+### Fixed
+- **STARTUP_TIMEOUT 90→180s** — prevents false timeout on Raspberry Pi with SD card; improved timeout message with recovery hint.
+- **`backup_mount_path` validation** — `Path.exists()` check for predefined and custom paths; prompts to re-enter or skip if path is not mounted.
+- **Skill duplicates removed** — 13 stale flat-copy files deleted from `src/installer/templates/skills/`; only `always/` and `mistral/` structure remains.
+
+### Added
+- **systemd user service generator** — writes `~/.config/systemd/user/openclaw.service` at install time; attempts `systemctl --user enable` automatically; completion screen shows `loginctl enable-linger` hint for headless servers.
+- **`--dry-run` mode** — `python3 src/main.py install --dry-run` runs the full wizard but writes all generated files to a temp dir. Docker not started. Useful for previewing config before committing to install.
+
+### Docs
+- README updated for v0.3.0: status table, multi-agent features, sub-agent security philosophy (*"hardened from birth"*).
+
+---
+
 ## [0.3.0] — 2026-04-19 "The Crew"
 
 ### Added
