@@ -343,7 +343,7 @@ def _patch_openclaw_json(
 def _patch_exec_approvals(openclaw_dir: Path, name: str, dry_run: bool) -> None:
     path = openclaw_dir / "exec-approvals.json"
     if not path.exists():
-        print(f"⚠️  exec-approvals.json not found — skipping")
+        print("⚠️  exec-approvals.json not found — skipping")
         return
 
     data = json.loads(path.read_text(encoding="utf-8"))
