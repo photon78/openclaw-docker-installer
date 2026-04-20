@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.1-blue)](CHANGELOG.md)
 
 ---
 
@@ -21,7 +21,7 @@
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.3.0 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.3.1 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
@@ -201,7 +201,7 @@ Your agent starts its first session automatically. It will introduce itself and 
 | **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
 | **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
 | **v0.3.0** | The Crew | Multi-agent system, sub-agent hardening, skills bundled, systemd autostart, `--dry-run` |
-| v0.3.1 | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication |
+| **v0.3.1** | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication — **current stable** |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 

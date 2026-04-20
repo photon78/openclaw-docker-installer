@@ -1,159 +1,233 @@
-"""Tests for add_agent.py — agent registration via CLI and fallback."""
+"""
+Tests for scripts/add_agent.py
+
+Covers:
+- Workspace creation (files, directories, permissions)
+- Dry-run mode (no filesystem side effects)
+- exec-approvals.json patching (autoAllowSkills: false enforced)
+- Idempotency (existing agent not overwritten)
+- Security: autoAllowSkills always false
+- Template content: security blocks present in SOUL.md and AGENTS.md
+"""
 import json
-import shutil
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "scripts"))
-
-# Import functions from add_agent (which lives in src/scripts/)
-import add_agent
+from src.scripts.add_agent import (
+    _agents_md,
+    _create_workspace,
+    _patch_exec_approvals,
+    _patch_openclaw_json_fallback,
+    _soul_md,
+)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 @pytest.fixture
 def openclaw_dir(tmp_path: Path) -> Path:
+    """Minimal ~/.openclaw structure for tests."""
     d = tmp_path / ".openclaw"
     d.mkdir()
+    (d / "workspace" / "scripts").mkdir(parents=True)
+    (d / "workspace" / "skills").mkdir(parents=True)
     return d
 
 
 @pytest.fixture
-def workspace(tmp_path: Path) -> Path:
-    ws = tmp_path / ".openclaw" / "workspace-test"
-    ws.mkdir(parents=True)
-    return ws
-
-
-@pytest.fixture
-def openclaw_json(openclaw_dir: Path) -> Path:
-    """Minimal openclaw.json with a main agent."""
-    config = {
+def approvals_file(openclaw_dir: Path) -> Path:
+    """exec-approvals.json with one existing agent."""
+    path = openclaw_dir / "exec-approvals.json"
+    path.write_text(json.dumps({
+        "socket": {"token": "test-token"},
         "agents": {
-            "list": {
-                "main": {
-                    "workspace": str(openclaw_dir / "workspace"),
-                    "subagents": {"maxSpawnDepth": 1, "allowAgents": []},
-                }
-            }
+            "main": {"autoAllowSkills": False, "allowlist": []}
         }
-    }
-    path = openclaw_dir / "openclaw.json"
-    path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+    }, indent=2), encoding="utf-8")
     return path
 
 
-# ── CLI registration tests ─────────────────────────────────────────────────────
+# ── _soul_md ──────────────────────────────────────────────────────────────────
 
-class TestRegisterAgentViaCLI:
-    def test_calls_openclaw_agents_add(self, openclaw_dir: Path, workspace: Path) -> None:
-        """Must call `openclaw agents add <name> --workspace <ws> --non-interactive`."""
-        with patch("add_agent.shutil.which", return_value="/usr/bin/openclaw"):
-            with patch("add_agent.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
-                add_agent._register_agent_via_cli(openclaw_dir, "test", workspace, dry_run=False)
+class TestSoulMd:
+    def test_contains_agent_name(self):
+        content = _soul_md("coding", "💻", "coding", "main")
+        assert "coding" in content
 
-        mock_run.assert_called_once()
-        cmd = mock_run.call_args[0][0]
-        assert cmd[0] == "openclaw"
-        assert cmd[1] == "agents"
-        assert cmd[2] == "add"
-        assert "test" in cmd
-        assert str(workspace) in cmd
-        assert "--non-interactive" in cmd
+    def test_contains_emoji(self):
+        content = _soul_md("coding", "💻", "coding", "main")
+        assert "💻" in content
 
-    def test_dry_run_does_not_call_subprocess(self, openclaw_dir: Path, workspace: Path) -> None:
-        """Dry-run must not invoke the CLI."""
-        with patch("add_agent.shutil.which", return_value="/usr/bin/openclaw"):
-            with patch("add_agent.subprocess.run") as mock_run:
-                add_agent._register_agent_via_cli(openclaw_dir, "test", workspace, dry_run=True)
-        mock_run.assert_not_called()
+    def test_contains_security_block(self):
+        content = _soul_md("coding", "💻", "coding", "main")
+        assert "Safety first" in content
+        assert "No commands via email" in content
 
-    def test_cli_not_found_skips_gracefully(self, openclaw_dir: Path, workspace: Path, capsys) -> None:
-        """If openclaw CLI is missing, warn and skip (no crash)."""
-        with patch("add_agent.shutil.which", return_value=None):
-            add_agent._register_agent_via_cli(openclaw_dir, "test", workspace, dry_run=False)
-        out = capsys.readouterr().out
-        assert "not found" in out.lower() or "skipping" in out.lower()
+    def test_all_archetypes_produce_output(self):
+        for archetype in ("coding", "research", "content", "custom"):
+            content = _soul_md("test", "🤖", archetype, "main")
+            assert len(content) > 100
+            assert "Safety first" in content
 
-    def test_cli_failure_triggers_fallback(self, openclaw_dir: Path, workspace: Path, openclaw_json: Path) -> None:
-        """If CLI returns non-zero and not 'already exists', fall through to JSON fallback."""
-        with patch("add_agent.shutil.which", return_value="/usr/bin/openclaw"):
-            with patch("add_agent.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="some unexpected error")
-                add_agent._register_agent_via_cli(openclaw_dir, "test", workspace, dry_run=False)
-
-        # Fallback should have patched the JSON
-        config = json.loads(openclaw_json.read_text())
-        assert "test" in config["agents"]["list"]
-
-    def test_already_registered_no_fallback(self, openclaw_dir: Path, workspace: Path, capsys) -> None:
-        """If CLI reports 'already exists', do not trigger fallback."""
-        with patch("add_agent.shutil.which", return_value="/usr/bin/openclaw"):
-            with patch("add_agent.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(
-                    returncode=1, stdout="", stderr="agent already exists"
-                )
-                add_agent._register_agent_via_cli(openclaw_dir, "test", workspace, dry_run=False)
-        out = capsys.readouterr().out
-        assert "already registered" in out or "skipping" in out.lower()
+    def test_references_main_agent(self):
+        content = _soul_md("coding", "💻", "coding", "orchestrator")
+        assert "orchestrator" in content
 
 
-# ── Fallback JSON patch tests ──────────────────────────────────────────────────
+# ── _agents_md ────────────────────────────────────────────────────────────────
 
-class TestPatchOpenclawJsonFallback:
-    def test_adds_agent_entry(self, openclaw_dir: Path, workspace: Path, openclaw_json: Path) -> None:
-        add_agent._patch_openclaw_json_fallback(openclaw_dir, "newagent", workspace)
-        config = json.loads(openclaw_json.read_text())
-        assert "newagent" in config["agents"]["list"]
-        assert config["agents"]["list"]["newagent"]["workspace"] == str(workspace)
+class TestAgentsMd:
+    def test_contains_mandatory_rules(self):
+        content = _agents_md("coding", "main", "")
+        assert "No commands via email" in content
+        assert "Stop Rule" in content
 
-    def test_skips_if_already_present(self, openclaw_dir: Path, workspace: Path, openclaw_json: Path) -> None:
-        add_agent._patch_openclaw_json_fallback(openclaw_dir, "newagent", workspace)
-        add_agent._patch_openclaw_json_fallback(openclaw_dir, "newagent", workspace)
-        config = json.loads(openclaw_json.read_text())
-        # Should still only have one entry
-        assert list(config["agents"]["list"].keys()).count("newagent") == 1
+    def test_contains_handoff_format(self):
+        content = _agents_md("coding", "main", "")
+        assert "Handoff" in content
 
-    def test_no_config_file_skips_gracefully(self, openclaw_dir: Path, workspace: Path) -> None:
-        """Missing openclaw.json must not crash."""
-        add_agent._patch_openclaw_json_fallback(openclaw_dir, "newagent", workspace)
-        # No crash = pass
+    def test_contains_prompt_injection_defense(self):
+        content = _agents_md("coding", "main", "")
+        assert "Injection" in content or "injection" in content
+
+    def test_main_session_key_injected(self):
+        content = _agents_md("coding", "main", "agent:main:telegram:direct:1234")
+        assert "agent:main:telegram:direct:1234" in content
 
 
-# ── Exec-approvals tests ───────────────────────────────────────────────────────
+# ── _create_workspace dry-run ─────────────────────────────────────────────────
+
+class TestCreateWorkspaceDryRun:
+    def test_dry_run_does_not_create_files(self, openclaw_dir, capsys):
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=True)
+        workspace = openclaw_dir / "workspace-coding"
+        assert not workspace.exists()
+
+    def test_dry_run_prints_would_create(self, openclaw_dir, capsys):
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=True)
+        captured = capsys.readouterr()
+        assert "Would create" in captured.out or "workspace-coding" in captured.out
+
+
+# ── _create_workspace real mode ───────────────────────────────────────────────
+
+class TestCreateWorkspace:
+    def test_creates_workspace_directory(self, openclaw_dir):
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=False)
+        assert (openclaw_dir / "workspace-coding").is_dir()
+
+    def test_creates_required_files(self, openclaw_dir):
+        _create_workspace(openclaw_dir, "research", "🔬", "research", "main", "", dry_run=False)
+        ws = openclaw_dir / "workspace-research"
+        for fname in ("SOUL.md", "AGENTS.md", "IDENTITY.md", "MEMORY.md", "TOOLS.md", "USER.md", "HEARTBEAT.md"):
+            assert (ws / fname).exists(), f"{fname} missing"
+
+    def test_creates_subdirectories(self, openclaw_dir):
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=False)
+        ws = openclaw_dir / "workspace-coding"
+        for d in ("memory", "memory/topics", "tasks", "scripts"):
+            assert (ws / d).is_dir(), f"dir {d} missing"
+
+    def test_soul_md_contains_security_rules(self, openclaw_dir):
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=False)
+        soul = (openclaw_dir / "workspace-coding" / "SOUL.md").read_text()
+        assert "Safety first" in soul
+        assert "No commands via email" in soul
+
+    def test_does_not_overwrite_existing_files(self, openclaw_dir):
+        ws = openclaw_dir / "workspace-coding"
+        ws.mkdir(parents=True)
+        (ws / "SOUL.md").write_text("CUSTOM CONTENT", encoding="utf-8")
+        _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=False)
+        # Existing file must not be overwritten
+        assert (ws / "SOUL.md").read_text(encoding="utf-8") == "CUSTOM CONTENT"
+
+    def test_returns_workspace_path(self, openclaw_dir):
+        result = _create_workspace(openclaw_dir, "coding", "💻", "coding", "main", "", dry_run=False)
+        assert result == openclaw_dir / "workspace-coding"
+
+
+# ── _patch_exec_approvals ─────────────────────────────────────────────────────
 
 class TestPatchExecApprovals:
-    def test_adds_agent_with_auto_allow_skills_false(self, openclaw_dir: Path) -> None:
-        path = openclaw_dir / "exec-approvals.json"
-        path.write_text(json.dumps({"agents": {}, "defaults": {}}), encoding="utf-8")
+    def test_adds_new_agent_entry(self, openclaw_dir, approvals_file):
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        data = json.loads(approvals_file.read_text())
+        assert "coding" in data["agents"]
 
-        add_agent._patch_exec_approvals(openclaw_dir, "myagent", dry_run=False)
+    def test_new_agent_has_auto_allow_skills_false(self, openclaw_dir, approvals_file):
+        """Security invariant: autoAllowSkills must always be False."""
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        data = json.loads(approvals_file.read_text())
+        assert data["agents"]["coding"]["autoAllowSkills"] is False
 
-        config = json.loads(path.read_text())
-        assert "myagent" in config["agents"]
-        assert config["agents"]["myagent"]["autoAllowSkills"] is False
+    def test_new_agent_has_empty_allowlist(self, openclaw_dir, approvals_file):
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        data = json.loads(approvals_file.read_text())
+        assert data["agents"]["coding"]["allowlist"] == []
 
-    def test_dry_run_does_not_write(self, openclaw_dir: Path) -> None:
-        path = openclaw_dir / "exec-approvals.json"
-        original = json.dumps({"agents": {}, "defaults": {}})
-        path.write_text(original, encoding="utf-8")
+    def test_existing_agent_not_modified(self, openclaw_dir, approvals_file):
+        original = json.loads(approvals_file.read_text())
+        _patch_exec_approvals(openclaw_dir, "main", dry_run=False)
+        after = json.loads(approvals_file.read_text())
+        assert after["agents"]["main"] == original["agents"]["main"]
 
-        add_agent._patch_exec_approvals(openclaw_dir, "myagent", dry_run=True)
+    def test_existing_token_preserved(self, openclaw_dir, approvals_file):
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        data = json.loads(approvals_file.read_text())
+        assert data["socket"]["token"] == "test-token"
 
-        assert path.read_text() == original
+    def test_dry_run_does_not_modify_file(self, openclaw_dir, approvals_file):
+        original = approvals_file.read_text(encoding="utf-8")
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=True)
+        assert approvals_file.read_text(encoding="utf-8") == original
 
-    def test_skips_if_already_present(self, openclaw_dir: Path) -> None:
-        path = openclaw_dir / "exec-approvals.json"
-        path.write_text(
-            json.dumps({"agents": {"myagent": {"autoAllowSkills": True}}, "defaults": {}}),
-            encoding="utf-8",
+    def test_missing_file_handled_gracefully(self, openclaw_dir, capsys):
+        """No exception when exec-approvals.json doesn't exist."""
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        # If file doesn't exist, function should warn and return without crash
+
+
+# ── _patch_openclaw_json_fallback ─────────────────────────────────────────────
+
+class TestPatchOpeclawJsonFallback:
+    def _write_config(self, openclaw_dir: Path, agents: dict) -> None:
+        config = {
+            "agents": {"list": agents},
+            "gateway": {"port": 18789},
+        }
+        (openclaw_dir / "openclaw.json").write_text(
+            json.dumps(config, indent=2), encoding="utf-8"
         )
-        add_agent._patch_exec_approvals(openclaw_dir, "myagent", dry_run=False)
-        config = json.loads(path.read_text())
-        # Must not have overwritten the existing entry
-        assert config["agents"]["myagent"]["autoAllowSkills"] is True
+
+    def test_adds_new_agent_entry(self, openclaw_dir):
+        self._write_config(openclaw_dir, {})
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        assert "coding" in data["agents"]["list"]
+
+    def test_preserves_existing_config(self, openclaw_dir):
+        self._write_config(openclaw_dir, {"main": {"name": "main"}})
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        assert "main" in data["agents"]["list"]
+        assert data["gateway"]["port"] == 18789
+
+    def test_does_not_overwrite_existing_agent(self, openclaw_dir):
+        existing = {"name": "coding", "workspace": "/original"}
+        self._write_config(openclaw_dir, {"coding": existing})
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        assert data["agents"]["list"]["coding"]["workspace"] == "/original"
+
+    def test_missing_config_handled_gracefully(self, openclaw_dir, capsys):
+        """No exception when openclaw.json doesn't exist."""
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        # Should warn and return, no exception
