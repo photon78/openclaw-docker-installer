@@ -74,25 +74,41 @@ class TestWorkspaceBootstrapGen:
         assert state.agent_name in content
 
     def test_heartbeat_md_contains_workspace_specific_path(self, state: WizardState) -> None:
-        """HEARTBEAT.md must reference the workspace-specific check_tasks.py path."""
+        """HEARTBEAT.md must reference the container check_tasks.py path.
+
+        check_tasks.py and heartbeat run INSIDE the Docker container, so the
+        generated path uses the container path (/home/node/.openclaw/...), not
+        the host tmpdir path used during testing.
+        """
         workspace_bootstrap_gen.write(state)
         content = (state.workspace_dir / "HEARTBEAT.md").read_text()
-        expected_path = str(state.workspace_dir / "scripts" / "check_tasks.py")
-        assert expected_path in content
+        # Container path: Docker maps host openclaw_dir → /home/node/.openclaw
+        container_check_tasks = str(state.container_scripts_dir / "check_tasks.py")
+        assert container_check_tasks in content
 
     def test_heartbeat_md_uses_state_paths(self, state: WizardState) -> None:
-        """HEARTBEAT.md must reference paths derived from state, not hardcoded values."""
+        """HEARTBEAT.md must reference the container check_tasks.py path.
+
+        Container path (/home/node/.openclaw/workspace/scripts/check_tasks.py)
+        must appear — not any host-side tmpdir path.
+        """
         workspace_bootstrap_gen.write(state)
         content = (state.workspace_dir / "HEARTBEAT.md").read_text()
-        # Path must be based on state.workspace_dir, not any hardcoded value
-        assert str(state.workspace_dir) in content
-        assert str(state.workspace_dir / "scripts" / "check_tasks.py") in content
+        container_check_tasks = str(state.container_scripts_dir / "check_tasks.py")
+        assert container_check_tasks in content
 
     def test_check_tasks_py_references_correct_tasks_dir(self, state: WizardState) -> None:
+        """check_tasks.py must reference the container tasks dir.
+
+        The script runs INSIDE the Docker container, so the path must match
+        the container workspace (/home/node/.openclaw/workspace/tasks), not
+        the host tmpdir path used during testing.
+        """
         workspace_bootstrap_gen.write(state)
         content = (state.workspace_dir / "scripts" / "check_tasks.py").read_text()
-        expected_tasks_dir = str(state.workspace_dir / "tasks")
-        assert expected_tasks_dir in content
+        # Container path: Docker maps host openclaw_dir → /home/node/.openclaw
+        container_tasks_dir = str(state.container_workspace_dir / "tasks")
+        assert container_tasks_dir in content
 
     @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_check_tasks_py_is_executable(self, state: WizardState) -> None:
@@ -190,9 +206,13 @@ class TestWorkspaceBootstrapSecurityFeatures:
         assert "telegram-approval-buttons" not in entries
 
     def test_openclaw_json_mistral_plugin_enabled(self, state: WizardState) -> None:
-        """Mistral must run via plugin — no custom models.providers block."""
+        """Mistral must run via plugin — no custom models.providers block.
+
+        Mistral plugin is only enabled when mistral_api_key is set (dynamic config).
+        """
         from generator import openclaw_json_gen
         import json
+        state.mistral_api_key = "test-mistral-key"
         config = openclaw_json_gen.generate(state)
         # Plugin entry must exist and be enabled
         assert config["plugins"]["entries"]["mistral"]["enabled"] is True
@@ -202,8 +222,15 @@ class TestWorkspaceBootstrapSecurityFeatures:
         assert "auth.profiles" not in config_str
 
     def test_openclaw_json_plugins_allow_list(self, state: WizardState) -> None:
-        """plugins.allow must be set to prevent silent resets on openclaw update."""
+        """plugins.allow must be set to prevent silent resets on openclaw update.
+
+        Provider plugins are only added when the corresponding API key is set.
+        Anthropic is the primary provider in the test fixture (no key set —
+        still included as default primary). Mistral requires an explicit key.
+        """
         from generator import openclaw_json_gen
+        state.mistral_api_key = "test-mistral-key"
+        state.anthropic_api_key = "sk-ant-test"
         config = openclaw_json_gen.generate(state)
         allow = config["plugins"]["allow"]
         assert "mistral" in allow
