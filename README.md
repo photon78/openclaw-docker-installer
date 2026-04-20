@@ -1,10 +1,10 @@
 # openclaw-docker-installer
 
-> Set up a secure, production-ready [OpenClaw](https://openclaw.ai) agent in minutes — not hours.
+> Set up a secure, production-ready [OpenClaw](https://openclaw.ai) agent in minutes - not hours.
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.1-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -12,15 +12,16 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.2.1** | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
-| v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram/Discord/Signal, security hardening, BOOTSTRAP onboarding |
+| **v0.3.0** | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
+| v0.2.1 | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
+| v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram, security hardening, BOOTSTRAP onboarding |
 | v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
 
-> ✅ **The installer works end-to-end.** After running the wizard, you get a fully functional, security-hardened OpenClaw instance running in Docker — ready to use via Telegram (or your chosen channel). The agent introduces itself, explains its capabilities, and is ready to work.
+> ✅ **The installer works end-to-end.** After running the wizard, you get a fully functional, security-hardened OpenClaw instance running in Docker — ready to use via Telegram. The agent introduces itself, explains its capabilities, and is ready to work.
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.2.1 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.3.0 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
@@ -32,11 +33,11 @@ git clone --branch v0.2.1 https://github.com/photon78/openclaw-docker-installer.
 ---
 ## What is this?
 
-OpenClaw is a powerful self-hosted AI agent platform. It's flexible, extensible — and by default, it gives the agent a lot of power.
+OpenClaw is a powerful self-hosted AI agent platform. It's flexible, extensible - and by default, it gives the agent a lot of power.
 
 **This installer doesn't just set up OpenClaw. It sets up a secure one.**
 
-No root access. No dangerous shell tools. A restrictive allowlist from day one. Approval dialogs for anything sensitive. The agent gets exactly as much power as it needs — and not a byte more.
+No root access. No dangerous shell tools. A restrictive allowlist from day one. Approval dialogs for anything sensitive. The agent gets exactly as much power as it needs - and not a byte more.
 
 Everything runs in Docker. Works on Linux, macOS, and Windows.
 
@@ -57,9 +58,11 @@ to think about. The hard parts are already done.
 
 **Setup**
 - ✅ Interactive TUI wizard (5–10 minutes, no config files to edit)
+- ✅ `--dry-run` mode — preview all generated config files before writing anything
 - ✅ Docker-based OpenClaw instance, pinned to a stable release
-- ✅ Telegram, Discord, or Signal channel setup
+- ✅ Telegram channel setup
 - ✅ Agent persona: name, emoji, communication style
+- ✅ systemd user service generated automatically — autostart on boot, no manual unit file needed
 
 **Security**
 - ✅ Restrictive exec allowlist — shell tools (`ls`, `cat`, `grep`, `bash` …) excluded by design
@@ -67,11 +70,19 @@ to think about. The hard parts are already done.
 - ✅ Plugin version pinning — no silent upstream changes
 - ✅ `autoAllowSkills` off by default — opt-in only
 - ✅ "No commands via email" rule in all workspace templates
+- ✅ `add_agent.py` — new sub-agents inherit the full security baseline from day one
+
+**Multi-Agent (new in v0.3.0)**
+- ✅ `add_agent.py` — main agent creates specialist sub-agents on demand (coding, research, content, custom)
+- ✅ Every sub-agent gets its own hardened workspace: `autoAllowSkills: false`, exec allowlist, security blocks in `SOUL.md` and `AGENTS.md`
+- ✅ Spawn rules enforced in `openclaw.json` — sub-agents cannot spawn further sub-agents
+- ✅ Restore merge strategy — sub-agents survive `openclaw update`
 
 **Workspace**
 - ✅ Full workspace bootstrapped: `SOUL.md`, `AGENTS.md`, `HEARTBEAT.md`, `IDENTITY.md`,
   `MEMORY.md`, `USER.md`, `BOOTSTRAP.md`, `scripts/check_tasks.py`
-- ✅ All workspace files as real copies — no symlinks (OpenClaw doesn’t follow symlinks)
+- ✅ All workspace files as real copies — no symlinks (OpenClaw doesn't follow symlinks)
+- ✅ Skills bundled: web-search, docs-summarize always; Mistral OCR/translate/transcribe/vision when Mistral key present
 - ✅ Memory search configured out of the box (Mistral embeddings)
 - ✅ Backup script pre-configured and ready to schedule
 
@@ -83,7 +94,7 @@ to think about. The hard parts are already done.
 |-------------|-------|
 | Python 3.11+ | [python.org/downloads](https://www.python.org/downloads/) |
 | Docker + Docker Compose v2 | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
-| API Key — Anthropic or Mistral | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) |
+| API Key - Anthropic or Mistral | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) |
 | Telegram Bot Token *(optional)* | [@BotFather](https://t.me/BotFather) |
 
 ---
@@ -104,13 +115,13 @@ pip install -e ".[dev]"
 python src/main.py install
 ```
 
-The wizard walks you through everything. It takes about 5–10 minutes.
+The wizard walks you through everything. It takes about 5-10 minutes.
 
 ---
 
 ## Security philosophy
 
-> *An LLM agent with shell access is a controlled weapon. The capability isn't the problem — uncontrolled capability is.*
+> *An LLM agent with shell access is a controlled weapon. The capability isn't the problem - uncontrolled capability is.*
 
 Most "easy setup" tools trade security for convenience. This one doesn't.
 
@@ -123,6 +134,14 @@ Most "easy setup" tools trade security for convenience. This one doesn't.
 - The agent asks *why* before touching sensitive paths
 
 These aren't optional. They're the point.
+
+**Sub-agents are hardened from birth.**
+
+When your main agent creates a specialist sub-agent via `add_agent.py`, it doesn't get
+a blank slate. It gets the same security baseline the main agent runs on:
+`autoAllowSkills: false`, a restrictive exec allowlist, prompt injection defenses,
+and mandatory stop rules baked into `SOUL.md` and `AGENTS.md`. No configuration needed.
+Every agent in your system starts secure — not just the first one.
 
 ---
 
@@ -181,7 +200,8 @@ Your agent starts its first session automatically. It will introduce itself and 
 | **v0.1.0-alpha** | First Light | Single agent, Docker, security baseline |
 | **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
 | **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
-| v0.3.0 | The Crew | Multi-agent ready: add_agent.py, Active Memory, MMR search, task-file system |
+| **v0.3.0** | The Crew | Multi-agent system, sub-agent hardening, skills bundled, systemd autostart, `--dry-run` |
+| v0.3.1 | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 
@@ -209,8 +229,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-MIT — free to use, modify, and distribute.
+MIT - free to use, modify, and distribute.
 
-If this saved you some time — or just made you smile — Photon would love a glass of good Valais red wine. No pressure, just appreciation.
+If this saved you some time - or just made you smile - Photon would love a glass of good Valais red wine. No pressure, just appreciation.
 
 🟥 [paypal.me/photon78](https://paypal.me/photon78) 🍷

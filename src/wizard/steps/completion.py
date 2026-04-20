@@ -116,9 +116,17 @@ def show(state: WizardState, image: str) -> None:
   [cyan]docker compose -f {compose_file} ps[/cyan]
   [cyan]docker compose -f {compose_file} logs -f[/cyan]
 
-[bold]4. Add to autostart (optional)[/bold]
+[bold]4. Autostart on boot[/bold]
 
-  Docker restarts the container automatically ([cyan]restart: unless-stopped[/cyan]).
+  A systemd user service was generated for you:
+  [cyan]~/.config/systemd/user/openclaw.service[/cyan]
+
+  If not already enabled, run:
+  [cyan]systemctl --user enable --now openclaw.service[/cyan]
+
+  For headless servers (no GUI session), also enable linger:
+  [cyan]sudo loginctl enable-linger {state.username}[/cyan]
+
   Make sure Docker itself starts on boot:
   [cyan]sudo systemctl enable docker[/cyan]
 
