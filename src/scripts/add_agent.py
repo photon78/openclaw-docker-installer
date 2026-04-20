@@ -268,7 +268,7 @@ def _create_workspace(
         return workspace
 
     if workspace.exists():
-        print(f"ℹ️  Workspace already exists — updating missing files only")
+        print("ℹ️  Workspace already exists — updating missing files only")
     workspace.mkdir(parents=True, exist_ok=True)
     for d in dirs:
         (workspace / d).mkdir(parents=True, exist_ok=True)
@@ -287,14 +287,14 @@ def _create_workspace(
     if main_check.exists() and not dst_check.exists():
         shutil.copy2(main_check, dst_check)
         dst_check.chmod(0o755)
-        print(f"   ✅ scripts/check_tasks.py")
+        print("   ✅ scripts/check_tasks.py")
 
     # Symlink skills from main workspace
     main_skills = openclaw_dir / "workspace" / "skills"
     dst_skills = workspace / "skills"
     if main_skills.exists() and not dst_skills.exists():
         dst_skills.symlink_to(main_skills)
-        print(f"   ✅ skills/ → symlink to main workspace")
+        print("   ✅ skills/ → symlink to main workspace")
 
     return workspace
 
@@ -337,7 +337,7 @@ def _patch_openclaw_json(
         print(f"   ✅ Added '{name}' to {main_agent}.allowAgents")
 
     config_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"   ✅ openclaw.json updated")
+    print("   ✅ openclaw.json updated")
 
 
 def _patch_exec_approvals(openclaw_dir: Path, name: str, dry_run: bool) -> None:
@@ -360,7 +360,7 @@ def _patch_exec_approvals(openclaw_dir: Path, name: str, dry_run: bool) -> None:
 
     data.setdefault("agents", {})[name] = entry
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"   ✅ exec-approvals.json updated (autoAllowSkills: false)")
+    print("   ✅ exec-approvals.json updated (autoAllowSkills: false)")
 
 
 def main() -> None:
@@ -395,10 +395,10 @@ def main() -> None:
     else:
         print(f"\n✅ Agent '{args.name}' created.")
         print(f"   Workspace: {workspace}")
-        print(f"\n⚠️  Next steps:")
+        print("\n⚠️  Next steps:")
         print(f"   1. Review and customise {workspace}/SOUL.md")
-        print(f"   2. Reload gateway: openclaw gateway reload")
-        print(f"   3. Verify: openclaw agents list")
+        print("   2. Reload gateway: openclaw gateway reload")
+        print("   3. Verify: openclaw agents list")
 
 
 if __name__ == "__main__":
