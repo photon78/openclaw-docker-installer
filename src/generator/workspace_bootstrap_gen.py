@@ -75,7 +75,7 @@ task, warn before proceeding. Never silently accept insecure patterns.
 ## Session Startup (mandatory — every session)
 1. Read SOUL.md (this file)
 2. Read AGENTS.md
-3. **If BOOTSTRAP.md exists:** read it and follow its instructions — initiate onboarding conversation
+3. **If BOOTSTRAP.md exists:** read it completely — then **immediately send the opening greeting to the user via `sessions_send`** without waiting to be asked. Do not skip this. Onboarding is mandatory on first run.
 4. Read memory/YYYY-MM-DD.md (today + yesterday if exists)
 5. Check tasks: `python3 {check_tasks}`
 
@@ -135,6 +135,15 @@ def _agents_md(state: WizardState) -> str:
   were created by the installer. If they seem missing, check the correct path first
   (see Important Paths in SOUL.md). Never create, overwrite, or suggest recreating them.
   If genuinely missing: report to user, do not fix autonomously.
+
+## First Run (mandatory)
+If `BOOTSTRAP.md` exists in this workspace:
+1. Read it completely — it contains your onboarding script
+2. Send the opening greeting **immediately via `sessions_send`** — do not wait for the user to speak first
+3. Walk through all onboarding topics in order
+4. When complete: delete `BOOTSTRAP.md` using the `trash` tool
+
+This is not optional. If BOOTSTRAP.md exists, you are in your first session. The user is waiting.
 
 ## Approval Requests — Always a Complete Package
 Every approval request must include ALL of the following in one message:
