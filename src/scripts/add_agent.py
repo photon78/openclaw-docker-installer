@@ -24,6 +24,7 @@ Security:
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -299,9 +300,42 @@ def _create_workspace(
     return workspace
 
 
-def _patch_openclaw_json(
-    openclaw_dir: Path, name: str, main_agent: str, workspace: Path, dry_run: bool,
+def _register_agent_via_cli(
+    openclaw_dir: Path, name: str, workspace: Path, dry_run: bool,
 ) -> None:
+    """Register the agent using `openclaw agents add` CLI (resilient to config shape changes)."""
+    # Verify openclaw CLI is available
+    which = shutil.which("openclaw")
+    if not which:
+        print("⚠️  openclaw CLI not found — skipping agent registration")
+        print("   Run: openclaw agents add " + name + " --workspace " + str(workspace) + " --non-interactive")
+        return
+
+    cmd = ["openclaw", "agents", "add", name, "--workspace", str(workspace), "--non-interactive"]
+
+    if dry_run:
+        print(f"\n📝 Would run: {' '.join(cmd)}")
+        return
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        print("   ✅ Agent registered via openclaw CLI")
+        if result.stdout.strip():
+            print(f"   {result.stdout.strip()}")
+    else:
+        stderr = result.stderr.strip()
+        if "already exists" in stderr or "already registered" in stderr:
+            print(f"ℹ️  Agent '{name}' already registered — skipping")
+        else:
+            print(f"⚠️  openclaw agents add failed: {stderr}")
+            print("   Fallback: patch openclaw.json manually")
+            _patch_openclaw_json_fallback(openclaw_dir, name, workspace)
+
+
+def _patch_openclaw_json_fallback(
+    openclaw_dir: Path, name: str, workspace: Path,
+) -> None:
+    """Fallback: direct JSON patch if CLI is unavailable or fails."""
     config_path = openclaw_dir / "openclaw.json"
     if not config_path.exists():
         print(f"⚠️  openclaw.json not found at {config_path} — skipping")
@@ -319,25 +353,9 @@ def _patch_openclaw_json(
         "workspace": str(workspace),
         "subagents": {"maxSpawnDepth": 1, "allowAgents": []},
     }
-
-    if dry_run:
-        print(f"\n📝 Would add to openclaw.json → agents.list.{name}:")
-        print(json.dumps(new_entry, indent=2))
-        main_allow = agents_list.get(main_agent, {}).get("subagents", {}).get("allowAgents", [])
-        if name not in main_allow:
-            print(f"📝 Would add '{name}' to {main_agent}.subagents.allowAgents")
-        return
-
     data.setdefault("agents", {}).setdefault("list", {})[name] = new_entry
-
-    main_sub = data["agents"]["list"].get(main_agent, {}).setdefault("subagents", {})
-    allow = main_sub.setdefault("allowAgents", [])
-    if name not in allow:
-        allow.append(name)
-        print(f"   ✅ Added '{name}' to {main_agent}.allowAgents")
-
     config_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    print("   ✅ openclaw.json updated")
+    print("   ✅ openclaw.json patched (fallback mode)")
 
 
 def _patch_exec_approvals(openclaw_dir: Path, name: str, dry_run: bool) -> None:
@@ -387,7 +405,7 @@ def main() -> None:
         openclaw_dir, args.name, args.emoji, args.type,
         args.main_agent, args.main_session, args.dry_run,
     )
-    _patch_openclaw_json(openclaw_dir, args.name, args.main_agent, workspace, args.dry_run)
+    _register_agent_via_cli(openclaw_dir, args.name, workspace, args.dry_run)
     _patch_exec_approvals(openclaw_dir, args.name, args.dry_run)
 
     if args.dry_run:

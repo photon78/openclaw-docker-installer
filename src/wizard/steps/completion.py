@@ -81,18 +81,19 @@ def show(state: WizardState, image: str) -> None:
     # Channel-specific hint
     if state.channel == "telegram":
         console.print(
-            "[yellow]Telegram:[/yellow] Make sure your bot token is active. "
-            "Send [cyan]/start[/cyan] to your bot to verify the connection."
+            "[yellow]Telegram:[/yellow] Make sure your bot token is active, then send your agent:\n"
+            "  [bold cyan]Lies bitte BOOTSTRAP.md und mach den Onboarding-Ablauf.[/bold cyan]\n"
+            "  [dim](English: Please read BOOTSTRAP.md and start the onboarding.)[/dim]"
         )
     elif state.channel == "discord":
         console.print(
-            "[yellow]Discord:[/yellow] Invite your bot to a server and check "
-            "that it has message permissions in the target channel."
+            "[yellow]Discord:[/yellow] Invite your bot to a server and send your agent:\n"
+            "  [bold cyan]Please read BOOTSTRAP.md and start the onboarding.[/bold cyan]"
         )
-    elif state.channel == "signal":
+    else:
         console.print(
-            "[yellow]Signal:[/yellow] Link your Signal account via the Control UI "
-            "after the gateway is running."
+            "[yellow]First message:[/yellow] Send your agent:\n"
+            "  [bold cyan]Please read BOOTSTRAP.md and start the onboarding.[/bold cyan]"
         )
 
     _pause(console, "next steps")
@@ -136,6 +137,9 @@ def show(state: WizardState, image: str) -> None:
   [cyan]docker compose exec -it openclaw-gateway openclaw configure[/cyan]
   This handles provider changes, model tiers, and new channels
   without re-running the installer.
+
+  [dim]Want to use Ollama (local models)?[/dim]
+  [dim]Add it via [cyan]openclaw configure[/cyan] after the gateway is running.[/dim]
 
 [bold]6. Restore exec-approvals (if needed)[/bold]
 

@@ -1,199 +1,115 @@
 # OpenClaw Installer — Roadmap
 
-> Status: 2026-04-08
+> Last updated: 2026-04-20
 
 ## Principles
 
 1. **Every version is stable in itself** — no "only works with v0.3"
 2. **Secure by Default** — every version, every feature
-3. **Backward compatible** — config from v0.1 works in v0.5
+3. **Backward compatible** — config from v0.1 works in later versions
 4. **Wizard prevents poor decisions** — friction for risk
 5. **All Python** — wizard, scripts, skills, tests
-6. **Docker first, Native second** — but native is first-class, not an afterthought
+6. **Docker first** — native installation as a future option
 
 ---
 
-## v0.1.0 — "First Light" 🔦
-*Single Agent, Docker, functional.*
+## Released
 
-### Infrastructure
-- [x] Python project structure (pyproject.toml, src/, tests/)
-- [x] CLI framework (typer): install / status / start / stop / uninstall
-- [x] CI: Linting (ruff), Type-Check (mypy), Docker Build Test
+### v0.1.0-alpha — "First Light" ✅
+*Single agent, Docker, security baseline.*
 
-### Wizard
-- [x] Interactive wizard (questionary + rich)
-- [x] Welcome + platform detection
-- [x] Request API key(s) — multi-provider (Anthropic, OpenAI, Google, xAI, Ollama, etc.)
-- [x] Mistral as recommended skills/budget provider
-- [x] Select channel (Telegram / Discord / Signal)
-- [x] Request channel credentials (bot token, etc.)
-- [x] Security profile: Strict / Standard / Custom
+- Interactive TUI wizard (Anthropic, Mistral, OpenAI, Ollama)
+- Docker-based OpenClaw deployment with pinned release
+- Telegram channel setup
+- Restrictive exec allowlist (no shell tools, no bash)
+- Full workspace bootstrap (SOUL.md, AGENTS.md, HEARTBEAT.md, MEMORY.md, …)
+- Gateway rate-limiting, plugin version pinning
+- `autoAllowSkills: false` by default
+- Skills bundled: web-search, docs-summarize, Mistral suite
 
-### Generation
-- [x] docker-compose.yml (bind mounts, .env + scripts read-only, pinned release)
-- [x] .env (API keys, LLM tiers, USER_NAME)
-- [x] openclaw.json (bootstrapMaxChars, subagents, sessions, maintenance)
-- [x] exec-approvals.json (from security profile, per-agent tiers; shell tools + bash excluded by design)
-- [x] restore_exec_approvals.py (container-internal paths, main agent allowlist)
-- [x] restore_config.py (restores plugins.allow, rateLimit after `openclaw update`)
-- [x] `plugins.allow` + Mistral/Anthropic plugin entries (no custom provider block)
-- [x] Plugin pinning: telegram-approval-buttons@5.1.0
-- [x] `gateway.auth.rateLimit` (10 attempts / 5min lockout)
-- [x] `autoAllowSkills` opt-in (default: false)
-- [x] Workspace bootstrapping (SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md, MEMORY.md,
-  USER.md, BOOTSTRAP.md, scripts/check_tasks.py — all real copies, no symlinks)
+### v0.2.0 — "The Pack" ✅
+*Security hardening, workspace quality, Windows support.*
 
-### Security Baseline
-- [x] Bundle health_check.py
-- [x] Bundle audit_integrity.py + set baselines
-- [x] API keys only in .env, never in service file
+- Security profile tightening (no shell tools in any allowlist)
+- BOOTSTRAP.md onboarding file
+- Windows 11 compatibility
+- UTF-8 encoding fixes across all generators
+- Headless-Docker warning (no channel configured)
+- Signal + Discord removed from wizard (Telegram only)
 
-### Backup Setup (optional — can be configured after install)
-- [x] Wizard: "Where is your backup medium?" (SD card / USB mount path) — skippable, configure later
-- [x] Deploy `daily_backup.py` from template (configured with user-defined mount path)
-- [ ] Crontab entry: daily at 04:10
-- [ ] Generate `restore.md` with concrete paths + token placeholder
-- [ ] What is backed up: workspaces (rsync diff Mon–Sat, full Sun), openclaw.json, scripts (*.py), systemd drop-ins, memory SQLite, exec-approvals.json (token=REDACTED)
-- [ ] What is NOT backed up: .env / API keys, session JSONL, node_modules / dist / .astro
-- [x] Reference implementation: `~/.openclaw/scripts/daily_backup.py` (live, tested 2026-04-06)
+### v0.2.1 — "The Pack (patch)" ✅
+*Windows 11 compatibility fixes, permission handling.*
 
-### Post-Install
-- [x] docker-compose up via CLI
-- [x] Gateway health poll (/healthz, 60s timeout with log fallback)
-- [x] Summary + next steps (completion screen)
-- [x] start.sh entrypoint — restores exec-approvals.json on every container start
+### v0.3.0 — "The Crew" ✅
+*Multi-agent system, sub-agent hardening, dynamic config.*
 
-### Docs & Community
-- [x] README.md (Vision, Quick Start, Status table, Features, post-update warning)
-- [x] LICENSE (MIT)
-- [x] CHANGELOG.md (Keep a Changelog)
-- [x] CONTRIBUTING.md (DCO, Code Style, PR process)
-- [x] CODE_OF_CONDUCT.md (Contributor Covenant)
-- [x] SECURITY.md (Responsible Disclosure)
-- [x] GitHub issue templates (Bug / Feature / Security Report)
-- [x] `docs/workspace-file-management.md` (symlink limitation + correct setup)
+- `add_agent.py` — main agent creates specialist sub-agents on demand
+- 4 archetypes: coding, research, content, custom
+- Sub-agents inherit full security baseline from day one
+- Spawn rules enforced: `maxSpawnDepth: 1`, no chain-spawning
+- Merge-based restore strategy (sub-agents survive `openclaw update`)
+- Dynamic plugin config (Mistral plugin only if key present)
+- systemd user service generator (autostart on boot)
+- `--dry-run` mode — preview all config before writing
+- Skill deduplication (`always/` + `mistral/` only)
+- CI: Node.js 24 compatible actions
+
+### v0.3.1 — "The Crew (patch)" ✅
+*Code review fixes.*
+
+- STARTUP_TIMEOUT 90→180s (Pi/SD-card first pull)
+- `backup_mount_path` validation with retry option
+- Stale skill duplicates removed (13 files)
+- README updated: multi-agent features, sub-agent security philosophy
+- 5 CI test failures resolved (container paths, dynamic plugin config)
 
 ---
 
-## v0.2.0 — "The Pack" 🐺
-*Multi-Agent, Extended Memory, Telegram Topics.*
+## In Progress
 
-### Design Decisions (locked)
-- **v0.1 = single main agent** — KISS, stable baseline
-- **v0.2 adds optional specialist agents** — each with own workspace, no shared MEMORY.md
-- **Shared MEMORY.md is a bug** — installer must enforce unique workspaces per agent
-- **Preset profiles** (no free-form in wizard): coder / researcher / buero
-  - coder: sonnet, workspace-coding
-  - researcher: sonnet, workspace-research  
-  - buero: mistral, workspace-buero
-- **Required fields per agent**: id, workspace, identity.name, identity.emoji
-- **Optional per agent**: model.primary+fallbacks, memorySearch.extraPaths (can point at main's memory/topics)
-- **allowAgents** lives in `agents.agents[id].subagents` — NOT in `agents.defaults`
-- Source: openclaw.json inspection 2026-04-06, main-AGENT config as reference
+### v0.3.2 — "The Crew (patch 2)" 🔧
+*Agent registration via CLI — resilient to config shape changes.*
 
-### Multi-Agent
-- [ ] Wizard: optional "Add specialist agent?" step (after main is configured)
-- [ ] Preset picker: coder / researcher / buero (or skip)
-- [ ] Per agent: Name, emoji, workspace auto-derived from preset
-- [ ] Generate Telegram group + topic bindings
-- [ ] Generate per-agent allowlist
-- [ ] Automatically copy workspace files per agent (real copies, NOT symlinks — OpenClaw does not follow symlinks in context injection)
-- [x] Subagent templates: AGENTS-persistent.md + AGENTS-ephemeral.md (in installer)
-
-### Extended Memory (Opt-in)
-- [ ] Wizard prompt: Basic vs. Extended
-- [ ] Generate topics folder + _template.md + index.md
-- [ ] Generate daily_digest.py (atomic writing)
-- [ ] Cron jobs: Log writer (hourly), Weekly Maintenance (Fri)
-- [ ] extraPaths for cross-agent memory
-- [ ] HEARTBEAT.md with guards (line limit, log compactness, digest age)
-
-### LLM Tiers
-- [x] Budget / Standard / Power / Media in .env
-- [x] openclaw.json with ${LLM_*} variables
-
-### Agent Management
-- [ ] openclaw-installer add-agent (post-installation)
-- [ ] openclaw-installer remove-agent
+- `add_agent.py`: use `openclaw agents add --non-interactive` instead of direct JSON patching
+- JSON patch kept as fallback if CLI unavailable
+- 11 new tests for CLI registration, fallback, exec-approvals
+- Real-world validation required before merge
 
 ---
 
-## v0.3.0 — "VPS Ready" 🖥️
-*One-command setup for VPS deployments: nginx, HTTPS, firewall.*
+## Planned
 
-### VPS Quick Deploy Mode
-- [ ] Detect fresh Ubuntu/Debian VPS
-- [ ] Install and configure nginx as reverse proxy
-- [ ] Set up Certbot (Let's Encrypt) for HTTPS
-- [ ] Configure basic ufw firewall rules (80, 443, SSH)
-- [ ] Generate nginx config for the OpenClaw gateway
+### v0.4.0 — "Open House" 🏠
+*Stability, UX polish, Ollama integration.*
 
-### Resource Limits
-- [ ] Wizard: "How much RAM does your server have?" (1 / 2 / 4+ GB)
-- [ ] Generate docker-compose.yml with memory/CPU caps
+- Ollama provider support in wizard (local model, no API key required)
+- `openclaw agents add` real-world validation and cleanup
+- CLI: `start` / `stop` / `status` subcommands
+- Integration tests for full install → healthcheck flow
+- macOS launchd service (alongside existing systemd)
+- CONTRIBUTING.md review and update
 
-### Unattended Updates
-- [ ] Weekly cron: check for new OpenClaw image releases
-- [ ] Pull + restart container automatically
-- [ ] Notify via Telegram after successful update
-- [ ] Rollback on health check failure
+### v0.5.0 — "Shape Shifter" 🔄
+*Updates, migration, backup.*
 
----
+- `openclaw-installer update` — backup before update, health check after
+- `openclaw-installer backup` / `restore`
+- Migration path: Docker → native
 
-## v0.4.0 — "Unleash the Beast" 🐧
-*Native Linux, systemd, no Docker.*
+### v0.6.0 — "VPS Ready" 🖥️
+*One-command VPS deployment.*
 
-### Native Installation
-- [ ] Wizard: Native vs. Docker selection
-- [ ] Check/install Node.js (fnm)
-- [ ] Install openclaw via npm globally
-- [ ] Generate systemd user service
-- [ ] ExecStartPost for restore_exec_approvals.py
-- [ ] loginctl enable-linger
-- [ ] Generate sudoers entry (specific, no wildcard)
-
-### System Integration
-- [ ] FTS5 check (Node + SQLite)
-- [ ] Generate crontab (instead of Docker-internal crons)
-- [ ] Generate backup script (daily_backup.py)
-- [ ] Generate morning briefing
-- [ ] openclaw-installer doctor (diagnostics)
+- nginx reverse proxy config
+- Let's Encrypt / Certbot setup
+- UFW firewall rules
+- Resource limits (RAM-aware docker-compose)
 
 ---
 
-## v0.5.0 — "Shape Shifter" 🔄
-*Migration, Updates, Portability.*
+## Backlog
 
-- [ ] openclaw-installer migrate docker-to-native
-- [ ] openclaw-installer migrate native-to-docker
-- [ ] openclaw-installer update (check version, backup before update, post-update check)
-- [ ] openclaw-installer backup / restore
-- [ ] platformdirs integration (no hardcoded ~/...)
-
----
-
-## v0.6.0 — "All Platforms" 🌐
-*macOS + Windows Support.*
-
-- [x] Python 3.11+ pre-flight check (catches missing Python on Windows before wizard)
-- [x] Windows venv instructions (`VM-TEST-SETUP.md`)
-- [ ] macOS: launchd service (~/Library/LaunchAgents/)
-- [ ] macOS: Docker Desktop integration
-- [ ] Windows: NSSM Service Manager
-- [ ] Windows: Docker Desktop integration
-- [ ] PyInstaller binaries (no Python required on host)
-- [ ] Cross-platform tests (GitHub Actions Matrix)
-
----
-
-## Backlog / Long-term
-
-- [ ] Web UI for wizard (Textual TUI or browser-based)
-- [ ] Plugin system (install skills via wizard)
-- [ ] Auto-discovery: detect existing OpenClaw installation
-- [ ] Telemetry (opt-in, anonymized): installation success rate
-- [ ] Community Skills Repository integration (ClaWHub)
-- [ ] Cluster mode (multiple servers)
-
-
+- Native Linux installation (systemd, no Docker)
+- PyInstaller binaries (no Python required on host)
+- Web UI for wizard
+- Community skills integration (ClaWHub)
+- Multi-server / cluster mode

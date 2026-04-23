@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2] — 2026-04-23 “Clean Slate”
+
+### Fixed
+- **Welcome screen: Discord + Signal entfernt** — Messaging-Channel auf Telegram beschränkt; Discord/Signal waren nicht implementiert.
+- **Completion screen: /start-Hinweis ersetzt** — Telegram-Abschluss zeigt jetzt den konkreten Bootstrap-Prompt statt generischem `/start`.
+- **BOOTSTRAP.md Block 2: Skills aus TOOLS.md** — Agent liest TOOLS.md statt hardcodierter Skill-Liste; bleibt automatisch aktuell.
+- **BOOTSTRAP.md Block 4: Ablenkungsfrage entfernt** — "Any questions about how I work?" → "Ready for the next part?" (verhindert Off-Topic-Diskussionen im Onboarding).
+- **Backup-Step: Pfad-Hinweis ergänzt** — Explizite Bestätigung dass `openclaw-backup/` beim ersten Lauf automatisch erstellt wird.
+
+### Added
+- **VERSION-Datei** — `VERSION` im Repo-Root; Welcome-Screen liest daraus die Versionsnummer (Fallback: hardcoded).
+- **Versionsnummer im Bootsplash** — Welcome-Panel zeigt jetzt `v0.3.2` (aus VERSION-Datei).
+
+---
+
 ## [0.3.1] — 2026-04-20 "The Crew (patch)"
 
 ### Fixed

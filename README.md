@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.2-blue)](CHANGELOG.md)
 
 ---
 
@@ -12,7 +12,9 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.3.0** | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
+| **v0.3.2** | ✅ Stable | Test findings fixed: welcome/completion/bootstrap/backup UX improvements |
+| v0.3.1 | ✅ Stable | Startup timeout, backup validation, skill deduplication |
+| v0.3.0 | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
 | v0.2.1 | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
 | v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram, security hardening, BOOTSTRAP onboarding |
 | v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
@@ -21,7 +23,7 @@
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.3.0 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.3.2 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
@@ -94,8 +96,10 @@ to think about. The hard parts are already done.
 |-------------|-------|
 | Python 3.11+ | [python.org/downloads](https://www.python.org/downloads/) |
 | Docker + Docker Compose v2 | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
-| API Key - Anthropic or Mistral | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) |
+| API Key — Anthropic, Mistral, or OpenAI | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) · [platform.openai.com](https://platform.openai.com/) |
 | Telegram Bot Token *(optional)* | [@BotFather](https://t.me/BotFather) |
+
+> **Ollama (local models):** Not configured by this installer. Add via `openclaw configure` after setup.
 
 ---
 
@@ -201,7 +205,7 @@ Your agent starts its first session automatically. It will introduce itself and 
 | **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
 | **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
 | **v0.3.0** | The Crew | Multi-agent system, sub-agent hardening, skills bundled, systemd autostart, `--dry-run` |
-| v0.3.1 | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication |
+| **v0.3.1** | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication — **current stable** |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 

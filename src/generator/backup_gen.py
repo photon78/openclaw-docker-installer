@@ -70,6 +70,8 @@ RSYNC_EXCLUDES = [
     "--exclude=dist/",
     "--exclude=.astro/",
     "--exclude=.venv/",
+    "--exclude=venv/",
+    "--exclude=__pycache__/",
 ]
 
 
