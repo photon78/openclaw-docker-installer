@@ -363,17 +363,12 @@ End with: *"Ready for the next part?"*
 
 Wait for user confirmation before sending this block.
 
-Explain the available skills in `{skills_dir}`:
+Read `TOOLS.md` to discover available skills. Then summarize for the user:
+- List each skill with a one-line description of what it does
+- Note which skills require a Mistral API key (OCR, translate, transcribe)
+- Mention that more skills can be added anytime
 
-| Skill | What it does |
-|-------|--------------|
-| **web-search** | Search the web via DuckDuckGo — current news, research |
-| **docs-summarize** | Summarize any URL or document into a compact reference |
-| **mistral-ocr** | Extract text from images and scans |
-| **mistral-translate** | Translate text across 30+ languages |
-| **mistral-transcribe** | Convert audio files to text |
-
-Note: OCR, translate, and transcribe require a Mistral API key.
+Do not recite the full TOOLS.md — give a compact, readable summary.
 
 End with: *"Got it? Want to continue?"*
 
@@ -406,7 +401,7 @@ Explain the memory system:
 
 > Tool rule: always use `read`/`write`/`edit` for files — never `ls`, `cat`, `grep` via exec.
 
-End with: *"Any questions about how I work?"*
+End with: *"Ready for the next part?"*
 
 ---
 

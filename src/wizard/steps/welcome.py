@@ -48,9 +48,15 @@ def run(state: WizardState) -> bool:
     Returns True if all critical checks pass, False to abort.
     """
     # ── Intro screen ──────────────────────────────────────────────────────
+    from pathlib import Path as _Path
+    _version = "0.3.2"
+    _version_file = _Path(__file__).parent.parent.parent.parent / "VERSION"
+    if _version_file.exists():
+        _version = _version_file.read_text().strip()
+
     console.print()
     console.print(Panel(
-        "[bold cyan]Welcome to the OpenClaw Installer[/bold cyan]\n\n"
+        f"[bold cyan]Welcome to the OpenClaw Installer[/bold cyan]  [dim]v{_version}[/dim]\n\n"
         "This wizard sets up a [bold]secure, production-ready[/bold] OpenClaw instance\n"
         "running in Docker — with a restrictive allowlist, approval dialogs,\n"
         "and sane defaults out of the box.\n\n"

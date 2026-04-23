@@ -93,6 +93,7 @@ def run(state: WizardState) -> bool | str:
             state.backup_mount_path = str(path)
 
     console.print(f"[green]✓[/green] Backup mount: [cyan]{state.backup_mount_path}[/cyan]")
+    console.print("[dim]Backup directory [cyan]openclaw-backup/[/cyan] is created automatically on first run.[/dim]")
 
     # Crontab hint
     console.print(
