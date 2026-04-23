@@ -138,6 +138,9 @@ def show(state: WizardState, image: str) -> None:
   This handles provider changes, model tiers, and new channels
   without re-running the installer.
 
+  [dim]Want to use Ollama (local models)?[/dim]
+  [dim]Add it via [cyan]openclaw configure[/cyan] after the gateway is running.[/dim]
+
 [bold]6. Restore exec-approvals (if needed)[/bold]
 
   If the gateway overwrites exec-approvals.json via doctor mode:

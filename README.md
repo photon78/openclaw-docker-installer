@@ -96,8 +96,10 @@ to think about. The hard parts are already done.
 |-------------|-------|
 | Python 3.11+ | [python.org/downloads](https://www.python.org/downloads/) |
 | Docker + Docker Compose v2 | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
-| API Key - Anthropic or Mistral | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) |
+| API Key — Anthropic, Mistral, or OpenAI | [console.anthropic.com](https://console.anthropic.com/) · [console.mistral.ai](https://console.mistral.ai/) · [platform.openai.com](https://platform.openai.com/) |
 | Telegram Bot Token *(optional)* | [@BotFather](https://t.me/BotFather) |
+
+> **Ollama (local models):** Not configured by this installer. Add via `openclaw configure` after setup.
 
 ---
 

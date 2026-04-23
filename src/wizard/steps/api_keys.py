@@ -54,17 +54,6 @@ PROVIDERS: list[dict[str, Any]] = [
         "default_model": "mistral/mistral-large-latest",
     },
     {
-        "id": "ollama",
-        "label": "Ollama (local models, no API key needed)",
-        "key_hint": None,
-        "key_prefix": None,
-        "models": [
-            ("ollama/llama3.3", "Llama 3.3 — recommended local model"),
-            ("ollama/qwen2.5",  "Qwen 2.5  — strong multilingual"),
-        ],
-        "default_model": "ollama/llama3.3",
-    },
-    {
         "id": "custom",
         "label": "Other / Custom provider",
         "key_hint": "Enter model ID manually (format: provider/model)",
