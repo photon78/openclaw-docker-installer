@@ -9,6 +9,7 @@ Verifies that the generated daily_backup.py:
 """
 import json
 import stat
+import sys
 from pathlib import Path
 
 import pytest
@@ -122,6 +123,7 @@ class TestWrite:
         result = write(state)
         assert result.exists()
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="chmod executable bits not supported on Windows")
     def test_written_file_is_executable(self, tmp_path):
         state = _make_state(tmp_path)
         result = write(state)
