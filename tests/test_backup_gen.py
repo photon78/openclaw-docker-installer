@@ -7,7 +7,6 @@ Verifies that the generated daily_backup.py:
 - Is written as an executable file
 - Returns None when backup is not configured
 """
-import json
 import stat
 import sys
 from pathlib import Path

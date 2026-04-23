@@ -311,7 +311,6 @@ def _user_md(state: WizardState) -> str:
 
 
 def _bootstrap_md(state: WizardState) -> str:
-    skills_dir = state.container_workspace_dir / "skills"
     check_tasks = state.container_scripts_dir / "check_tasks.py"
     return f"""\
 # BOOTSTRAP.md — First Run
