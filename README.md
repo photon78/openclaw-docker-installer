@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.1-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.2-blue)](CHANGELOG.md)
 
 ---
 
@@ -12,7 +12,9 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.3.0** | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
+| **v0.3.2** | ✅ Stable | Test findings fixed: welcome/completion/bootstrap/backup UX improvements |
+| v0.3.1 | ✅ Stable | Startup timeout, backup validation, skill deduplication |
+| v0.3.0 | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
 | v0.2.1 | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
 | v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram, security hardening, BOOTSTRAP onboarding |
 | v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
@@ -21,7 +23,7 @@
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.3.1 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.3.2 https://github.com/photon78/openclaw-docker-installer.git
 ```
 
 ---
