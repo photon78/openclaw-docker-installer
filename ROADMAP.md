@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Last updated: 2026-04-20
+> Last updated: 2026-04-23
 
 ## Principles
 
@@ -63,11 +63,23 @@
 - README updated: multi-agent features, sub-agent security philosophy
 - 5 CI test failures resolved (container paths, dynamic plugin config)
 
+### v0.3.2 — "Clean Slate" ✅
+*UX fixes from real-world install test.*
+
+- Welcome screen: version number in Bootsplash (aus `VERSION`-Datei)
+- Requirements: Discord + Signal entfernt — nur Telegram
+- Ollama aus Wizard entfernt — via `openclaw configure` konfigurierbar
+- Completion screen: `/start`-Hinweis → Bootstrap-Prompt als Kopiervorlage
+- BOOTSTRAP.md Block 2: Skills aus TOOLS.md statt hardcodierter Liste
+- BOOTSTRAP.md Block 4: Ablenkungsfrage entfernt
+- Backup: Hinweis dass Mount verfügbar sein muss + Verzeichnis auto-erstellt
+- CI: Windows-skip für `chmod`-Test
+
 ---
 
 ## In Progress
 
-### v0.3.2 — "The Crew (patch 2)" 🔧
+### v0.3.3 — "The Crew (patch 3)" 🔧
 *Agent registration via CLI — resilient to config shape changes.*
 
 - `add_agent.py`: use `openclaw agents add --non-interactive` instead of direct JSON patching
@@ -80,9 +92,8 @@
 ## Planned
 
 ### v0.4.0 — "Open House" 🏠
-*Stability, UX polish, Ollama integration.*
+*Stability, UX polish, CLI commands.*
 
-- Ollama provider support in wizard (local model, no API key required)
 - `openclaw agents add` real-world validation and cleanup
 - CLI: `start` / `stop` / `status` subcommands
 - Integration tests for full install → healthcheck flow
