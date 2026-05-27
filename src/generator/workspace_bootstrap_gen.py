@@ -216,6 +216,12 @@ python3 {check_tasks.parent}/add_agent.py --name <name> --type <coding|research|
 - `maxSpawnDepth: 1` — no chain-spawning
 - Each agent gets its own exec-approvals section
 - Sub-agents do NOT automatically see main topics (use `extraPaths` if needed)
+
+**Sub-Agent Bootstrap Context (important — since OpenClaw 2026.5.22):**
+Sub-agents spawned via `sessions_spawn` only receive `AGENTS.md` + `TOOLS.md` by default.
+SOUL.md, MEMORY.md, USER.md, HEARTBEAT.md are NOT injected automatically.
+Always include all needed context explicitly in the spawn `task:` prompt.
+For tasks requiring full session context, use `context: "fork"` — but prefer explicit task descriptions.
 """
 
 
@@ -383,6 +389,12 @@ Explain sub-agents:
 - You are the **Botmaster**: you can create and manage sub-agents on demand
 - Sub-agents report back to you — you stay in control
 - The user can ask you to set one up at any time
+
+**Important context rule (since OpenClaw 2026.5.22):** When you spawn a sub-agent via
+`sessions_spawn`, it only receives `AGENTS.md` + `TOOLS.md` by default. You must include
+all needed context (role, goal, data, constraints) directly in the `task:` prompt.
+For tasks requiring the full current session context, use `context: "fork"` —
+but prefer explicit task descriptions to keep sub-agents lean and focused.
 
 End with: *"Want me to set up a sub-agent now, or do that later?"*
 

@@ -79,13 +79,13 @@
 
 ## In Progress
 
-### v0.3.3 — "The Crew (patch 3)" 🔧
-*Agent registration via CLI — resilient to config shape changes.*
+### v0.3.3 — "The Crew (patch 3)" ✅
+*OpenClaw 2026.5.22 compat, CLI agent registration, config hardening.*
 
-- `add_agent.py`: use `openclaw agents add --non-interactive` instead of direct JSON patching
-- JSON patch kept as fallback if CLI unavailable
-- 11 new tests for CLI registration, fallback, exec-approvals
-- Real-world validation required before merge
+- `add_agent.py`: uses `openclaw agents add --non-interactive`; JSON patch as fallback
+- Sub-agent bootstrap context documented in AGENTS.md + BOOTSTRAP.md templates
+- `restore_gen.py`: stale `daily_digest.py` / `memory_digest.py` entries removed
+- `openclaw.json`: `compaction.model: "${LLM_BUDGET}"` + `logging.redactSensitive: "tools"`
 
 ---
 

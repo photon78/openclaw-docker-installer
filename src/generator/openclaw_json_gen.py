@@ -130,6 +130,10 @@ def generate(state: WizardState) -> dict:
                     "maxConcurrent": 2,
                     "maxSpawnDepth": 1,
                 },
+                # Compaction: use budget model to keep costs low
+                "compaction": {
+                    "model": "${LLM_BUDGET}",
+                },
                 # Memory search: explicit provider so embedding works out of the box
                 # Auto-detection fails in Docker when API keys are only in .env
                 "memorySearch": _memory_search_config(state),
@@ -168,6 +172,10 @@ def generate(state: WizardState) -> dict:
         },
         "cron": {
             "enabled": True,
+        },
+        "logging": {
+            # Best-effort masking of sensitive values in logs and transcripts
+            "redactSensitive": "tools",
         },
     }
 

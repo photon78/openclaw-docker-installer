@@ -78,9 +78,8 @@ APPROVALS = {{
             {{"pattern": "/usr/bin/curl",       "id": "d-curl-01"}},
             {{"pattern": "{_SCRIPTS}/health_check.py",     "id": "d-health-check-01"}},
             {{"pattern": "{_SCRIPTS}/morning_briefing.py", "id": "d-morning-briefing-01"}},
-            {{"pattern": "{_SCRIPTS}/daily_digest.py",     "id": "d-daily-digest-01"}},
-            {{"pattern": "{_SCRIPTS}/memory_digest.py",    "id": "d-memory-digest-01"}},
             {{"pattern": "{_SCRIPTS}/audit_integrity.py",  "id": "d-audit-integrity-01"}},
+            {{"pattern": "{_SCRIPTS}/check_tasks.py",      "id": "d-check-tasks-01"}},
         ]
     }},
     "agents": {agents_block}
@@ -150,7 +149,9 @@ def _agents_block(state: WizardState) -> str:
         {"pattern": "/usr/bin/jq",         "id": "m-jq-01"},
         {"pattern": f"{_SCRIPTS}/health_check.py",    "id": "m-health-check-01"},
         {"pattern": f"{_SCRIPTS}/audit_integrity.py", "id": "m-audit-integrity-01"},
-        {"pattern": f"{_SCRIPTS}/memory_digest.py",   "id": "m-memory-digest-01"},
+        {"pattern": f"{_SCRIPTS}/morning_briefing.py","id": "m-morning-briefing-01"},
+        {"pattern": f"{_SCRIPTS}/check_tasks.py",     "id": "m-check-tasks-01"},
+        {"pattern": f"{_SCRIPTS}/add_agent.py",       "id": "m-add-agent-01"},
         {"pattern": f"{_WORKSPACE}/skills/web-search/search.py",        "id": "m-web-search-01"},
         {"pattern": f"{_WORKSPACE}/skills/docs-summarize/summarize.py", "id": "m-docs-summarize-01"},
     ]

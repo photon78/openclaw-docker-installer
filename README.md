@@ -193,7 +193,7 @@ Your agent starts its first session automatically. It will introduce itself and 
 | macOS | 🔜 Planned |
 | Windows 11 | ✅ Tested (v0.2.1) |
 
-**Tested with OpenClaw `2026.4.9`**
+**Tested with OpenClaw `2026.5.22`**
 
 ---
 

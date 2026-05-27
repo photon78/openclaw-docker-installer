@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.3] — 2026-05-27 "The Crew (patch 3)"
+
+### Added
+- **Sub-agent bootstrap context note** — `AGENTS.md` template and `BOOTSTRAP.md` Block 3 now
+  document OpenClaw 2026.5.22 breaking change: sub-agents spawned via `sessions_spawn` only
+  receive `AGENTS.md` + `TOOLS.md` by default. Spawn `task:` prompts must include all needed
+  context explicitly; use `context: "fork"` only when full session history is required.
+- **`openclaw.json`: `compaction.model`** — generated config now sets
+  `agents.defaults.compaction.model: "${LLM_BUDGET}"` so compaction summarisation uses
+  the budget model, not the power model.
+- **`openclaw.json`: `logging.redactSensitive`** — generated config now sets
+  `logging.redactSensitive: "tools"` to mask sensitive values in logs and transcripts.
+- **`add_agent.py`: CLI registration** — agent registration now uses
+  `openclaw agents add --non-interactive` as primary path; direct JSON patching kept as
+  fallback when the CLI is unavailable. Resilient to config schema changes.
+
+### Fixed
+- **`restore_gen.py`: stale allowlist entries removed** — `daily_digest.py` and
+  `memory_digest.py` were removed from the project in v0.3.0 but remained in the generated
+  `restore_exec_approvals.py` defaults allowlist. Entries now match `exec_approvals_gen.py`.
+  `check_tasks.py` added to defaults; `morning_briefing.py`, `check_tasks.py`, and
+  `add_agent.py` added to main agent allowlist for consistency.
+
+### Compatibility
+- Requires OpenClaw ≥ 2026.5.22 for sub-agent bootstrap behaviour.
+  Earlier versions still work; the new context note in templates is informational only.
+- `add_agent.py` CLI path requires `openclaw agents add --non-interactive` support
+  (available since OpenClaw 2026.4.x). Falls back to JSON patch on older installs.
+
+---
+
 ## [0.3.2] — 2026-04-23 “Clean Slate”
 
 ### Fixed
