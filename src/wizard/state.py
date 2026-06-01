@@ -27,6 +27,9 @@ class WizardState:
     mistral_api_key: str = ""       # optional, but recommended for skills
     primary_provider_id: str = ""   # e.g. "openai", "google", "xai"
     primary_api_key: str = ""       # key for non-anthropic/non-mistral providers
+    kimi_api_key: str = ""          # Moonshot Kimi K2.6
+    openai_api_key: str = ""        # OpenAI GPT-5.5 Codex
+    ollama_host: str = ""           # Ollama host URL (e.g. http://172.16.50.19:11434)
     telegram_bot_token: str = ""    # set when channel == telegram
     discord_bot_token: str = ""     # set when channel == discord
     signal_number: str = ""          # set when channel == signal
@@ -63,6 +66,10 @@ class WizardState:
     llm_standard: str = "anthropic/claude-sonnet-4-6"
     llm_power: str = "anthropic/claude-opus-4-6"
     llm_media: str = "mistral/mistral-large-latest"
+    llm_kimi: str = "moonshot/kimi-k2.6"
+    llm_gemma4: str = "ollama/gemma4_26_Q5KS"
+    llm_qwen3: str = "ollama/qwen3.6_27b"
+    llm_codex: str = "openai/gpt-5.5"
 
     # Container-side paths (Docker maps host openclaw_dir → /home/node/.openclaw)
     # Scripts and agent templates that run INSIDE the container must use these.

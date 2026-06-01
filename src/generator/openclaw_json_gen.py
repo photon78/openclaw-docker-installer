@@ -27,6 +27,20 @@ def _memory_search_config(state: WizardState) -> dict:
                 },
             },
         }
+    if state.kimi_api_key:
+        # Kimi does not offer embeddings — fall through to next option
+        pass
+    if state.openai_api_key:
+        return {
+            "provider": "openai",
+            "model": "text-embedding-3-small",
+            "query": {
+                "hybrid": {
+                    "mmr": {"enabled": True},
+                    "temporalDecay": {"enabled": True},
+                },
+            },
+        }
     if state.anthropic_api_key:
         # Anthropic does not offer embeddings — fall through to disabled
         pass
@@ -59,7 +73,8 @@ def _active_memory_config(state: WizardState) -> dict:
 
 # Providers with confirmed native OpenClaw plugins (enabled: true is sufficient).
 # DeepSeek, OpenRouter = OpenAI-compat, not in installer wizard — use openclaw configure.
-_NATIVE_PLUGINS = {"anthropic", "mistral", "openai"}
+_NATIVE_PLUGINS = {"anthropic", "mistral", "openai", "moonshot"}
+# Ollama has no native plugin — configured via model string only
 
 
 def _plugins_config(state: WizardState) -> dict:
@@ -83,6 +98,10 @@ def _plugins_config(state: WizardState) -> dict:
         active_providers.add("mistral")
     if state.primary_api_key and state.primary_provider_id not in ("anthropic", "mistral"):
         active_providers.add(state.primary_provider_id)
+    if state.kimi_api_key:
+        active_providers.add("moonshot")
+    if state.openai_api_key:
+        active_providers.add("openai")
 
     # Add plugin entries for each active provider
     for provider in sorted(active_providers):
@@ -112,13 +131,13 @@ def generate(state: WizardState) -> dict:
                 "workspace": "/home/node/.openclaw/workspace",
                 # Model refs via env vars — change models by editing .env only
                 "model": {
-                    "primary": "${LLM_BUDGET}",
-                    "fallbacks": ["${LLM_STANDARD}", "${LLM_POWER}"],
+                    "primary": "${LLM_KIMI}",
+                    "fallbacks": ["${LLM_BUDGET}", "${LLM_STANDARD}", "${LLM_POWER}", "${LLM_GEMMA4}"],
                 },
                 "heartbeat": {
                     "every": "30m",
                     "target": "last",
-                    "model": "mistral/mistral-large-latest",
+                    "model": "${LLM_BUDGET}",
                     "isolatedSession": True,
                     "lightContext": True,
                 },
