@@ -139,10 +139,11 @@ def run(state: WizardState) -> bool | str:
     # API key or host (skip for Ollama)
     if provider["id"] == "ollama":
         console.print()
-        console.print("[dim]Ollama host URL (e.g. http://172.16.50.19:11434)[/dim]\n")
+        console.print("[yellow]⚠ Ollama runs externally — not inside the Docker container.[/yellow]")
+        console.print("[dim]Enter the host URL where Ollama is running (e.g. http://192.168.1.100:11434)[/dim]\n")
         ollama_host = questionary.text(
-            "Ollama host:",
-            default="http://172.16.50.19:11434",
+            "Ollama host URL:",
+            default="http://localhost:11434",
         ).ask()
         if ollama_host is None:
             return False

@@ -71,6 +71,9 @@ class WizardState:
     llm_qwen3: str = "ollama/qwen3.6_27b"
     llm_codex: str = "openai/gpt-5.5"
 
+    # Gateway auth (generated during install, written to .env)
+    gateway_token: str = ""
+
     # Container-side paths (Docker maps host openclaw_dir → /home/node/.openclaw)
     # Scripts and agent templates that run INSIDE the container must use these.
     CONTAINER_OPENCLAW_DIR: Path = Path("/home/node/.openclaw")

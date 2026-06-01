@@ -166,6 +166,7 @@ def generate(state: WizardState) -> dict:
                 "mode": "hybrid",
             },
             "auth": {
+                "token": state.gateway_token,
                 "rateLimit": {
                     "maxAttempts": 10,
                     "windowMs": 60000,

@@ -74,7 +74,7 @@ def install(
         "  |  ",
         ("Multi-Agent AI Setup", "bold"),
         "\n",
-        "v0.3.1 \"The Crew (patch)\"",
+        "v0.3.4 \"The Crew (patch)\"",
         "  |  ",
         ("https://openclaw.ai", "cyan underline"),
     )
