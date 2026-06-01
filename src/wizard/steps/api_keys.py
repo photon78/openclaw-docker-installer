@@ -19,6 +19,16 @@ console = Console()
 # Main LLM providers (the most common ones)
 PROVIDERS: list[dict[str, Any]] = [
     {
+        "id": "moonshot",
+        "label": "Moonshot (Kimi K2.6)",
+        "key_hint": "Starts with sk-  →  https://platform.moonshot.ai/",
+        "key_prefix": "sk-",
+        "models": [
+            ("moonshot/kimi-k2.6", "Kimi K2.6 — recommended"),
+        ],
+        "default_model": "moonshot/kimi-k2.6",
+    },
+    {
         "id": "anthropic",
         "label": "Anthropic (Claude)",
         "key_hint": "Starts with sk-ant-  →  https://console.anthropic.com/",
@@ -32,15 +42,15 @@ PROVIDERS: list[dict[str, Any]] = [
     },
     {
         "id": "openai",
-        "label": "OpenAI (ChatGPT / GPT-4)",
+        "label": "OpenAI (GPT-5.5 Codex)",
         "key_hint": "Starts with sk-  →  https://platform.openai.com/",
         "key_prefix": "sk-",
         "models": [
-            ("openai/gpt-4o",        "GPT-4o — recommended"),
+            ("openai/gpt-5.5",       "GPT-5.5 — recommended"),
+            ("openai/gpt-4o",        "GPT-4o — legacy"),
             ("openai/gpt-4o-mini",   "GPT-4o Mini — fast & cheap"),
-            ("openai/o3",            "o3 — advanced reasoning"),
         ],
-        "default_model": "openai/gpt-4o",
+        "default_model": "openai/gpt-5.5",
     },
     {
         "id": "mistral",
@@ -52,6 +62,17 @@ PROVIDERS: list[dict[str, Any]] = [
             ("mistral/mistral-small-latest", "Mistral Small — fast & cheap"),
         ],
         "default_model": "mistral/mistral-large-latest",
+    },
+    {
+        "id": "ollama",
+        "label": "Ollama (Local)",
+        "key_hint": "No API key needed — enter Ollama host URL",
+        "key_prefix": None,
+        "models": [
+            ("ollama/gemma4_26_Q5KS", "Gemma 4 26B Q5KS — recommended"),
+            ("ollama/qwen3.6_27b",    "Qwen 3.6 27B — alternative"),
+        ],
+        "default_model": "ollama/gemma4_26_Q5KS",
     },
     {
         "id": "custom",
@@ -115,8 +136,22 @@ def run(state: WizardState) -> bool | str:
 
     provider = next(p for p in PROVIDERS if p["id"] == provider_choice)
 
-    # API key (skip for Ollama)
-    if provider["key_hint"]:
+    # API key or host (skip for Ollama)
+    if provider["id"] == "ollama":
+        console.print()
+        console.print("[yellow]⚠ Ollama runs externally — not inside the Docker container.[/yellow]")
+        console.print("[dim]Enter the host URL where Ollama is running (e.g. http://192.168.1.100:11434)[/dim]\n")
+        ollama_host = questionary.text(
+            "Ollama host URL:",
+            default="http://localhost:11434",
+        ).ask()
+        if ollama_host is None:
+            return False
+        if ollama_host.strip().lower() == "back":
+            return BACK
+        state.ollama_host = ollama_host.strip()
+        key = ""  # No API key for Ollama
+    elif provider["key_hint"]:
         console.print()
         console.print(f"[dim]{provider['key_hint']}[/dim]\n")
 
@@ -144,6 +179,10 @@ def run(state: WizardState) -> bool | str:
             state.anthropic_api_key = key
         elif provider["id"] == "mistral":
             state.mistral_api_key = key
+        elif provider["id"] == "moonshot":
+            state.kimi_api_key = key
+        elif provider["id"] == "openai":
+            state.openai_api_key = key
         else:
             # Generic: store as primary_api_key for config generator
             state.primary_provider_id = provider["id"]
@@ -205,6 +244,14 @@ def run(state: WizardState) -> bool | str:
                 "[yellow]Note:[/yellow] Skills requiring Mistral (translate, OCR, transcribe)\n"
                 "[dim]will not be available. You can add a Mistral key later in .env.[/dim]\n"
             )
+    elif provider["id"] == "moonshot":
+        # Kimi IS the primary — use it for everything
+        state.llm_budget = primary_model
+        state.llm_media = primary_model
+    elif provider["id"] == "ollama":
+        # Ollama IS the primary — use it for everything
+        state.llm_budget = primary_model
+        state.llm_media = primary_model
     else:
         # Mistral IS the primary — use it for everything
         state.llm_budget = primary_model
@@ -222,6 +269,12 @@ def run(state: WizardState) -> bool | str:
     table.add_row("[dim]Media model[/dim]",       f"[bold]{state.llm_media}[/bold]")
     if state.mistral_api_key:
         table.add_row("[dim]Skills provider[/dim]", "[bold]Mistral[/bold] [green]✓[/green]")
+    if state.kimi_api_key:
+        table.add_row("[dim]Kimi[/dim]", "[bold]Moonshot[/bold] [green]✓[/green]")
+    if state.openai_api_key:
+        table.add_row("[dim]OpenAI[/dim]", "[bold]GPT-5.5[/bold] [green]✓[/green]")
+    if state.ollama_host:
+        table.add_row("[dim]Ollama[/dim]", f"[bold]{state.ollama_host}[/bold] [green]✓[/green]")
     console.print(table)
     console.print()
 

@@ -2,6 +2,7 @@
 generator.py — Orchestrates config file generation from WizardState.
 Calls all individual generators and reports what was written.
 """
+import secrets
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -40,6 +41,10 @@ def _print_table(results: list) -> None:
 
 def run(state: WizardState) -> GenerationResult:
     """Generate all config files. Returns GenerationResult."""
+    # Generate gateway auth token once (used by env_gen and openclaw_json_gen)
+    if not state.gateway_token:
+        state.gateway_token = secrets.token_urlsafe(32)
+
     if state.dry_run:
         # Redirect all writes to a temporary directory
         tmp = Path(tempfile.mkdtemp(prefix="openclaw-dry-run-"))
@@ -117,7 +122,7 @@ def run(state: WizardState) -> GenerationResult:
 
     # Bootstrap workspace directory with template files
     try:
-        workspace_paths = workspace_bootstrap_gen.write(state)
+        workspace_paths = workspace_bootstrap_gen.generate(state)
         results.append((
             "[green]\u2713[/green]",
             "workspace/",

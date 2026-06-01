@@ -24,18 +24,18 @@ def state(tmp_path: Path) -> WizardState:
 
 class TestWorkspaceBootstrapGen:
     def test_creates_workspace_directory(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         assert state.workspace_dir.is_dir()
 
     def test_creates_required_subdirectories(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         assert (state.workspace_dir / "memory").is_dir()
         assert (state.workspace_dir / "tasks").is_dir()
         assert (state.workspace_dir / "scripts").is_dir()
         assert (state.workspace_dir / "memory" / "topics").is_dir()
 
     def test_creates_all_required_files(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         required = [
             "SOUL.md",
             "AGENTS.md",
@@ -52,24 +52,24 @@ class TestWorkspaceBootstrapGen:
 
     def test_no_symlinks_for_workspace_files(self, state: WizardState) -> None:
         """All workspace files must be real copies — never symlinks."""
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         for md_file in state.workspace_dir.glob("*.md"):
             assert not md_file.is_symlink(), f"{md_file.name} must not be a symlink"
         check_tasks = state.workspace_dir / "scripts" / "check_tasks.py"
         assert not check_tasks.is_symlink()
 
     def test_soul_md_contains_no_email_rule(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "SOUL.md").read_text()
         assert "email" in content.lower() or "e-mail" in content.lower()
 
     def test_agents_md_contains_no_email_rule(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "AGENTS.md").read_text(encoding="utf-8")
         assert "email" in content.lower() or "e-mail" in content.lower()
 
     def test_soul_md_contains_agent_name(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "SOUL.md").read_text()
         assert state.agent_name in content
 
@@ -80,7 +80,7 @@ class TestWorkspaceBootstrapGen:
         generated path uses the container path (/home/node/.openclaw/...), not
         the host tmpdir path used during testing.
         """
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "HEARTBEAT.md").read_text()
         # Container path: Docker maps host openclaw_dir → /home/node/.openclaw
         container_check_tasks = str(state.container_scripts_dir / "check_tasks.py")
@@ -92,7 +92,7 @@ class TestWorkspaceBootstrapGen:
         Container path (/home/node/.openclaw/workspace/scripts/check_tasks.py)
         must appear — not any host-side tmpdir path.
         """
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "HEARTBEAT.md").read_text()
         container_check_tasks = str(state.container_scripts_dir / "check_tasks.py")
         assert container_check_tasks in content
@@ -104,7 +104,7 @@ class TestWorkspaceBootstrapGen:
         the container workspace (/home/node/.openclaw/workspace/tasks), not
         the host tmpdir path used during testing.
         """
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "scripts" / "check_tasks.py").read_text()
         # Container path: Docker maps host openclaw_dir → /home/node/.openclaw
         container_tasks_dir = str(state.container_workspace_dir / "tasks")
@@ -112,33 +112,33 @@ class TestWorkspaceBootstrapGen:
 
     @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_check_tasks_py_is_executable(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         check_tasks = state.workspace_dir / "scripts" / "check_tasks.py"
         mode = oct(check_tasks.stat().st_mode)
         assert mode[-3:] in ("755", "744", "775"), f"Expected executable, got {mode}"
 
     def test_user_md_contains_state_username(self, state: WizardState) -> None:
         """USER.md must contain the username from WizardState, not a hardcoded value."""
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "USER.md").read_text()
         assert state.username in content
 
     def test_memory_md_contains_state_username(self, state: WizardState) -> None:
         """MEMORY.md must reference state.username."""
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         content = (state.workspace_dir / "MEMORY.md").read_text()
         assert state.username in content
 
     @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
     def test_health_check_py_is_executable(self, state: WizardState) -> None:
-        workspace_bootstrap_gen.write(state)
+        workspace_bootstrap_gen.generate(state)
         health_check = state.workspace_dir / "scripts" / "health_check.py"
         if health_check.exists():  # Only test if the file was generated
             mode = oct(health_check.stat().st_mode)
             assert mode[-3:] in ("755", "744", "775"), f"Expected executable, got {mode}"
 
     def test_write_returns_list_of_paths(self, state: WizardState) -> None:
-        result = workspace_bootstrap_gen.write(state)
+        result = workspace_bootstrap_gen.generate(state)
         assert isinstance(result, list)
         assert len(result) > 0
         for path in result:

@@ -24,6 +24,12 @@ def generate(state: WizardState) -> str:
         # Map provider ID to expected env var name
         env_var = _provider_env_var(state.primary_provider_id)
         lines.append(f"{env_var}={state.primary_api_key}")
+    if state.kimi_api_key:
+        lines.append(f"KIMI_API_KEY={state.kimi_api_key}")
+    if state.openai_api_key:
+        lines.append(f"OPENAI_API_KEY={state.openai_api_key}")
+    if state.ollama_host:
+        lines.append(f"OLLAMA_HOST={state.ollama_host}")
     if state.telegram_bot_token:
         lines.append(f"TELEGRAM_BOT_TOKEN={state.telegram_bot_token}")
     if state.discord_bot_token:
@@ -31,12 +37,20 @@ def generate(state: WizardState) -> str:
     if state.signal_number:
         lines.append(f"SIGNAL_NUMBER={state.signal_number}")
 
+    # Gateway auth token (required for Docker container)
+    if state.gateway_token:
+        lines.append(f"OPENCLAW_GATEWAY_TOKEN={state.gateway_token}")
+
     lines += [
         "",
         f"LLM_BUDGET={state.llm_budget}",
         f"LLM_STANDARD={state.llm_standard}",
         f"LLM_POWER={state.llm_power}",
         f"LLM_MEDIA={state.llm_media}",
+        f"LLM_KIMI={state.llm_kimi}",
+        f"LLM_GEMMA4={state.llm_gemma4}",
+        f"LLM_QWEN3={state.llm_qwen3}",
+        f"LLM_CODEX={state.llm_codex}",
         "",
         f"BACKUP_MOUNT={state.backup_mount_path or '/mnt/backup'}",
     ]
