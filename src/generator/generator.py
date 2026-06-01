@@ -122,7 +122,7 @@ def run(state: WizardState) -> GenerationResult:
 
     # Bootstrap workspace directory with template files
     try:
-        workspace_paths = workspace_bootstrap_gen.write(state)
+        workspace_paths = workspace_bootstrap_gen.generate(state)
         results.append((
             "[green]\u2713[/green]",
             "workspace/",
