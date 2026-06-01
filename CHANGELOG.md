@@ -11,6 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.4] — 2026-06-02 "LLM Providers Expansion"
+
+### Added
+- **Kimi K2.6 support** — new LLM provider via Moonshot AI (`moonshot/kimi-k2.6`).
+  Requires `KIMI_API_KEY` in `.env`.
+- **Ollama support** — local LLM provider with configurable host (`OLLAMA_HOST`,
+  default `localhost:11434`). Supports `gemma4`, `qwen3`, and other Ollama models.
+- **GPT-5.5 Codex support** — OpenAI Codex as optional provider (`openai/gpt-5.5`).
+  Requires `OPENAI_API_KEY` in `.env`.
+- **Gateway Token generation** — installer now generates a random
+  `OPENCLAW_GATEWAY_TOKEN` and writes it to both `.env` and `openclaw.json`.
+  Fixes container authentication issues.
+- **Ollama Host configuration** — interactive prompt for Ollama host IP during
+  install with warning for external hosts.
+
+### Fixed
+- **BOOTSTRAP.md creation** — corrected `workspace_bootstrap_gen.generate()` call
+  (was incorrectly calling `.write()` which no longer exists). BOOTSTRAP.md is
+  now properly created in the workspace.
+- **OpenAI dependencies removed** — all OpenAI-specific code removed from installer.
+  Codex is now optional via user-provided API key.
+
+### Changed
+- **Version bump** — `v0.3.3` → `v0.3.4`.
+- **LLM provider selection** — installer now asks for preferred provider
+  (Kimi / Ollama / Codex) with appropriate API key prompts.
+
+---
+
 ## [0.3.3] — 2026-05-27 "The Crew (patch 3)"
 
 ### Added
