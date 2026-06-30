@@ -112,12 +112,15 @@
 - macOS launchd service (alongside existing systemd)
 - CONTRIBUTING.md review and update
 
-### v0.5.0 — "Shape Shifter" 🔄
-*Updates, migration, backup.*
+### v0.5.0 — "Day 2" 🔄
+*Agent-guided updates and backup — no separate CLI tool needed.*
 
-- `openclaw-installer update` — backup before update, health check after
-- `openclaw-installer backup` / `restore`
-- Migration path: Docker → native
+- Insight: after install the agent is running and security-aware — it guides the user through updates
+- `backup_workspace.py` bundled in `workspace/scripts/` — agent can run it on demand or on schedule
+- Update flow documented in agent SOUL.md/AGENTS.md — agent knows the steps
+- HEARTBEAT: agent checks for new OpenClaw version, notifies user, offers to run update flow
+- Update flow: backup → docker pull → restart → healthcheck → rollback if broken
+- Concept: TBD (to be designed with main)
 
 ---
 
