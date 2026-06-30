@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.5] — 2026-06-30
+
+### Fixed
+- **`openclaw.json`: `tools.exec.mode`** — generated config now includes the full
+  `tools` block with `exec.mode: "allowlist"`, matching the production OpenClaw
+  configuration on `hummer`. Previously this block was missing after generation,
+  causing exec approvals to fall back to manual review instead of the allowlist.
+- **Tests:** updated assertions now verify the `tools` block presence and
+  `tools.exec.mode` value.
+
 ## [0.3.4] — 2026-06-02 "LLM Providers Expansion"
 
 ### Added
@@ -39,6 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Kimi / Ollama / Codex) with appropriate API key prompts.
 
 ---
+=======
+## [0.3.5] — 2026-06-30
+
+### Fixed
+- **`openclaw.json`: `tools.exec.mode`** — generated config now includes the full
+  `tools` block with `exec.mode: "allowlist"`, matching the production OpenClaw
+  configuration on `hummer`. Previously this block was missing after generation,
+  causing exec approvals to fall back to manual review instead of the allowlist.
+- **Tests:** updated assertions now verify the `tools` block presence and
+  `tools.exec.mode` value.
 
 ## [0.3.3] — 2026-05-27 "The Crew (patch 3)"
 

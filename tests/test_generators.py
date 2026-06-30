@@ -151,6 +151,12 @@ class TestExecApprovalsGen:
         path = exec_approvals_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
 
+    def test_tools_block_exec_mode_allowlist(self, state: WizardState) -> None:
+        """Generated config must enforce allowlist-only exec approvals."""
+        config = openclaw_json_gen.generate(state)
+        assert config["tools"]["exec"]["mode"] == "allowlist"
+        assert config["tools"]["profile"] == "coding"
+
     def test_no_shell_tools_in_allowlists(self, state: WizardState) -> None:
         """Shell tools must never appear in any allowlist."""
         content = json.dumps(exec_approvals_gen.generate(state))

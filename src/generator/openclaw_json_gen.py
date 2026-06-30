@@ -197,6 +197,45 @@ def generate(state: WizardState) -> dict:
             # Best-effort masking of sensitive values in logs and transcripts
             "redactSensitive": "tools",
         },
+        "tools": {
+            "profile": "coding",
+            "exec": {
+                # Allowlist-only exec: keeps approvals predictable and prevents
+                # arbitrary shell execution by requiring explicit allowlist entries.
+                "mode": "allowlist",
+            },
+            "agentToAgent": {
+                "enabled": True,
+            },
+            "sessions": {
+                "visibility": "all",
+            },
+            "media": {
+                "audio": {
+                    "enabled": True,
+                    "echoTranscript": True,
+                    "echoFormat": "🎤 \"{transcript}\"",
+                    "models": [
+                        {
+                            "type": "cli",
+                            "command": "python3",
+                            "args": [
+                                "/home/hummer/.openclaw/scripts/audio_transcribe.py",
+                                "{{MediaPath}}",
+                            ],
+                            "timeoutSeconds": 60,
+                        }
+                    ],
+                }
+            },
+            "web": {
+                "search": {
+                    "enabled": True,
+                    "maxResults": 5,
+                    "timeoutSeconds": 30,
+                }
+            },
+        },
     }
 
     # Channel defaults: security-hardened baseline for all channels
