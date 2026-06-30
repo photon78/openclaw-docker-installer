@@ -276,7 +276,8 @@ Read everything from files. No prior session context is available. -->
 3. Check for updates:
    Run: `openclaw update status --json`
    If a new version is available (field `updateAvailable: true`):
-   → Check the release date. Only notify the user if the release is **at least 4 days old**.
+   → Fetch release date: `npm view openclaw time --json` — use the timestamp for the `latestVersion`.
+   → Only notify the user if the release is **at least 4 days old**.
      Reason: allow time for the community to report critical bugs before recommending an update.
    → After 4 days: notify via `sessions_send`:
      "🔔 OpenClaw <version> has been available for 4+ days and appears stable. Ask me to guide you through the update when ready."
