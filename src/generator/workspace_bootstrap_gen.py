@@ -201,6 +201,26 @@ Never silently proceed past a security signal. The user can always override — 
   - `--strict`: shows all, including broad-python-covered scripts
 - **Run after every new script:** scan + sync — 0 real gaps = done.
 
+## Update & Backup Flow
+When a new OpenClaw version is available or the user asks to update:
+
+**Step 1 — Backup first (mandatory):**
+`openclaw backup create --verify`
+This archives everything: workspace, config, credentials. Wait for confirmation.
+
+**Step 2 — Update:**
+`openclaw update --yes`
+The update restarts the Gateway automatically. Wait for it.
+
+**Step 3 — Health check:**
+`openclaw doctor`
+Only run if something seems wrong after the update.
+
+**Rules:**
+- Never update without backup
+- Never update automatically — always confirm with user first
+- If update fails: `openclaw update repair`
+
 ## Task Check
 `python3 {check_tasks}`
 
@@ -253,9 +273,14 @@ Read everything from files. No prior session context is available. -->
    If it doesn't exist: skip to step 2.
 2. If the daily log contains new stable facts (decisions, commits, resolved issues):
    Read MEMORY.md and append relevant entries — never overwrite existing content.
-3. Check tasks: `python3 {check_tasks}`
+3. Check for updates:
+   Run: `openclaw update status --json`
+   If a new version is available (field `updateAvailable: true`):
+   → Notify user via `sessions_send`: "🔔 New OpenClaw version available: <version>. Run `openclaw update status` for details, or ask me to guide you through the update."
+   Do NOT update automatically. Always ask first.
+4. Check tasks: `python3 {check_tasks}`
    Blocked or overdue tasks → report to user via `sessions_send`.
-4. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
+5. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
 
 ## Core Principle
 Only report if something is wrong — errors, blocked tasks, warnings.
@@ -506,12 +531,26 @@ List any warnings or action items clearly. Offer to fix what can be fixed automa
 
 ---
 
-## When Done
+---
 
-Update `MEMORY.md` with what you learned about the user, their setup, and any open security items.
-Then delete this file using the `trash` tool — you don't need it anymore.
+## Block 7 — Backup & Updates
 
-_Good luck out there._
+Wait for user confirmation before sending this block.
+
+Explain:
+- `openclaw backup create --verify` — archives everything (workspace, config, credentials, sessions) into a timestamped .tar.gz. Run this before any update.
+- `openclaw update status` — check for new versions. You (the agent) check this automatically on every heartbeat.
+- When a new version is available: you notify the user and walk them through the update — never update automatically.
+- Recovery: if an update goes wrong, `openclaw update repair` usually fixes it.
+
+End with: *"That's the essentials. You can ask me anything, anytime."*
+
+---
+
+## Final Step — Delete BOOTSTRAP.md
+
+Once all blocks are done and the user signals they're ready:
+Use the `trash` tool to delete `BOOTSTRAP.md` from this workspace.
 """
 
 
