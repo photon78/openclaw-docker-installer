@@ -91,6 +91,18 @@
 
 ## Planned
 
+### v0.3.6 — "Script Safety Bundle" 🛡️ ✅
+*Agent exec-safety, script registry, allowlist verification.*
+
+- **`safe_exec_check.py`** — bundled in `workspace/scripts/shared/`; AGENTS.md templates already reference it, now ships with the installer
+  - Blocks: pipes, chaining (`&&`, `||`, `;`), redirects, subshells, globs, backgrounding, inline-shell (`bash -c`, `python3 -c`), `run`-prefix, Newlines
+  - Exit 0 = ok, Exit 1 = reject, Exit 2 = config error
+- **SCRIPT-META header standard** — generic renamed from ZOT-META; fields: `agent`, `type`, `risk`, `description`; documented in BOOTSTRAP.md
+- **`scan_scripts.py`** — scans workspace scripts for SCRIPT-META headers, writes `scripts/registry.json`; bundled in `workspace/scripts/shared/`
+- **`sync_allowlist.py`** — compares registry against `exec-approvals.json`; default mode hides broad-python-covered scripts; `--apply` fills gaps; `--strict` shows all
+  - Runs as post-install verification step: 0 real gaps = installation correct
+- AGENTS.md templates updated: "Script-Registry & Allowlist-Sync" section
+
 ### v0.4.0 — "Open House" 🏠
 *Stability, UX polish, CLI commands.*
 

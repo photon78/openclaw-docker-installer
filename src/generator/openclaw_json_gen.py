@@ -131,8 +131,8 @@ def generate(state: WizardState) -> dict:
                 "workspace": "/home/node/.openclaw/workspace",
                 # Model refs via env vars — change models by editing .env only
                 "model": {
-                    "primary": "${LLM_KIMI}",
-                    "fallbacks": ["${LLM_BUDGET}", "${LLM_STANDARD}", "${LLM_POWER}", "${LLM_GEMMA4}"],
+                    "primary": "${LLM_BUDGET}",
+                    "fallbacks": ["${LLM_STANDARD}", "${LLM_KIMI}", "${LLM_POWER}"],
                 },
                 "heartbeat": {
                     "every": "30m",
