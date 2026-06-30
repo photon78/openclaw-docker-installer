@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] — 2026-06-30 "Day 2"
+
+### Added
+- **HEARTBEAT.md template:** `openclaw update status --json` on every heartbeat; notifies user when `updateAvailable: true`. Never auto-updates.
+- **AGENTS.md template:** new `## Update & Backup Flow` section — backup → update → doctor, with explicit rules (never without backup, never automatic, repair fallback).
+- **BOOTSTRAP.md:** Block 7 "Backup & Updates" explains backup/update/heartbeat flow. Final Step instructs agent to delete `BOOTSTRAP.md` after onboarding.
+- **`docs/day2-operations.md`:** reference guide for standard and power-user update flows, backup commands, recovery steps, update channels.
+
+---
+
 ## [0.3.6] — 2026-06-30 "Script Safety Bundle"
 
 ### Added
