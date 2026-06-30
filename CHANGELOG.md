@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.6] — 2026-06-30 "Script Safety Bundle"
+
+### Added
+- **`safe_exec_check.py`** bundled in `workspace/scripts/shared/` — pre-flight exec safety check for all agents.
+  Blocks pipes, chaining, redirects, subshells, globs, backgrounding, inline-shell, `run`-prefix, newlines.
+  Exit 0 = ok, Exit 1 = reject, Exit 2 = config/IO error.
+- **SCRIPT-META header standard** — generic script metadata (renamed from ZOT-META).
+  Fields: `agent`, `type`, `risk`, `description`. Documented in BOOTSTRAP.md template.
+- **`scan_scripts.py`** bundled in `workspace/scripts/shared/` — scans SCRIPT-META headers, writes `scripts/registry.json`.
+- **`sync_allowlist.py`** bundled in `workspace/scripts/shared/` — compares registry vs. `exec-approvals.json`.
+  Default: hides broad-python-covered scripts. `--apply` fills gaps. `--strict` shows all.
+  Runs as post-install verification step (0 real gaps = config correct).
+
+### Changed
+- AGENTS.md templates: new section "Script-Registry & Allowlist-Sync" with scan + sync workflow.
+
+---
+
 ## [0.3.5] — 2026-06-30
 
 ### Fixed

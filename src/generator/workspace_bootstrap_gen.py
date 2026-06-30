@@ -116,6 +116,7 @@ Full reference: `TOOLS.md`
 
 def _agents_md(state: WizardState) -> str:
     check_tasks = state.container_scripts_dir / "check_tasks.py"
+    scripts_shared = state.container_scripts_dir / "shared"
     return f"""\
 # AGENTS.md — {state.agent_name}
 
@@ -190,6 +191,15 @@ Warn immediately — before proceeding — in any of these situations:
 - Credentials or secrets appear in logs or output → report immediately
 
 Never silently proceed past a security signal. The user can always override — but must be informed first.
+
+## Script Registry & Allowlist Sync
+- **SCRIPT-META:** Every new script needs a SCRIPT-META header (agent, type, risk, description).
+- **Update registry:** `python3 {scripts_shared}/scan_scripts.py`
+- **Check allowlist:** `python3 {scripts_shared}/sync_allowlist.py`
+  - Default: only shows real gaps (broad `python3` = covered, no noise)
+  - `--apply`: writes missing entries into `exec-approvals.json`
+  - `--strict`: shows all, including broad-python-covered scripts
+- **Run after every new script:** scan + sync — 0 real gaps = done.
 
 ## Task Check
 `python3 {check_tasks}`
@@ -543,6 +553,9 @@ def _tools_md(state: WizardState) -> str:
 |--------|---------|
 | `python3 {scripts_dir}/check_tasks.py` | List open tasks |
 | `python3 {scripts_dir}/health_check.py` | Gateway health check |
+| `python3 {scripts_dir}/shared/safe_exec_check.py "<cmd>"` | Pre-flight exec safety check |
+| `python3 {scripts_dir}/shared/scan_scripts.py` | Scan SCRIPT-META headers → registry.json |
+| `python3 {scripts_dir}/shared/sync_allowlist.py` | Check allowlist gaps (--apply to fix) |
 
 ## Git
 
@@ -1090,6 +1103,17 @@ def generate(state: WizardState) -> list[Path]:
         written.append(_add_agent_dst)
     else:
         print(f"  [warn] add_agent.py not found at {_ADD_AGENT_SRC} — skipping")
+
+    # Copy bundled shared scripts to workspace/scripts/shared/
+    _SHARED_SCRIPTS_SRC = Path(__file__).parent.parent / "scripts" / "shared"
+    if _SHARED_SCRIPTS_SRC.exists():
+        shared_dst = workspace / "scripts" / "shared"
+        shared_dst.mkdir(exist_ok=True)
+        for script_file in sorted(_SHARED_SCRIPTS_SRC.glob("*.py")):
+            dst = shared_dst / script_file.name
+            shutil.copy2(script_file, dst)
+            dst.chmod(0o755)
+            written.append(dst)
 
     # Copy bundled skills (idempotent — skip if already present)
     # Structure: templates/skills/always/ (always copied)
