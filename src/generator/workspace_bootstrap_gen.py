@@ -276,8 +276,12 @@ Read everything from files. No prior session context is available. -->
 3. Check for updates:
    Run: `openclaw update status --json`
    If a new version is available (field `updateAvailable: true`):
-   → Notify user via `sessions_send`: "🔔 New OpenClaw version available: <version>. Run `openclaw update status` for details, or ask me to guide you through the update."
-   Do NOT update automatically. Always ask first.
+   → Check the release date. Only notify the user if the release is **at least 4 days old**.
+     Reason: allow time for the community to report critical bugs before recommending an update.
+   → After 4 days: notify via `sessions_send`:
+     "🔔 OpenClaw <version> has been available for 4+ days and appears stable. Ask me to guide you through the update when ready."
+   → Before 4 days: stay silent. Check again on the next heartbeat.
+   Do NOT update automatically. Always confirm with the user first.
 4. Check tasks: `python3 {check_tasks}`
    Blocked or overdue tasks → report to user via `sessions_send`.
 5. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
@@ -540,7 +544,7 @@ Wait for user confirmation before sending this block.
 Explain:
 - `openclaw backup create --verify` — archives everything (workspace, config, credentials, sessions) into a timestamped .tar.gz. Run this before any update.
 - `openclaw update status` — check for new versions. You (the agent) check this automatically on every heartbeat.
-- When a new version is available: you notify the user and walk them through the update — never update automatically.
+- When a new version is available: you wait **4 days** after release before notifying the user — time for the community to report critical bugs. Then you notify and guide through the update — never update automatically.
 - Recovery: if an update goes wrong, `openclaw update repair` usually fixes it.
 
 End with: *"That's the essentials. You can ask me anything, anytime."*

@@ -10,7 +10,7 @@
 2. **Update:** `openclaw update --yes`
 3. **Healthcheck (only if issues):** `openclaw doctor`
 
-Your agent monitors new versions on every heartbeat and notifies you automatically.
+Your agent monitors new versions on every heartbeat. It waits **4 days** after a release before notifying you — allowing time for critical bugs to surface in the community. After 4 days without major incidents, it notifies you that the update appears stable.
 
 ## Power User: Extended Update Flow
 
