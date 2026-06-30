@@ -119,14 +119,6 @@
 - `openclaw-installer backup` / `restore`
 - Migration path: Docker → native
 
-### v0.6.0 — "VPS Ready" 🖥️
-*One-command VPS deployment.*
-
-- nginx reverse proxy config
-- Let's Encrypt / Certbot setup
-- UFW firewall rules
-- Resource limits (RAM-aware docker-compose)
-
 ---
 
 ## Backlog
