@@ -88,9 +88,10 @@ def heartbeat_md(name: str, workspace_dir: str) -> str:
    Read MEMORY.md and append relevant entries — never overwrite existing content.
 3. Check tasks: `python3 {workspace_dir}/scripts/check_tasks.py`
    Blocked or overdue tasks → report to main via `sessions_send`.
-4. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
+4. If nothing to report: **end silently — no visible reply, no HEARTBEAT_OK message.**
 
 ## Rules
+- **No update checks in heartbeat.** Never run `openclaw update status` from heartbeat.
 - Always read files first — no assumptions
 - Only stable, permanent facts go in MEMORY.md — no daily minutiae
 - Never deploy or execute commands not listed in this file

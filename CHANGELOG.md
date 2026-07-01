@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] — 2026-07-01 "Dedicated Update Cron"
+
+### Changed
+- **HEARTBEAT.md templates** (main + all 4 sub-agent types): update check removed from
+  heartbeat. Heartbeat now ends silently when nothing to report (no visible `HEARTBEAT_OK`
+  message). Explicit rule added: `No update checks in heartbeat`.
+- **AGENTS.md template**: update procedure extended with allowlist sync (step 3) and
+  gateway restart (step 5). Rule clarified: update only runs on explicit user request;
+  the `Daily OpenClaw Update Check` cron sends the summary.
+- **BOOTSTRAP.md Block 7**: wording updated — references dedicated daily cron instead
+  of heartbeat for update monitoring.
+- **`docs/day2-operations.md`**: new “Update Design Principles” section; “How the Daily
+  Update Check Works” step-by-step; gateway restart added to standard flow.
+
+### Added
+- **`scripts/check_openclaw_update.py`** generated in every new workspace: standalone
+  daily update check script. Calls `openclaw update status --json` + `npm view openclaw
+  time --json`. Waits 4 days, gathers GitHub community feedback, prints summary.
+  Exit 0 = silent, Exit 1 = summary available, Exit 2 = error.
+- **`tasks/cron-setup.md`** extended: documents `Daily OpenClaw Update Check` cron
+  (isolated agentTurn at 08:00 local time) alongside the existing Gateway Health Check.
+
+---
+
 ## [0.5.0] — 2026-06-30 "Day 2"
 
 ### Added

@@ -210,15 +210,20 @@ This archives everything: workspace, config, credentials. Wait for confirmation.
 
 **Step 2 — Update:**
 `openclaw update --yes`
-The update restarts the Gateway automatically. Wait for it.
 
-**Step 3 — Health check:**
-`openclaw doctor`
-Only run if something seems wrong after the update.
+**Step 3 — Allowlist sync (if scripts directory is set up):**
+`python3 {scripts_shared}/sync_allowlist.py` (or skip if not yet configured)
+
+**Step 4 — Health check:**
+`openclaw doctor` — only if step 2 had warnings.
+
+**Step 5 — Gateway restart:**
+`openclaw gateway restart`
 
 **Rules:**
-- Never update without backup
-- Never update automatically — always confirm with user first
+- Never update without backup (step 1 mandatory)
+- Never update automatically — user must explicitly request it
+- The `Daily OpenClaw Update Check` cron sends a summary when a release is ≥ 4 days old
 - If update fails: `openclaw update repair`
 
 ## Task Check
@@ -273,23 +278,20 @@ Read everything from files. No prior session context is available. -->
    If it doesn't exist: skip to step 2.
 2. If the daily log contains new stable facts (decisions, commits, resolved issues):
    Read MEMORY.md and append relevant entries — never overwrite existing content.
-3. Check for updates:
-   Run: `openclaw update status --json`
-   If a new version is available (field `updateAvailable: true`):
-   → Fetch release date: `npm view openclaw time --json` — use the timestamp for the `latestVersion`.
-   → Only notify the user if the release is **at least 4 days old**.
-     Reason: allow time for the community to report critical bugs before recommending an update.
-   → After 4 days: notify via `sessions_send`:
-     "🔔 OpenClaw <version> has been available for 4+ days and appears stable. Ask me to guide you through the update when ready."
-   → Before 4 days: stay silent. Check again on the next heartbeat.
-   Do NOT update automatically. Always confirm with the user first.
-4. Check tasks: `python3 {check_tasks}`
+3. Check tasks: `python3 {check_tasks}`
    Blocked or overdue tasks → report to user via `sessions_send`.
-5. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
+4. If nothing to report: **end silently — no visible reply, no HEARTBEAT_OK message, no output.**
 
 ## Core Principle
-Only report if something is wrong — errors, blocked tasks, warnings.
-Silence (HEARTBEAT_OK) = everything is fine.
+Only report if something is actually wrong — errors, blocked tasks, warnings.
+Silence = everything is fine. A visible reply means something needs attention.
+
+## Rules
+- **No update checks in heartbeat.** Updates are checked once daily by a dedicated cron
+  (`Daily OpenClaw Update Check`). Never run `openclaw update status` from heartbeat.
+- Always read files first — no assumptions
+- Only stable, permanent facts go in MEMORY.md — no daily minutiae
+- Never deploy or execute commands not listed in this file
 
 ## Proactive Messages
 Use `sessions_send` to notify the user if action is needed.
@@ -544,8 +546,8 @@ Wait for user confirmation before sending this block.
 
 Explain:
 - `openclaw backup create --verify` — archives everything (workspace, config, credentials, sessions) into a timestamped .tar.gz. Run this before any update.
-- `openclaw update status` — check for new versions. You (the agent) check this automatically on every heartbeat.
-- When a new version is available: you wait **4 days** after release before notifying the user — time for the community to report critical bugs. Then you notify and guide through the update — never update automatically.
+- `openclaw update status` — check for new versions. A dedicated daily cron (`Daily OpenClaw Update Check`) does this automatically at 08:00. You do **not** check for updates in the heartbeat.
+- When a new version is available: the cron waits **4 days** after release before notifying you — time for the community to report critical bugs. Then it sends you a summary (version, age, open issues). You decide when to update — never automatic.
 - Recovery: if an update goes wrong, `openclaw update repair` usually fixes it.
 
 End with: *"That's the essentials. You can ask me anything, anytime."*
@@ -663,8 +665,9 @@ if __name__ == "__main__":
 """
 
 
-def _cron_setup_task_md(state: WizardState) -> str:  # noqa: ARG001
-    return """\
+def _cron_setup_task_md(state: WizardState) -> str:
+    update_script = state.container_workspace_dir / "scripts" / "check_openclaw_update.py"
+    return f"""\
 # Task: Set up recommended cron jobs
 
 **Priority:** Normal
@@ -672,12 +675,46 @@ def _cron_setup_task_md(state: WizardState) -> str:  # noqa: ARG001
 
 ## What to do
 
-Run this command once to activate the automated gateway health check.
-Crons must be set via CLI — they cannot be defined in openclaw.json.
+Set up the two recommended cron jobs below. Use the `cron` tool or CLI.
+Crons must be set at runtime — they cannot be defined in openclaw.json.
 
-### Gateway Health Check
+---
 
-Runs every 2 hours, triggers a gateway health check:
+### 1. Daily OpenClaw Update Check
+
+Runs every morning at 08:00 (local time). Checks for updates, waits 4 days after
+release, gathers community feedback (GitHub Issues), and sends you a summary.
+**Never updates autonomously** — you must say \"run the update\" explicitly.
+
+Create via `cron` tool:
+
+```
+cron action=add job={{
+  "name": "Daily OpenClaw Update Check",
+  "schedule": {{"kind": "cron", "expr": "0 8 * * *"}},
+  "sessionTarget": "isolated",
+  "payload": {{
+    "kind": "agentTurn",
+    "message": "Run: python3 {update_script}\\nExit 1 = update available, send printed summary to user. Exit 0 = silent. Exit 2 = send error."
+  }}
+}}
+```
+
+Or via CLI:
+
+```bash
+openclaw cron add \\
+  --name "Daily OpenClaw Update Check" \\
+  --cron "0 8 * * *" \\
+  --session isolated \\
+  --agent-turn "Run: python3 {update_script}. Exit 1: send printed summary to user."
+```
+
+---
+
+### 2. Gateway Health Check
+
+Runs every 2 hours, triggers a heartbeat:
 
 ```bash
 openclaw cron add --name "Gateway Health Check" \\
@@ -686,17 +723,18 @@ openclaw cron add --name "Gateway Health Check" \\
   --system-event "HEARTBEAT: gateway health check"
 ```
 
+---
+
 ## Verify
 
 ```bash
 openclaw cron list
 ```
 
-The job should appear as active.
+Both jobs should appear as active.
 
 > **Note:** No daily digest cron needed. OpenClaw indexes all `.md` files in
-> `memory/topics/` recursively and automatically — `memory_search` always finds
-> the latest topics without a separate digest step.
+> `memory/topics/` recursively and automatically.
 
 ## Docs
 
@@ -1069,6 +1107,175 @@ if __name__ == "__main__":
     return template.format(env_file=str(env_file), agents_dir=str(agents_dir))
 
 
+def _check_openclaw_update_py(state: WizardState) -> str:  # noqa: ARG001
+    """Generate check_openclaw_update.py — daily update check script.
+
+    Checks whether an OpenClaw update is available, waits 4 days after release,
+    gathers community feedback (GitHub Issues), and prints a summary.
+    Never updates autonomously.
+    """
+    state_dir = state.CONTAINER_OPENCLAW_DIR / "scripts" / "state"
+    return f"""\
+#!/usr/bin/env python3
+\"\"\"
+check_openclaw_update.py — Daily OpenClaw Update Check
+
+Checks whether a new OpenClaw release is available.
+- Release < 4 days old: log internally, stay silent.
+- Release >= 4 days old: gather community feedback and print a summary.
+- Never updates autonomously — user must say \"run the update\" explicitly.
+
+Usage:
+    python3 check_openclaw_update.py
+
+Exit codes:
+    0 = No update, or release too recent.
+    1 = Update summary printed (caller should send to user).
+    2 = Error fetching update info.
+\"\"\"
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+WAIT_DAYS = 4
+STATE_FILE = Path("{state_dir}") / "openclaw_update_check.json"
+
+
+def _run(cmd: list) -> str:
+    r = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if r.returncode != 0:
+        raise RuntimeError(f"Failed: {{' '.join(cmd)}}\\n{{r.stderr}}")
+    return r.stdout
+
+
+def _load_state() -> dict:
+    if STATE_FILE.exists():
+        try:
+            return json.loads(STATE_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {{}}
+
+
+def _save_state(state: dict) -> None:
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(state, indent=2))
+
+
+def _fetch_status() -> dict:
+    return json.loads(_run(["openclaw", "update", "status", "--json"]))
+
+
+def _fetch_release_time(version: str) -> "datetime | None":
+    try:
+        data = json.loads(_run(["npm", "view", "openclaw", "time", "--json"]))
+        if version in data:
+            return datetime.fromisoformat(data[version].replace("Z", "+00:00"))
+    except (RuntimeError, json.JSONDecodeError, KeyError, ValueError):
+        pass
+    return None
+
+
+def _fetch_feedback(version: str) -> dict:
+    fb = {{"issues": [], "error": None}}
+    try:
+        out = _run([
+            "gh", "issue", "list",
+            "--repo", "openclaw/openclaw",
+            "--label", "bug,crash,regression",
+            "--state", "open",
+            "--search", version,
+            "--limit", "5",
+            "--json", "number,title,url"
+        ])
+        fb["issues"] = json.loads(out)
+    except RuntimeError as e:
+        fb["error"] = str(e)
+    return fb
+
+
+def _summary(version: str, release_time: datetime, fb: dict) -> str:
+    age = (datetime.now(timezone.utc) - release_time).days
+    lines = [
+        f"🔔 **OpenClaw update available: `{{version}}`**",
+        "",
+        f"- Released: {{release_time.strftime('%Y-%m-%d %H:%M UTC')}}",
+        f"- Age: {{age}} day(s) ({{WAIT_DAYS}}-day wait passed)",
+        "",
+        "**Community feedback:**",
+    ]
+    if fb.get("error"):
+        lines.append(f"- GitHub issues unavailable: {{fb['error']}}")
+    elif fb.get("issues"):
+        lines.append(f"- Open issues/regressions ({{len(fb['issues'])}} found):")
+        for i in fb["issues"]:
+            lines.append(f"  - #{{i['number']}}: {{i['title']}} ({{i['url']}})")
+    else:
+        lines.append("- No obvious blocker bugs in the first 5 open issues.")
+    lines.extend([
+        "",
+        "**Next step:** Say \"run the update\" and I will:",
+        "1. `openclaw backup create --verify`",
+        "2. `openclaw update --yes`",
+        "3. Sync allowlist",
+        "4. `openclaw doctor` if needed",
+        "5. `openclaw gateway restart`",
+    ])
+    return "\\n".join(lines)
+
+
+def main() -> int:
+    state = _load_state()
+    try:
+        status = _fetch_status()
+    except (RuntimeError, json.JSONDecodeError) as e:
+        print(f"Error: {{e}}", file=sys.stderr)
+        return 2
+
+    avail = status.get("update", {{}}).get("availability", {{}})
+    if not avail.get("available"):
+        print("No update available.")
+        state["lastCheck"] = datetime.now(timezone.utc).isoformat()
+        _save_state(state)
+        return 0
+
+    version = avail.get("latestVersion") or status.get("update", {{}}).get("registry", {{}}).get("latestVersion")
+    if not version:
+        print("Version unknown.", file=sys.stderr)
+        return 2
+
+    release_time = _fetch_release_time(version)
+    if not release_time:
+        print(f"Release date for {{version}} unavailable — skipping.", file=sys.stderr)
+        return 0
+
+    now = datetime.now(timezone.utc)
+    if (now - release_time) < timedelta(days=WAIT_DAYS):
+        remaining = WAIT_DAYS - (now - release_time).days
+        print(f"{{version}} is {{(now - release_time).days}} day(s) old — {{remaining}} more to go.")
+        state.update({{"lastCheck": now.isoformat(), "pendingVersion": version,
+                     "releaseTime": release_time.isoformat(), "notified": False}})
+        _save_state(state)
+        return 0
+
+    fb = _fetch_feedback(version)
+    print(_summary(version, release_time, fb))
+    state.update({{"lastCheck": now.isoformat(), "pendingVersion": version,
+                 "releaseTime": release_time.isoformat(), "notified": True,
+                 "notifiedAt": now.isoformat()}})
+    _save_state(state)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+"""
+
+
 def _memory_topic_template(state: WizardState) -> str:  # noqa: ARG001
     return """\
 # Topic: <title>
@@ -1120,8 +1327,9 @@ def generate(state: WizardState) -> list[Path]:
         "BOOTSTRAP.md":             _bootstrap_md(state),
         "TOOLS.md":                 _tools_md(state),
         "scripts/check_tasks.py":      _check_tasks_py(state),
-        "scripts/post_gateway_fix.py":  _post_gateway_fix_py(state),
-        "tasks/cron-setup.md":          _cron_setup_task_md(state),
+        "scripts/post_gateway_fix.py":        _post_gateway_fix_py(state),
+        "scripts/check_openclaw_update.py":   _check_openclaw_update_py(state),
+        "tasks/cron-setup.md":                _cron_setup_task_md(state),
         "memory/topics/_template.md":   _memory_topic_template(state),
     }
 
@@ -1136,6 +1344,7 @@ def generate(state: WizardState) -> list[Path]:
     (workspace / "scripts" / "check_tasks.py").chmod(0o755)
     (workspace / "scripts" / "post_gateway_fix.py").chmod(0o755)
     (workspace / "scripts" / "health_check.py").chmod(0o755)
+    (workspace / "scripts" / "check_openclaw_update.py").chmod(0o755)
 
     # Copy add_agent.py from installer source into workspace/scripts/
     _ADD_AGENT_SRC = Path(__file__).parent.parent / "scripts" / "add_agent.py"
