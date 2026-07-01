@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
     if not args.quiet:
-        print(f"=== scan_scripts report ===")
+        print("=== scan_scripts report ===")
         print(f"Scripts dir:    {scripts_dir}")
         print(f"Registry:       {output_path}")
         print(f"Total scripts:  {stats['total']}")
