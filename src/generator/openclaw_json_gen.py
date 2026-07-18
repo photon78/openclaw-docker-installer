@@ -1,6 +1,7 @@
 """
 openclaw_json_gen.py — Generate openclaw.json from WizardState.
-Uses ${LLM_*} env var references — no hardcoded model names.
+Uses ${LLM_*} env var references and SecretRefs — no hardcoded model names
+or plaintext secrets in config files.
 """
 import json
 from pathlib import Path
@@ -59,7 +60,18 @@ def _active_memory_config(state: WizardState) -> dict:
 
 # Providers with confirmed native OpenClaw plugins (enabled: true is sufficient).
 # DeepSeek, OpenRouter = OpenAI-compat, not in installer wizard — use openclaw configure.
-_NATIVE_PLUGINS = {"anthropic", "mistral", "openai"}
+_NATIVE_PLUGINS = {"anthropic", "mistral", "openai", "aki"}
+
+
+def _provider_api_key_env(provider: str) -> str:
+    """Return the canonical env-var name for a provider API key."""
+    mapping = {
+        "anthropic": "ANTHROPIC_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "aki": "AKI_API_KEY",
+    }
+    return mapping.get(provider, f"{provider.upper()}_API_KEY")
 
 
 def _plugins_config(state: WizardState) -> dict:
@@ -68,6 +80,7 @@ def _plugins_config(state: WizardState) -> dict:
     Rules:
     - Primary provider plugin: always included if key is set
     - Mistral plugin: included if mistral_api_key is set (even as secondary, for skills)
+    - Aki plugin: included if aki_api_key is set
     - active-memory: always included
     - No plugin added without a configured key (avoids 404 / auth errors at boot)
     """
@@ -81,15 +94,34 @@ def _plugins_config(state: WizardState) -> dict:
         active_providers.add("anthropic")
     if state.mistral_api_key:
         active_providers.add("mistral")
-    if state.primary_api_key and state.primary_provider_id not in ("anthropic", "mistral"):
+    if state.aki_api_key:
+        active_providers.add("aki")
+    if state.primary_api_key and state.primary_provider_id not in ("anthropic", "mistral", "aki"):
         active_providers.add(state.primary_provider_id)
 
     # Add plugin entries for each active provider
     for provider in sorted(active_providers):
         if provider in _NATIVE_PLUGINS:
             allow.append(provider)
-            entries[provider] = {"enabled": True}
+            entries[provider] = {
+                "enabled": True,
+                "config": {
+                    "apiKey": f"${_provider_api_key_env(provider)}",
+                },
+            }
         # Unknown providers: skip (no plugin available)
+
+    # Brave web-search plugin
+    if state.brave_web_search_api_key:
+        allow.append("brave")
+        entries["brave"] = {
+            "enabled": True,
+            "config": {
+                "webSearch": {
+                    "apiKey": "${BRAVE_WEB_SEARCH_API_KEY}",
+                },
+            },
+        }
 
     # active-memory always last
     allow.append("active-memory")
@@ -106,6 +138,14 @@ def _plugins_config(state: WizardState) -> dict:
 def generate(state: WizardState) -> dict:
     """Return openclaw.json content as dict."""
     config: dict = {
+        "secrets": {
+            "providers": {
+                "default": {"source": "env"},
+            },
+            "defaults": {
+                "env": "default",
+            },
+        },
         "agents": {
             "defaults": {
                 # Container-internal path — host path is bind-mounted here
@@ -143,6 +183,7 @@ def generate(state: WizardState) -> dict:
                 "mode": "hybrid",
             },
             "auth": {
+                "token": "${OPENCLAW_GATEWAY_AUTH_TOKEN}",
                 "rateLimit": {
                     "maxAttempts": 10,
                     "windowMs": 60000,

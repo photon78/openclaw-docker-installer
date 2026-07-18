@@ -25,9 +25,13 @@ class WizardState:
     # API Keys
     anthropic_api_key: str = ""
     mistral_api_key: str = ""       # optional, but recommended for skills
+    aki_api_key: str = ""           # optional, for aki/kimi-k2.7-code-1100b
+    brave_web_search_api_key: str = ""  # optional, Brave web-search plugin
+    openclaw_gateway_auth_token: str = ""  # auto-generated if empty
     primary_provider_id: str = ""   # e.g. "openai", "google", "xai"
     primary_api_key: str = ""       # key for non-anthropic/non-mistral providers
-    telegram_bot_token: str = ""    # set when channel == telegram
+    telegram_bot_token: str = ""    # set when channel == telegram (legacy name)
+    telegram_bot_token_default: str = ""   # TELEGRAM_BOT_TOKEN_DEFAULT in .env
     discord_bot_token: str = ""     # set when channel == discord
     signal_number: str = ""          # set when channel == signal
 
@@ -82,6 +86,14 @@ class WizardState:
     @property
     def env_file(self) -> Path:
         return self.openclaw_dir / ".env"
+
+    @property
+    def gateway_auth_token(self) -> str:
+        """Return the gateway auth token, generating one if necessary."""
+        if not self.openclaw_gateway_auth_token:
+            import secrets as _secrets
+            self.openclaw_gateway_auth_token = _secrets.token_hex(32)
+        return self.openclaw_gateway_auth_token
 
     @property
     def container_workspace_dir(self) -> Path:

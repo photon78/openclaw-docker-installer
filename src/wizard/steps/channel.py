@@ -97,6 +97,8 @@ def run(state: WizardState) -> bool | str:
 
     # Save token to the correct field
     if channel_choice == "telegram":
+        # New canonical env var name; keep legacy field for backwards compat
+        state.telegram_bot_token_default = token.strip()
         state.telegram_bot_token = token.strip()
 
     # allowFrom — who can talk to the agent

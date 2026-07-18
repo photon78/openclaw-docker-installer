@@ -210,6 +210,44 @@ def run(state: WizardState) -> bool | str:
         state.llm_budget = primary_model
         state.llm_media = primary_model
 
+    # ── Optional: Aki / Kimi API key ───────────────────────────────────────
+    console.print()
+    console.print(Panel(
+        "[bold]Aki / Kimi K2.7-code[/bold] [dim](optional)[/dim]\n\n"
+        "Aki/Kimi ist ein starker Coding-Modell-Provider.\n"
+        "Wenn du einen API-Key hast, kannst du ihn hier hinterlegen.\n"
+        "[dim]→  https://aki.trl / Entwickler-Doku[/dim]",
+        border_style="blue",
+        padding=(1, 2),
+    ))
+    console.print("[bold cyan]› Aki / Kimi API key:[/bold cyan] [dim](optional, Enter to skip, 'back' to go back)[/dim]")
+    aki_key = questionary.password("").ask()
+    if aki_key is None:
+        aki_key = ""
+    if aki_key.strip().lower() == "back":
+        return BACK
+    if aki_key.strip():
+        state.aki_api_key = aki_key.strip()
+
+    # ── Optional: Brave web-search API key ───────────────────────────────────
+    console.print()
+    console.print(Panel(
+        "[bold]Brave Web Search[/bold] [dim](optional)[/dim]\n\n"
+        "Brave bietet eine schnelle Web-Suche als OpenClaw-Plugin.\n"
+        "Wenn du einen API-Key hast, wird das Plugin automatisch aktiviert.\n"
+        "[dim]→  https://brave.com/search/api/[/dim]",
+        border_style="blue",
+        padding=(1, 2),
+    ))
+    console.print("[bold cyan]› Brave Web Search API key:[/bold cyan] [dim](optional, Enter to skip, 'back' to go back)[/dim]")
+    brave_key = questionary.password("").ask()
+    if brave_key is None:
+        brave_key = ""
+    if brave_key.strip().lower() == "back":
+        return BACK
+    if brave_key.strip():
+        state.brave_web_search_api_key = brave_key.strip()
+
     # ── Summary ─────────────────────────────────────────────────────────────
     console.print()
     console.print("[green]✓[/green] Provider configured.\n")
@@ -222,6 +260,10 @@ def run(state: WizardState) -> bool | str:
     table.add_row("[dim]Media model[/dim]",       f"[bold]{state.llm_media}[/bold]")
     if state.mistral_api_key:
         table.add_row("[dim]Skills provider[/dim]", "[bold]Mistral[/bold] [green]✓[/green]")
+    if state.aki_api_key:
+        table.add_row("[dim]Coding provider[/dim]", "[bold]Aki/Kimi[/bold] [green]✓[/green]")
+    if state.brave_web_search_api_key:
+        table.add_row("[dim]Web search[/dim]", "[bold]Brave[/bold] [green]✓[/green]")
     console.print(table)
     console.print()
 
