@@ -83,6 +83,7 @@ def run(state: WizardState) -> StartResult:
                     log.info("Gateway healthy at %s", HEALTHZ_URL)
                     console.print("[green]✓[/green] Gateway is healthy.")
                     _run_post_gateway_fix(state)
+                    _run_script_registry_sync(state)
                     return StartResult(ok=True, message="Gateway ready.")
             except Exception:
                 pass
@@ -116,6 +117,63 @@ def _run_post_gateway_fix(state: WizardState) -> None:
         log.info("post_gateway_fix.py started in background")
     except Exception as exc:
         log.warning("post_gateway_fix.py failed to start (non-fatal): %s", exc)
+
+
+def _run_script_registry_sync(state: WizardState) -> None:
+    """Run script registry sync after gateway is healthy.
+
+    Re-scans SCRIPT-META headers, distributes scripts to agent workspaces,
+    and optionally updates exec-approvals.json.
+    Non-fatal if scripts are missing or fail.
+    """
+    import sys
+    scripts_dir = state.workspace_dir / "scripts"
+    scan_script = scripts_dir / "scan_script_meta.py"
+    sync_script = scripts_dir / "sync_agent_scripts.py"
+    allowlist_script = scripts_dir / "sync_allowlist.py"
+
+    if not scan_script.exists():
+        log.info("Script registry not set up — skipping post-startup sync")
+        return
+
+    try:
+        subprocess.run(
+            [sys.executable, str(scan_script), "--path", str(scripts_dir)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        log.info("scan_script_meta.py completed")
+    except Exception as exc:
+        log.warning("scan_script_meta.py failed (non-fatal): %s", exc)
+
+    if sync_script.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(sync_script),
+                 "--source", str(scripts_dir),
+                 "--base", str(state.openclaw_dir)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            log.info("sync_agent_scripts.py completed")
+        except Exception as exc:
+            log.warning("sync_agent_scripts.py failed (non-fatal): %s", exc)
+
+    if allowlist_script.exists():
+        cmd = [
+            sys.executable, str(allowlist_script),
+            "--registry", str(scripts_dir / "registry.json"),
+            "--approvals", str(state.openclaw_dir / "exec-approvals.json"),
+        ]
+        if state.allowlist_auto_apply:
+            cmd.append("--apply")
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, check=False)
+            log.info("sync_allowlist.py completed")
+        except Exception as exc:
+            log.warning("sync_allowlist.py failed (non-fatal): %s", exc)
 
 
 def _fix_permissions(openclaw_dir: Path) -> None:
