@@ -18,7 +18,10 @@ def state(tmp_path: Path) -> WizardState:
     s.anthropic_api_key = "sk-ant-test-key"
     s.mistral_api_key = "mistral-test-key"
     s.telegram_bot_token = "123456:TEST-TOKEN"
+    s.telegram_bot_token_default = "123456:TEST-TOKEN"
     s.channel = "telegram"
+    s.aki_api_key = "aki-test-key"
+    s.brave_web_search_api_key = "brave-test-key"
     s.channel_allow_from = ["8620748747"]
     s.security_profile = "strict"
     s.llm_standard = "anthropic/claude-sonnet-4-6"
@@ -37,11 +40,43 @@ class TestEnvGen:
         content = env_gen.generate(state)
         assert "MISTRAL_API_KEY=mistral-test-key" in content
 
+    def test_contains_gateway_auth_token(self, state: WizardState) -> None:
+        content = env_gen.generate(state)
+        assert "OPENCLAW_GATEWAY_AUTH_TOKEN=" in content
+        # Token should be a 64-char hex string
+        token_line = [line for line in content.splitlines() if line.startswith("OPENCLAW_GATEWAY_AUTH_TOKEN=")][0]
+        token = token_line.split("=", 1)[1]
+        assert len(token) == 64
+        int(token, 16)  # valid hex
+
+    def test_contains_aki_key(self, state: WizardState) -> None:
+        content = env_gen.generate(state)
+        assert "AKI_API_KEY=aki-test-key" in content
+
+    def test_contains_brave_key(self, state: WizardState) -> None:
+        content = env_gen.generate(state)
+        assert "BRAVE_WEB_SEARCH_API_KEY=brave-test-key" in content
+
+    def test_telegram_token_default(self, state: WizardState) -> None:
+        content = env_gen.generate(state)
+        assert "TELEGRAM_BOT_TOKEN_DEFAULT=123456:TEST-TOKEN" in content
+        # Legacy name must not leak into .env
+        assert "TELEGRAM_BOT_TOKEN=123456:TEST-TOKEN" not in content
+
     def test_contains_llm_tiers(self, state: WizardState) -> None:
         content = env_gen.generate(state)
         assert "LLM_STANDARD=anthropic/claude-sonnet-4-6" in content
         assert "LLM_POWER=anthropic/claude-opus-4-6" in content
         assert "LLM_BUDGET=mistral/mistral-large-latest" in content
+
+    def test_no_plaintext_secrets_in_env(self, state: WizardState) -> None:
+        # Legacy field should not be emitted as its own env var
+        state.telegram_bot_token = "legacy-token"
+        state.telegram_bot_token_default = "default-token"
+        content = env_gen.generate(state)
+        assert "TELEGRAM_BOT_TOKEN_DEFAULT=default-token" in content
+        assert "TELEGRAM_BOT_TOKEN=legacy-token" not in content
+        assert "TELEGRAM_BOT_TOKEN=default-token" not in content
 
     def test_no_hardcoded_values(self, state: WizardState, tmp_path: Path) -> None:
         # All values must come from state — no hardcoded paths or usernames
@@ -76,6 +111,36 @@ class TestOpenClawJsonGen:
         # agents.defaults.models is not a valid OpenClaw config key — must not be set
         config = openclaw_json_gen.generate(state)
         assert "models" not in config["agents"]["defaults"]
+
+    def test_secrets_block_present(self, state: WizardState) -> None:
+        config = openclaw_json_gen.generate(state)
+        assert "secrets" in config
+        assert config["secrets"]["providers"]["default"]["source"] == "env"
+        assert config["secrets"]["defaults"]["env"] == "default"
+
+    def test_gateway_auth_uses_secret_ref(self, state: WizardState) -> None:
+        config = openclaw_json_gen.generate(state)
+        token = config["gateway"]["auth"]["token"]
+        assert token == "${OPENCLAW_GATEWAY_AUTH_TOKEN}"
+
+    def test_provider_api_keys_use_secret_refs(self, state: WizardState) -> None:
+        config = openclaw_json_gen.generate(state)
+        anthropic = config["plugins"]["entries"]["anthropic"]["config"]["apiKey"]
+        mistral = config["plugins"]["entries"]["mistral"]["config"]["apiKey"]
+        assert anthropic == "$ANTHROPIC_API_KEY"
+        assert mistral == "$MISTRAL_API_KEY"
+
+    def test_aki_plugin_enabled(self, state: WizardState) -> None:
+        state.aki_api_key = "aki-test-key"
+        config = openclaw_json_gen.generate(state)
+        assert "aki" in config["plugins"]["allow"]
+        assert config["plugins"]["entries"]["aki"]["config"]["apiKey"] == "$AKI_API_KEY"
+
+    def test_brave_plugin_enabled(self, state: WizardState) -> None:
+        config = openclaw_json_gen.generate(state)
+        assert "brave" in config["plugins"]["allow"]
+        brave_cfg = config["plugins"]["entries"]["brave"]["config"]
+        assert brave_cfg["webSearch"]["apiKey"] == "${BRAVE_WEB_SEARCH_API_KEY}"
 
     def test_telegram_channel_configured(self, state: WizardState) -> None:
         config = openclaw_json_gen.generate(state)
