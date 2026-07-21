@@ -81,6 +81,13 @@ def generate(state: WizardState) -> str:
         f"LLM_QWEN3={state.llm_qwen3}",
         f"LLM_CODEX={state.llm_codex}",
         "",
+        "# Script Registry",
+        f"INSTALLER_SCRIPT_REGISTRY_ENABLED={'true' if state.script_registry_enabled else 'false'}",
+        f"INSTALLER_SCRIPT_SYNC_ENABLED={'true' if state.script_sync_enabled else 'false'}",
+        f"INSTALLER_ALLOWLIST_SYNC_ENABLED={'true' if state.allowlist_sync_enabled else 'false'}",
+        f"INSTALLER_ALLOWLIST_AUTO_APPLY={'true' if state.allowlist_auto_apply else 'false'}",
+        f"INSTALLER_SAFE_EXEC_CHECK_ENABLED={'true' if state.safe_exec_check_enabled else 'false'}",
+        "",
         f"BACKUP_MOUNT={state.backup_mount_path or '/mnt/backup'}",
     ]
 

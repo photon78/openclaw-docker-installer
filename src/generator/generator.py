@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen, script_registry_gen
 from installer import systemd_gen
 
 console = Console()
@@ -131,6 +131,23 @@ def run(state: WizardState) -> GenerationResult:
         ))
     except Exception as e:
         console.print(f"[red]\u2717 workspace bootstrap: {e}[/red]")
+        _print_table(results)
+        return GenerationResult(env_path, json_path, approvals_path, success=False)
+
+    # Script Registry files
+    try:
+        script_registry_paths = script_registry_gen.write(state)
+        if script_registry_paths:
+            results.append((
+                "[green]\u2713[/green]",
+                "scripts/",
+                str(state.workspace_dir / "scripts"),
+                f"{len(script_registry_paths)} files (registry, sync, safe-exec \u2026)"
+            ))
+        else:
+            results.append(("[dim]\u23ed[/dim]", "scripts/", "", "skipped"))
+    except Exception as e:
+        console.print(f"[red]\u2717 script registry: {e}[/red]")
         _print_table(results)
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 

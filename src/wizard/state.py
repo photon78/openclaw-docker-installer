@@ -62,6 +62,13 @@ class WizardState:
     backup_enabled: bool = True
     backup_mount_path: str = ""        # e.g. "/mnt/backup"
 
+    # Script Registry
+    script_registry_enabled: bool = True
+    script_sync_enabled: bool = True
+    allowlist_sync_enabled: bool = True
+    allowlist_auto_apply: bool = True
+    safe_exec_check_enabled: bool = True
+
     # Dry-run mode — write to tempdir, skip Docker and systemd
     dry_run: bool = False
 

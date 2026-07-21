@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Last updated: 2026-04-23
+> Last updated: 2026-07-21
 
 ## Principles
 
@@ -97,14 +97,50 @@
 - **`safe_exec_check.py`** — bundled in `workspace/scripts/shared/`; AGENTS.md templates already reference it, now ships with the installer
   - Blocks: pipes, chaining (`&&`, `||`, `;`), redirects, subshells, globs, backgrounding, inline-shell (`bash -c`, `python3 -c`), `run`-prefix, Newlines
   - Exit 0 = ok, Exit 1 = reject, Exit 2 = config error
-- **SCRIPT-META header standard** — generic renamed from ZOT-META; fields: `agent`, `type`, `risk`, `description`; documented in BOOTSTRAP.md
-- **`scan_scripts.py`** — scans workspace scripts for SCRIPT-META headers, writes `scripts/registry.json`; bundled in `workspace/scripts/shared/`
+- **script-meta header standard** — generic header for scripts; fields: `agent`, `type`, `risk`, `description`; documented in BOOTSTRAP.md
+- **`scan_script_meta.py`** — scans workspace scripts for script-meta headers, writes `scripts/registry.json`; bundled in `workspace/scripts/shared/`
 - **`sync_allowlist.py`** — compares registry against `exec-approvals.json`; default mode hides broad-python-covered scripts; `--apply` fills gaps; `--strict` shows all
   - Runs as post-install verification step: 0 real gaps = installation correct
 - AGENTS.md templates updated: "Script-Registry & Allowlist-Sync" section
 
+### v1.0.0 — "The Trinity" 🎯
+*Production-ready multi-agent setup: Main, Coding, and Research Subagent.*
+
+Goal: the installer creates an OpenClaw instance that contains **two
+standalone agents out of the box** plus a ready-to-spawn research subagent,
+modeled on our own production setup and its hard-won tweaks.
+
+- **Main** (`main` / Zot) — primary concierge agent, Telegram direct-messages,
+  owns the user relationship and dispatches work.
+- **Coding** (`coding_zot`) — code, build, deployment tasks; separate workspace
+  with coding-specific rules (script-meta, allowlist sync, safe-exec pre-checks).
+- **Research** (`research_zot`) — **not a standalone agent**; spawned on demand
+  by Main or Coding as a subagent, isolated per task, destroyed on completion.
+  The first boot-up prompts Main to suggest creating the Research subagent so
+  the user learns the `sessions_spawn` workflow immediately.
+
+Scope for v1.0:
+- One installer run creates Main and Coding with consistent security baselines.
+- Research subagent template and bootstrap instructions are pre-installed;
+  creation is triggered via Main during onboarding, not hard-wired by the installer.
+- Each agent gets its own Telegram bot token / workspace / `AGENTS.md` /
+  `SOUL.md` / `MEMORY.md` / `HEARTBEAT.md` / `TOOLS.md` skeleton.
+- Shared infrastructure: NAS-mount path (configurable), `scripts/`,
+  `shared/` skeleton, script-meta header template, `scan_script_meta.py` /
+  `sync_allowlist.py` hooks, `check_tasks.py` cron.
+- Secrets via SecretRefs (`.env` only); exec-policy / allowlist baseline.
+- **No domain-specific logic** shipped with the installer: no hotel, no Sionis
+  finance, no Alpenblick website scripts. The installer only lays the
+  framework; concrete projects are added afterwards via git/copy.
+
+What is **explicitly out of scope** for v1.0:
+- Valère / content agent
+- Sentinel / security agent
+- Sionis / finance agent
+- Native Linux installation, PyInstaller binaries, web UI wizard.
+
 ### v0.4.0 — "Open House" 🏠
-*Stability, UX polish, CLI commands.*
+*Stability, UX polish, Ollama integration.*
 
 - `openclaw agents add` real-world validation and cleanup
 - CLI: `start` / `stop` / `status` subcommands
@@ -123,6 +159,29 @@
 - Concept: TBD (to be designed with main)
 
 ---
+
+## Real-Life Test Notes
+
+### Ubuntu 24.04 + OpenClaw 2026.7.1 — 2026-07-21
+*Manual install test by Photon in a fresh VirtualBox.*
+
+- Installer branch: `feature/secretrefs` (after explicit checkout).
+- OpenClaw version pinned: `2026.7.1`.
+- Result: **successful boot** to interactive agent (`agentZero`).
+- Learnings captured for v1.0 polish:
+  1. **Branch checkout trap:** `git clone` lands on `main` by default. The
+     installer must either default to the intended branch or clearly instruct
+     the user to `git checkout feature/secretrefs` (or the release branch)
+     before running `run.sh`.
+  2. **`BOOTSTRAP.md` lifecycle:** On a truly fresh install `BOOTSTRAP.md` must
+     be present. The agent reported it missing; we need to verify the installer
+     creates it and does not delete it prematurely.
+  3. **`openclaw doctor --lint` output is too long:** the first-run summary
+     spans more than two terminal screens. v1.0 should surface only
+     actionable, security-critical items and defer the rest to a log file.
+  4. **SecretRefs work** when the correct branch is actually checked out and
+     the generator runs. The plaintext-secrets finding in the test was caused
+     by running the pre-SecretRefs generator from `main`.
 
 ## Backlog
 
