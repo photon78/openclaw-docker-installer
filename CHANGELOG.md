@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Notes
+- Real-life install test on **Ubuntu 24.04 (VirtualBox)** with OpenClaw **2026.7.1**
+  completed successfully after checking out the correct installer branch.
+  Captured in `ROADMAP.md` under *Real-Life Test Notes*.
+
+### Roadmap
+- v1.0.0 target defined: **"The Trinity"** — Main, Coding, and Research
+  (subagent) setup modeled on our production configuration.
+  See `ROADMAP.md` for scope and exclusions.
+
 ---
 
 ## [0.3.2] — 2026-04-23 “Clean Slate”
