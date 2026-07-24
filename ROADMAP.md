@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Last updated: 2026-07-21
+> Last updated: 2026-07-24
 
 ## Principles
 
@@ -129,34 +129,6 @@ Scope for v1.0:
   `shared/` skeleton, script-meta header template, `scan_script_meta.py` /
   `sync_allowlist.py` hooks, `check_tasks.py` cron.
 - Secrets via SecretRefs (`.env` only); exec-policy / allowlist baseline.
-- **No domain-specific logic** shipped with the installer: no hotel, no Sionis
-  finance, no Alpenblick website scripts. The installer only lays the
-  framework; concrete projects are added afterwards via git/copy.
-
-What is **explicitly out of scope** for v1.0:
-- Valère / content agent
-- Sentinel / security agent
-- Sionis / finance agent
-- Native Linux installation, PyInstaller binaries, web UI wizard.
-
-### v0.4.0 — "Open House" 🏠
-*Stability, UX polish, Ollama integration.*
-
-- `openclaw agents add` real-world validation and cleanup
-- CLI: `start` / `stop` / `status` subcommands
-- Integration tests for full install → healthcheck flow
-- macOS launchd service (alongside existing systemd)
-- CONTRIBUTING.md review and update
-
-### v0.5.0 — "Day 2" 🔄
-*Agent-guided updates and backup — no separate CLI tool needed.*
-
-- Insight: after install the agent is running and security-aware — it guides the user through updates
-- `backup_workspace.py` bundled in `workspace/scripts/` — agent can run it on demand or on schedule
-- Update flow documented in agent SOUL.md/AGENTS.md — agent knows the steps
-- HEARTBEAT: agent checks for new OpenClaw version, notifies user, offers to run update flow
-- Update flow: backup → docker pull → restart → healthcheck → rollback if broken
-- Concept: TBD (to be designed with main)
 
 ---
 

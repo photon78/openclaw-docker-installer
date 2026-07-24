@@ -50,7 +50,7 @@ def test_scan_script_meta_populates_registry() -> None:
         state.openclaw_dir = Path(tmp) / ".openclaw"
         state.home_dir = Path(tmp)
         state.openclaw_dir = Path(tmp) / ".openclaw"
-        written = script_registry_gen.write(state)
+        script_registry_gen.write(state)
         registry_path = state.workspace_dir / "scripts" / "registry.json"
         assert registry_path.exists()
         content = registry_path.read_text()

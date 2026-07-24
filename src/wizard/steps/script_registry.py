@@ -5,7 +5,6 @@ Controls whether the installer sets up a local scripts/ directory with
 SCRIPT-META-based registry tooling, automatic allowlist syncing, and the
 safe-exec pre-check template.
 """
-import questionary
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table

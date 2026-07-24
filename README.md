@@ -19,6 +19,8 @@
 | v0.2.0 | ✅ Stable | Full install wizard, Docker deploy, Telegram, security hardening, BOOTSTRAP onboarding |
 | v0.1.0-alpha | ✅ Stable | Setup wizard, Docker deploy, Telegram, exec allowlist, workspace bootstrap, backup |
 
+> **Tested on:** OpenClaw 2026.7.1
+
 > ✅ **The installer works end-to-end.** After running the wizard, you get a fully functional, security-hardened OpenClaw instance running in Docker — ready to use via Telegram. The agent introduces itself, explains its capabilities, and is ready to work.
 
 Install the latest stable release:
@@ -205,7 +207,10 @@ Your agent starts its first session automatically. It will introduce itself and 
 | **v0.2.0** | The Pack | Security hardening, workspace bootstrap, install wizard, Windows compatibility |
 | **v0.2.1** | The Pack (patch) | Windows 11 compatibility, UTF-8 fixes, permission handling |
 | **v0.3.0** | The Crew | Multi-agent system, sub-agent hardening, skills bundled, systemd autostart, `--dry-run` |
-| **v0.3.1** | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication — **current stable** |
+| **v0.3.1** | The Crew (patch) | Code review fixes: startup timeout, backup validation, skill deduplication |
+| **v0.3.3** | The Crew (patch 3) | OpenClaw 2026.5.22 compat, CLI agent registration, config hardening |
+| **v0.3.4** | Script Safety Bundle | Agent exec-safety, script registry, allowlist verification — **current stable** |
+| **v1.0.0** | The Trinity | Production-ready multi-agent setup: Main, Coding, and Research Subagent |
 
 See [ROADMAP.md](ROADMAP.md) for details.
 
