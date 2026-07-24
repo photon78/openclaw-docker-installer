@@ -2,201 +2,108 @@
 
 **Audience:** Main agent (MAIN) and the human operator (HUMAN)  
 **Scope:** How to add a second or third agent to an existing OpenClaw installation  
-**Prerequisites:** Single-agent install completed, Gateway running
+**Prerequisites:** Single-agent install completed with the Docker installer, Gateway running
 
 ---
 
 ## Overview
 
-The Docker installer sets up a **single agent** (MAIN). Multi-agent setups are
-configured manually after the initial install — this guide walks through every step.
+The Docker installer sets up a **single main agent** (MAIN). Additional agents are added with the bundled `add_agent.py` script after the initial install.
 
 A typical multi-agent setup:
+
 ```
 MAIN (orchestrator)
-  ├── CODING_AGENT  — code, deployment, technical tasks
-  ├── CONTENT_AGENT — writing, translation, content creation
-  └── RESEARCH_AGENT — web research, document analysis (worker only, no spawn)
+  ├── CODING  — code, deployment, technical tasks
+  ├── RESEARCH — web research, document analysis (worker only, no spawn)
+  └── CONTENT — writing, translation, content creation
 ```
 
 **Rules that never change:**
 - Always ask HUMAN before adding a new agent or changing spawn permissions
 - `maxSpawnDepth: 1` — spawned agents cannot spawn further agents
-- RESEARCH_AGENT (or any pure worker) has `allowAgents: []`
-- New agent = new exec-approvals section (no exceptions)
+- Pure worker agents (e.g. RESEARCH) have `allowAgents: []`
+- Every new agent gets its own `exec-approvals` section with `autoAllowSkills: false`
 
 ---
 
-## Step 1: Create the Workspace
+## Step 1: Run `add_agent.py`
 
-Each agent needs its own workspace directory with real file copies (no symlinks).
+The installer copies `add_agent.py` into `~/.openclaw/scripts/`. Run it from inside the OpenClaw container (or from the host if `openclaw` CLI is available):
 
 ```bash
-# Example: adding CODING_AGENT
-mkdir -p ~/.openclaw/workspace-coding/{memory/topics,tasks,scripts,skills}
+python3 ~/.openclaw/scripts/add_agent.py \
+  --name coding \
+  --emoji 💻 \
+  --type coding \
+  --dry-run
 ```
 
-Copy and customize the workspace files (all must be real copies, not symlinks):
+Available archetypes:
 
-| File | Action |
-|------|--------|
-| `SOUL.md` | Define role, model routing, hard limits, no-email rule |
-| `AGENTS.md` | Tool rules, communication norms, spawning policy |
-| `HEARTBEAT.md` | What to do on each heartbeat wake |
-| `IDENTITY.md` | Name, emoji, avatar |
-| `MEMORY.md` | Start empty, agent fills it over time |
-| `USER.md` | Copy from main workspace (same HUMAN) |
-| `TOOLS.md` | Skills, scripts, git remotes, deploy targets |
-| `BOOTSTRAP.md` | First-run guide (delete after first session) |
-| `scripts/check_tasks.py` | Copy and update `TASKS_DIR` path |
+| Type | Purpose |
+|------|---------|
+| `coding` | Code, build, deployment, technical tasks |
+| `research` | Web research, summarisation, fact-checking |
+| `content` | Writing, translation, formatting |
+| `custom` | Generic template, configure role manually in `SOUL.md` |
 
-**Skills:** Symlink the shared skills directory:
-```bash
-ln -s ~/.openclaw/workspace/skills ~/.openclaw/workspace-coding/skills
-```
-Or use a shared Docker volume (recommended for containers — see Step 4).
+**Always use `--dry-run` first.** Review the output, then remove the flag to apply changes.
+
+### What `add_agent.py` does
+
+1. Creates `~/.openclaw/workspace-<name>/` with:
+   - `SOUL.md`, `AGENTS.md`, `HEARTBEAT.md`, `IDENTITY.md`
+   - `TOOLS.md`, `MEMORY.md`, `USER.md`
+   - Directories: `memory/`, `memory/topics/`, `tasks/`, `scripts/`
+2. Copies `scripts/check_tasks.py` from the main workspace
+3. Symlinks `skills/` to the main workspace skills directory
+4. Registers the agent via `openclaw agents add --non-interactive`
+5. Falls back to a manual JSON patch if the CLI is unavailable
+6. Adds a minimal `exec-approvals.json` section with `autoAllowSkills: false`
 
 ---
 
-## Step 2: Register Agent in `openclaw.json`
+## Step 2: Add Telegram Bot Token
 
-Add the new agent to `agents.list`. Use the existing MAIN entry as reference.
+Each agent needs its own Telegram bot. One token = one bot = one agent.
 
-```json
-{
-  "agents": {
-    "list": [
-      {
-        "id": "main",
-        "workspace": "/home/node/.openclaw/workspace",
-        "subagents": {
-          "allowAgents": ["coding_agent", "research_agent"]
-        }
-      },
-      {
-        "id": "coding_agent",
-        "workspace": "/home/node/.openclaw/workspace-coding",
-        "model": {
-          "primary": "${LLM_POWER}",
-          "fallbacks": ["${LLM_BUDGET}"]
-        },
-        "subagents": {
-          "allowAgents": ["research_agent"]
-        }
-      },
-      {
-        "id": "research_agent",
-        "workspace": "/home/node/.openclaw/workspace-research",
-        "model": {
-          "primary": "${LLM_BUDGET}",
-          "fallbacks": ["${LLM_STANDARD}"]
-        },
-        "subagents": {
-          "allowAgents": []
-        }
-      }
-    ],
-    "defaults": {
-      "subagents": {
-        "maxConcurrent": 2,
-        "maxSpawnDepth": 1
-      }
-    }
-  }
-}
-```
+1. Create a bot via [@BotFather](https://t.me/BotFather) → `/newbot`
+2. Add the token to `~/.openclaw/.env`:
+   ```env
+   TELEGRAM_BOT_TOKEN_CODING=<token>
+   ```
+3. Map the token in `openclaw.json` under the new agent's `channels.telegram.botToken` — use the SecretRef pattern from the main agent as a template.
 
-**Model values:** Use `${LLM_BUDGET}` etc. — OpenClaw resolves `${VAR}` references
-from `.env` at runtime. Change models by editing `.env` only, no `openclaw.json` edit needed.
+> The installer sets up SecretRefs by default; never paste raw tokens into `openclaw.json`.
 
 ---
 
-## Step 3: Add exec-approvals Section
+## Step 3: Add Docker Volume (if containerized)
 
-Every agent needs an explicit section in `exec-approvals.json`.
-**Never use `autoAllowSkills: true`** — this silently approves all skill executions
-without oversight (learned the hard way: hanging Playwright process, no alert).
-
-```json
-{
-  "agents": {
-    "main": { "...": "existing main config" },
-
-    "coding_agent": {
-      "security": "allowlist",
-      "ask": "on-miss",
-      "askFallback": "deny",
-      "autoAllowSkills": false,
-      "allowlist": [
-        {"pattern": "/usr/bin/python3",       "id": "ca-python3-01"},
-        {"pattern": "/usr/bin/git",           "id": "ca-git-01"},
-        {"pattern": "/usr/bin/df",            "id": "ca-df-01"},
-        {"pattern": "/usr/bin/du",            "id": "ca-du-01"},
-        {"pattern": "/usr/bin/free",          "id": "ca-free-01"},
-        {"pattern": "/usr/bin/ps",            "id": "ca-ps-01"},
-        {"pattern": "/usr/bin/trash",         "id": "ca-trash-01"},
-        {"pattern": "<workspace>/scripts/check_tasks.py",            "id": "ca-check-tasks-01"},
-        {"pattern": "<workspace>/skills/web-search/search.py",       "id": "ca-web-search-01"},
-        {"pattern": "<workspace>/skills/docs-summarize/summarize.py","id": "ca-docs-summarize-01"}
-      ]
-    },
-
-    "research_agent": {
-      "security": "allowlist",
-      "ask": "on-miss",
-      "askFallback": "deny",
-      "autoAllowSkills": false,
-      "allowlist": [
-        {"pattern": "/usr/bin/python3",       "id": "ra-python3-01"},
-        {"pattern": "<workspace>/skills/web-search/search.py",       "id": "ra-web-search-01"},
-        {"pattern": "<workspace>/skills/docs-summarize/summarize.py","id": "ra-docs-summarize-01"}
-      ]
-    }
-  }
-}
-```
-
-Replace `<workspace>` with the actual container-internal path (e.g. `/home/node/.openclaw/workspace-coding`).
-
----
-
-## Step 4: Docker Volume (if using containers)
-
-Add the new workspace as a volume mount in `docker-compose.yml`:
+If you run OpenClaw in Docker, mount the new workspace into `docker-compose.yml`:
 
 ```yaml
 services:
   openclaw-gateway:
     volumes:
-      - ~/.openclaw:/home/node/.openclaw          # main config + workspace
+      - ~/.openclaw:/home/node/.openclaw
       - ~/.openclaw/workspace-coding:/home/node/.openclaw/workspace-coding
       - ~/.openclaw/workspace-research:/home/node/.openclaw/workspace-research
-      # Shared skills — one directory, all agents
-      - ~/.openclaw/workspace/skills:/home/node/.openclaw/skills:ro
 ```
 
----
-
-## Step 5: Connect a Telegram Bot (per agent)
-
-Each agent needs its own Telegram bot token. One token = one bot = one agent.
-
-1. Create a new bot via [@BotFather](https://t.me/BotFather) → `/newbot`
-2. Add the token to `.env`:
-   ```env
-   TELEGRAM_BOT_TOKEN_CODING=<token>
-   ```
-3. Reference it in `openclaw.json` under the agent's channel config
+`add_agent.py` creates the workspace on the host filesystem. The Docker volume mount makes it visible inside the container.
 
 ---
 
-## Step 6: Reload the Gateway
+## Step 4: Restart the Gateway
 
 ```bash
-docker compose restart openclaw-gateway
+docker compose -f ~/.openclaw/docker-compose.yml restart openclaw-gateway
 ```
 
 Or via the OpenClaw CLI:
+
 ```bash
 openclaw gateway restart
 ```
@@ -205,43 +112,64 @@ Verify the new agent appears in `/status` or the web UI.
 
 ---
 
-## Cron Awareness for Sub-Agents
+## Spawn Configuration
 
-The following crons run system-wide and affect all agents. Sub-agents should
-know about them — include this in their `HEARTBEAT.md` or `SOUL.md`:
+`add_agent.py` registers each new agent with a safe default:
 
-| Cron | Schedule | What it does |
-|------|----------|-------------|
-| **Daily Memory Digest** | 03:05 daily | Runs `memory_digest.py` → writes `digest-latest.md` to all workspaces |
-| **Gateway Health Check** | Every 2h | Checks gateway status, alerts HUMAN on problem |
-
-Scripts live in `~/.openclaw/scripts/` (host) or `/home/node/.openclaw/scripts/` (container).
-
-Sub-agents can call these scripts directly if needed:
-```
-python3 /home/node/.openclaw/scripts/memory_digest.py
-python3 /home/node/.openclaw/scripts/hourly_log.py
+```json
+{
+  "subagents": {
+    "maxSpawnDepth": 1,
+    "allowAgents": []
+  }
+}
 ```
 
-`hourly_log.py` returns a JSON mapping of all active agents — useful for
-sub-agents that need to know who else is running.
+After creation, edit `openclaw.json` (or use `openclaw agents update`) to grant spawn permissions:
+
+- MAIN may spawn CODING and RESEARCH
+- CODING may spawn RESEARCH
+- RESEARCH has `allowAgents: []` — it cannot spawn anything
+
+**Ask HUMAN before changing `allowAgents` or `maxSpawnDepth`.**
 
 ---
 
-## Checklist: New Agent
+## Workspace Files
 
-- [ ] Workspace directory created with all required files (real copies, no symlinks)
-- [ ] `SOUL.md` includes no-email rule and hard limits
-- [ ] `scripts/check_tasks.py` has correct `TASKS_DIR` path
-- [ ] Agent registered in `openclaw.json` → `agents.list`
-- [ ] `allowAgents` configured for all relevant agents (ask HUMAN first)
-- [ ] `maxSpawnDepth: 1` in `agents.defaults.subagents` *(check your OpenClaw version — key may vary)*
-- [ ] exec-approvals section added with `autoAllowSkills: false`
-- [ ] Allowlist complete (every script the agent needs, explicitly listed)
-- [ ] Telegram bot created and token added to `.env`
-- [ ] Docker volume mount added (if containerized)
-- [ ] Gateway reloaded
-- [ ] `/status` confirms new agent is active
+All files created by `add_agent.py` are real copies. The only symlink is `skills/` pointing to the main workspace skills directory — this is intentional because skills are shared across agents and OpenClaw follows this specific symlink.
+
+| File | Purpose |
+|------|---------|
+| `SOUL.md` | Role, model routing, hard limits, no-email rule |
+| `AGENTS.md` | Tool rules, communication norms, spawn policy |
+| `HEARTBEAT.md` | What to do on each heartbeat wake |
+| `IDENTITY.md` | Name, emoji, role |
+| `MEMORY.md` | Long-term memory (starts empty) |
+| `USER.md` | Copy/adapt user info from main workspace |
+| `TOOLS.md` | Scripts, skills, git/deployment targets |
+| `BOOTSTRAP.md` | First-run guide (created by installer for MAIN only) |
+
+Copy `USER.md` from the main workspace and adjust it for the new agent.
+
+---
+
+## exec-approvals.json
+
+`add_agent.py` adds a minimal section:
+
+```json
+{
+  "agents": {
+    "coding": {
+      "autoAllowSkills": false,
+      "allowlist": []
+    }
+  }
+}
+```
+
+**Never set `autoAllowSkills: true`.** After the agent is running, approve commands on first use via the chat approval flow, then run `sync_allowlist.py --apply` (bundled in `workspace/scripts/shared/`) to persist the approved entries.
 
 ---
 
@@ -260,5 +188,38 @@ Wenn Agents strukturierte Daten direkt per `sessions_send` austauschen, können 
 
 ---
 
-*This guide is maintained by the installer project. Re-run the installer after
-major OpenClaw version upgrades to regenerate base configs.*
+## Checklist: New Agent
+
+- [ ] `add_agent.py --dry-run` reviewed and looks correct
+- [ ] Agent created with `add_agent.py` (without `--dry-run`)
+- [ ] Telegram bot created and token added to `.env`
+- [ ] SecretRef for bot token configured in `openclaw.json`
+- [ ] Docker volume mount added (if containerized)
+- [ ] Spawn permissions reviewed and limited (`maxSpawnDepth: 1`, worker agents `allowAgents: []`)
+- [ ] `exec-approvals.json` section present with `autoAllowSkills: false`
+- [ ] Gateway restarted
+- [ ] `/status` confirms new agent is active
+- [ ] Test message sent to new agent via Telegram
+
+---
+
+## Troubleshooting
+
+**`openclaw agents add` fails**
+- Ensure the Gateway container is running
+- Check that `openclaw` CLI is in `PATH`
+- `add_agent.py` falls back to manual JSON patching — verify `openclaw.json` was updated
+
+**Agent does not appear in `/status`**
+- Verify the workspace path in `openclaw.json`
+- Check Docker volume mount
+- Look at Gateway logs: `docker compose logs -f openclaw-gateway`
+
+**Skills are missing**
+- `skills/` is a symlink to the main workspace skills directory
+- Ensure the main workspace has skills installed
+- In Docker, both workspaces must be mounted from the same host path
+
+---
+
+*This guide is maintained by the installer project. Re-run the installer after major OpenClaw version upgrades to regenerate base configs.*
