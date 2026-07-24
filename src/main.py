@@ -40,6 +40,55 @@ from installer.docker_start import run as docker_start
 from installer.logging_setup import setup as setup_logging, get_log_file
 from wizard.steps import completion
 
+
+def _run_allowlist_sync(state) -> None:
+    """Run sync_allowlist_deep.py as a non-fatal post-install hook.
+
+    Warns on failure but never fails the installation — a post-install hook
+    must not block a successful setup. The user can re-run manually later.
+    """
+    import subprocess as _sp
+
+    script = state.openclaw_dir / "scripts" / "sync_allowlist_deep.py"
+    if not script.exists():
+        log.warning("sync_allowlist_deep.py not found at %s — skipping allowlist sync", script)
+        console.print("[yellow]⚠[/yellow] Allowlist sync script missing — skip.")
+        return
+
+    cmd = [
+        "python3",
+        str(script),
+        "--agent", state.agent_name,
+        "--apply",
+    ]
+    log.info("Running post-install allowlist sync: %s", " ".join(cmd))
+    console.print("\n[bold]Syncing exec-approvals allowlist...[/bold]")
+
+    try:
+        result = _sp.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except Exception as exc:  # pragma: no cover - hook failure should be non-fatal
+        log.warning("Allowlist sync failed to run: %s", exc)
+        console.print(f"[yellow]⚠[/yellow] Allowlist sync could not run: {exc}")
+        console.print(f"[dim]Re-run manually later:[/dim] python3 {script} --agent {state.agent_name} --apply")
+        return
+
+    if result.returncode == 0:
+        log.info("Allowlist sync completed successfully")
+        if result.stdout.strip():
+            console.print(result.stdout.strip())
+    else:
+        log.warning("Allowlist sync exited with code %d: %s", result.returncode, result.stderr.strip())
+        console.print(f"[yellow]⚠[/yellow] Allowlist sync finished with warnings (exit {result.returncode}).")
+        if result.stderr.strip():
+            console.print(f"[dim]{result.stderr.strip()}[/dim]")
+        console.print(f"[dim]Re-run manually later:[/dim] python3 {script} --agent {state.agent_name} --apply")
+
 log = logging.getLogger("installer")
 
 app = typer.Typer(
@@ -130,6 +179,9 @@ def install(
 
     log.info("=== openclaw-installer: install complete ===")
     completion.show(state, result.image)
+
+    # Final post-install hook: sync exec-approvals with discovered scripts
+    _run_allowlist_sync(state)
 
 
 @app.command()
