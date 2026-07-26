@@ -65,9 +65,9 @@ Available archetypes:
 4. Symlinks `skills/` to the main workspace skills directory
 5. Registers the agent via `openclaw agents add --non-interactive --json`
 6. Applies a safe manual JSON patch if the CLI is unavailable or rejects the request
-7. Adds a hardened `exec-approvals.json` section with `autoAllowSkills: false` and
-   the full security block (`security.requireApproval`, `security.allowElevated`,
-   `ask: user`, `askFallback: block`)
+7. Adds a hardened `exec-approvals.json` section with the real OpenClaw
+   security schema: `security: "allowlist"`, `ask: "on-miss"`,
+   `askFallback: "deny"`, plus `autoAllowSkills: false` and an empty allowlist
 8. Auto-discovers `--main-session` from the main agent's bindings when omitted
 
 ### Research archetype special handling
@@ -186,14 +186,11 @@ Copy `USER.md` from the main workspace and adjust it for the new agent.
 {
   "agents": {
     "coding": {
+      "security": "allowlist",
+      "ask": "on-miss",
+      "askFallback": "deny",
       "autoAllowSkills": false,
-      "allowlist": [],
-      "security": {
-        "requireApproval": true,
-        "allowElevated": false
-      },
-      "ask": "user",
-      "askFallback": "block"
+      "allowlist": []
     }
   }
 }

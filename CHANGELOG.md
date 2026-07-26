@@ -27,9 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Structured CLI duplicate detection**: `openclaw agents add` now uses
   `--json`; duplicate errors are parsed from the JSON response instead of
   relying on string matching in stderr.
-- **exec-approvals entry completeness**: new agents now receive the full
-  security block (`security.requireApproval`, `security.allowElevated`, `ask`,
-  `askFallback`) in addition to `autoAllowSkills: false` and an empty allowlist.
+- **exec-approvals entry completeness**: new agents now receive the real
+  OpenClaw security schema (`security: "allowlist"`, `ask: "on-miss"`,
+  `askFallback: "deny"`) in addition to `autoAllowSkills: false` and an empty
+  allowlist.
 
 ### Changed
 - **`add_agent.py` dry-run is now complete**: `--dry-run` prints all planned
