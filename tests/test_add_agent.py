@@ -18,8 +18,9 @@ from src.scripts.add_agent import (
     _agents_md,
     _create_workspace,
     _patch_exec_approvals,
-    _patch_openclaw_json_fallback,
+    _patch_openclaw_json,
     _soul_md,
+    _validate_name,
 )
 
 
@@ -167,6 +168,14 @@ class TestPatchExecApprovals:
         data = json.loads(approvals_file.read_text())
         assert data["agents"]["coding"]["allowlist"] == []
 
+    def test_new_agent_has_security_fields(self, openclaw_dir, approvals_file):
+        _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
+        data = json.loads(approvals_file.read_text())
+        assert data["agents"]["coding"]["security"]["requireApproval"] is True
+        assert data["agents"]["coding"]["security"]["allowElevated"] is False
+        assert data["agents"]["coding"]["ask"] == "user"
+        assert data["agents"]["coding"]["askFallback"] == "block"
+
     def test_existing_agent_not_modified(self, openclaw_dir, approvals_file):
         original = json.loads(approvals_file.read_text())
         _patch_exec_approvals(openclaw_dir, "main", dry_run=False)
@@ -189,10 +198,34 @@ class TestPatchExecApprovals:
         # If file doesn't exist, function should warn and return without crash
 
 
-# ── _patch_openclaw_json_fallback ─────────────────────────────────────────────
+# ── _validate_name ────────────────────────────────────────────────────────────
 
-class TestPatchOpeclawJsonFallback:
-    def _write_config(self, openclaw_dir: Path, agents: dict) -> None:
+class TestValidateName:
+    def test_accepts_valid_names(self):
+        for name in ("coding", "coding_zot", "research-zot", "agent1"):
+            _validate_name(name)
+
+    def test_rejects_empty_name(self):
+        with pytest.raises(ValueError):
+            _validate_name("")
+
+    def test_rejects_uppercase(self):
+        with pytest.raises(ValueError):
+            _validate_name("Coding")
+
+    def test_rejects_special_chars(self):
+        with pytest.raises(ValueError):
+            _validate_name("coding/zot")
+
+    def test_rejects_starting_with_digit(self):
+        with pytest.raises(ValueError):
+            _validate_name("1coding")
+
+
+# ── _patch_openclaw_json ─────────────────────────────────────────────────────
+
+class TestPatchOpenclawJson:
+    def _write_config(self, openclaw_dir: Path, agents: list) -> None:
         config = {
             "agents": {"list": agents},
             "gateway": {"port": 18789},
@@ -202,30 +235,62 @@ class TestPatchOpeclawJsonFallback:
         )
 
     def test_adds_new_agent_entry(self, openclaw_dir):
-        self._write_config(openclaw_dir, {})
+        self._write_config(openclaw_dir, [])
         workspace = openclaw_dir / "workspace-coding"
-        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        _patch_openclaw_json(openclaw_dir, "coding", workspace, "coding")
         data = json.loads((openclaw_dir / "openclaw.json").read_text())
-        assert "coding" in data["agents"]["list"]
+        ids = [a["id"] for a in data["agents"]["list"]]
+        assert "coding" in ids
+
+    def test_uses_id_field_not_name(self, openclaw_dir):
+        self._write_config(openclaw_dir, [])
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json(openclaw_dir, "coding", workspace, "coding")
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        entry = [a for a in data["agents"]["list"] if a["id"] == "coding"][0]
+        assert entry.get("workspace") == str(workspace)
+        assert "id" in entry
+        assert "name" not in entry
 
     def test_preserves_existing_config(self, openclaw_dir):
-        self._write_config(openclaw_dir, {"main": {"name": "main"}})
+        self._write_config(openclaw_dir, [{"id": "main", "workspace": "/main"}])
         workspace = openclaw_dir / "workspace-coding"
-        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        _patch_openclaw_json(openclaw_dir, "coding", workspace, "coding")
         data = json.loads((openclaw_dir / "openclaw.json").read_text())
-        assert "main" in data["agents"]["list"]
+        ids = [a["id"] for a in data["agents"]["list"]]
+        assert "main" in ids
         assert data["gateway"]["port"] == 18789
 
     def test_does_not_overwrite_existing_agent(self, openclaw_dir):
-        existing = {"name": "coding", "workspace": "/original"}
-        self._write_config(openclaw_dir, {"coding": existing})
+        self._write_config(openclaw_dir, [{"id": "coding", "workspace": "/original"}])
         workspace = openclaw_dir / "workspace-coding"
-        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        _patch_openclaw_json(openclaw_dir, "coding", workspace, "coding")
         data = json.loads((openclaw_dir / "openclaw.json").read_text())
-        assert data["agents"]["list"]["coding"]["workspace"] == "/original"
+        entry = [a for a in data["agents"]["list"] if a["id"] == "coding"][0]
+        assert entry["workspace"] == "/original"
+
+    def test_research_archetype_gets_special_settings(self, openclaw_dir):
+        self._write_config(openclaw_dir, [])
+        workspace = openclaw_dir / "workspace-research"
+        _patch_openclaw_json(openclaw_dir, "research_zot", workspace, "research")
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        entry = [a for a in data["agents"]["list"] if a["id"] == "research_zot"][0]
+        assert entry["heartbeat"]["enabled"] is False
+        assert entry["tools"]["deny"] == ["exec", "process"]
+        assert entry["bindings"] == []
+
+    def test_non_research_does_not_get_research_settings(self, openclaw_dir):
+        self._write_config(openclaw_dir, [])
+        workspace = openclaw_dir / "workspace-coding"
+        _patch_openclaw_json(openclaw_dir, "research_zot", workspace, "coding")
+        data = json.loads((openclaw_dir / "openclaw.json").read_text())
+        entry = [a for a in data["agents"]["list"] if a["id"] == "research_zot"][0]
+        assert "heartbeat" not in entry
+        assert "tools" not in entry
+        assert "bindings" not in entry
 
     def test_missing_config_handled_gracefully(self, openclaw_dir, capsys):
         """No exception when openclaw.json doesn't exist."""
         workspace = openclaw_dir / "workspace-coding"
-        _patch_openclaw_json_fallback(openclaw_dir, "coding", workspace)
+        _patch_openclaw_json(openclaw_dir, "coding", workspace, "coding")
         # Should warn and return, no exception

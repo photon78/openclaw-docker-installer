@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`add_agent.py` critical crash**: `_patch_openclaw_json_fallback` previously
+  assumed `agents.list` is a dict. OpenClaw stores agents as an **array of objects**
+  with an `id` field. The function now searches by `id`, appends new entries,
+  and never overwrites existing values.
+- **Research archetype no longer tied to literal name**: special research settings
+  (no channel, `tools.deny: ["exec", "process"]`, heartbeat disabled) are now
+  applied by `--type research` instead of checking for the hard-coded name
+  `research_zot`.
+- **Input sanitizing for `--name`**: agent names must match `^[a-z][a-z0-9_-]*$`
+  and are validated before any filesystem or config changes.
+- **Robust config parsing**: `openclaw.json` and `exec-approvals.json` are loaded
+  with `try/except json.JSONDecodeError`; invalid files no longer crash the script.
+- **Dangling symlink guard**: `skills/` symlink is only created when the target
+  exists and no file/dangling symlink already exists.
+- **Structured CLI duplicate detection**: `openclaw agents add` now uses
+  `--json`; duplicate errors are parsed from the JSON response instead of
+  relying on string matching in stderr.
+- **exec-approvals entry completeness**: new agents now receive the full
+  security block (`security.requireApproval`, `security.allowElevated`, `ask`,
+  `askFallback`) in addition to `autoAllowSkills: false` and an empty allowlist.
+
+### Changed
+- **`add_agent.py` dry-run is now complete**: `--dry-run` prints all planned
+  actions including workspace files, `TEMPLATE.md`, `corrections.md`,
+  `check_tasks.py`, `skills/` symlink, `openclaw agents add` invocation, and
+  exec-approvals changes.
+- **`--main-session` defaults to main agent bindings**: if omitted, the script
+  reads the main agent's bindings from `openclaw.json` to populate the
+  A2A session key hint in `AGENTS.md`.
+
 ### Notes
 - Real-life install test on **Ubuntu 24.04 (VirtualBox)** with OpenClaw **2026.7.1**
   completed successfully after checking out the correct installer branch.

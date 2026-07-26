@@ -52,15 +52,39 @@ Available archetypes:
 
 ### What `add_agent.py` does
 
-1. Creates `~/.openclaw/workspace-<name>/` with:
+1. Validates the requested name against `^[a-z][a-z0-9_-]*$`.
+2. Creates `~/.openclaw/workspace-<name>/` with:
    - `SOUL.md`, `AGENTS.md`, `HEARTBEAT.md`, `IDENTITY.md`
    - `TOOLS.md`, `MEMORY.md`, `USER.md`
-   - Directories: `memory/`, `memory/topics/`, `tasks/`, `scripts/`
-2. Copies `scripts/check_tasks.py` from the main workspace
-3. Symlinks `skills/` to the main workspace skills directory
-4. Registers the agent via `openclaw agents add --non-interactive`
-5. Falls back to a manual JSON patch if the CLI is unavailable
-6. Adds a minimal `exec-approvals.json` section with `autoAllowSkills: false`
+   - Directories: `memory/`, `memory/topics/`, `tasks/`, `scripts/`,
+     `tmp/task-lines/`, `tmp/task-lines/archive/`
+3. Copies from the main workspace:
+   - `tmp/task-lines/TEMPLATE.md`
+   - `scripts/check_tasks.py`
+   - `memory/corrections.md` (only for `coding` archetype)
+4. Symlinks `skills/` to the main workspace skills directory
+5. Registers the agent via `openclaw agents add --non-interactive --json`
+6. Applies a safe manual JSON patch if the CLI is unavailable or rejects the request
+7. Adds a hardened `exec-approvals.json` section with `autoAllowSkills: false` and
+   the full security block (`security.requireApproval`, `security.allowElevated`,
+   `ask: user`, `askFallback: block`)
+8. Auto-discovers `--main-session` from the main agent's bindings when omitted
+
+### Research archetype special handling
+
+A `--type research` agent receives additional hardening automatically:
+
+```json
+{
+  "id": "research_zot",
+  "heartbeat": {"enabled": false},
+  "tools": {"deny": ["exec", "process"]},
+  "bindings": []
+}
+```
+
+This makes research agents pure workers that cannot be reached directly on a
+channel and cannot spawn shell commands.
 
 ---
 
@@ -163,7 +187,13 @@ Copy `USER.md` from the main workspace and adjust it for the new agent.
   "agents": {
     "coding": {
       "autoAllowSkills": false,
-      "allowlist": []
+      "allowlist": [],
+      "security": {
+        "requireApproval": true,
+        "allowElevated": false
+      },
+      "ask": "user",
+      "askFallback": "block"
     }
   }
 }
@@ -190,7 +220,7 @@ Wenn Agents strukturierte Daten direkt per `sessions_send` austauschen, können 
 
 ## Checklist: New Agent
 
-- [ ] `add_agent.py --dry-run` reviewed and looks correct
+- [ ] `add_agent.py --dry-run` reviewed and looks correct (workspace, copies, symlink, CLI call, exec-approvals)
 - [ ] Agent created with `add_agent.py` (without `--dry-run`)
 - [ ] Telegram bot created and token added to `.env`
 - [ ] SecretRef for bot token configured in `openclaw.json`

@@ -155,7 +155,9 @@ volumes:
 ✅ Allowlist-Selbstmodifikation (Docker: scripts read-only)
 ✅ Unbemerkte Allowlist-Manipulation (Integrity-Audit)
 ✅ Secret-Leaks ins Service-File (Health-Check)
-✅ Allowlist-Verlust nach Gateway-Update (Restore-Script)
+� Allowlist-Verlust nach Gateway-Update (Restore-Script)
+✅ Sub-Agents ohne exec-Approval-Sicherheitsblock (`add_agent.py`)
+✅ Research-Agents mit Channel-Zugriff oder exec-Tools (`add_agent.py`)
 
 ### Was das System NICHT verhindert
 

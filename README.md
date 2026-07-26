@@ -149,6 +149,10 @@ a blank slate. It gets the same security baseline the main agent runs on:
 and mandatory stop rules baked into `SOUL.md` and `AGENTS.md`. No configuration needed.
 Every agent in your system starts secure — not just the first one.
 
+`add_agent.py` now validates agent names (`^[a-z][a-z0-9_-]*$`), handles OpenClaw's
+array-based `agents.list` correctly, auto-discovers the main agent session key, and
+applies research-agent hardening by `--type research` rather than by name.
+
 ---
 
 ## After updates
