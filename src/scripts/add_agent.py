@@ -9,7 +9,7 @@ Usage:
 
 Arguments:
     --name          Agent name (e.g. coding)
-    --emoji         Agent emoji (e.g. �, default: 🤖)
+    --emoji         Agent emoji (e.g. 💻, default: 🤖)
     --type          Archetype: coding | research | content | custom
     --openclaw-dir  OpenClaw directory (default: ~/.openclaw = /home/node/.openclaw)
     --main-agent    Name of the main agent (default: main)
@@ -564,18 +564,15 @@ def _patch_exec_approvals(openclaw_dir: Path, name: str, dry_run: bool) -> None:
         return
 
     if name in data.get("agents", {}):
-        print(f"�️  '{name}' already in exec-approvals.json — skipping")
+        print(f"⚠️  '{name}' already in exec-approvals.json — skipping")
         return
 
     entry = {
+        "security": "allowlist",
+        "ask": "on-miss",
+        "askFallback": "deny",
         "autoAllowSkills": False,
         "allowlist": [],
-        "security": {
-            "requireApproval": True,
-            "allowElevated": False,
-        },
-        "ask": "user",
-        "askFallback": "block",
     }
 
     if dry_run:

@@ -171,10 +171,9 @@ class TestPatchExecApprovals:
     def test_new_agent_has_security_fields(self, openclaw_dir, approvals_file):
         _patch_exec_approvals(openclaw_dir, "coding", dry_run=False)
         data = json.loads(approvals_file.read_text())
-        assert data["agents"]["coding"]["security"]["requireApproval"] is True
-        assert data["agents"]["coding"]["security"]["allowElevated"] is False
-        assert data["agents"]["coding"]["ask"] == "user"
-        assert data["agents"]["coding"]["askFallback"] == "block"
+        assert data["agents"]["coding"]["security"] == "allowlist"
+        assert data["agents"]["coding"]["ask"] == "on-miss"
+        assert data["agents"]["coding"]["askFallback"] == "deny"
 
     def test_existing_agent_not_modified(self, openclaw_dir, approvals_file):
         original = json.loads(approvals_file.read_text())
