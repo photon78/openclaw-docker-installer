@@ -1,0 +1,34 @@
+
+# HEARTBEAT.md — {{ state.agent_name }}
+
+<!-- INSTALLER NOTE: What to do on each heartbeat wake.
+Each heartbeat runs in an ISOLATED session with lightContext.
+Only this file is injected — no SOUL.md, MEMORY.md, or session history.
+Read everything from files. No prior session context is available. -->
+
+## On Every Heartbeat
+
+1. Read today's daily log: `memory/YYYY-MM-DD.md` (today's date, local timezone).
+   If it doesn't exist: skip to step 2.
+2. If the daily log contains new stable facts (decisions, commits, resolved issues):
+   Read MEMORY.md and append relevant entries — never overwrite existing content.
+3. Check for updates:
+   Run: `openclaw update status --json`
+   If a new version is available (field `updateAvailable: true`):
+   → Fetch release date: `npm view openclaw time --json` — use the timestamp for the `latestVersion`.
+   → Only notify the user if the release is **at least 4 days old**.
+     Reason: allow time for the community to report critical bugs before recommending an update.
+   → After 4 days: notify via `sessions_send`:
+     "🔔 OpenClaw <version> has been available for 4+ days and appears stable. Ask me to guide you through the update when ready."
+   → Before 4 days: stay silent. Check again on the next heartbeat.
+   Do NOT update automatically. Always confirm with the user first.
+4. Check tasks: `python3 {{ check_tasks }}`
+   Blocked or overdue tasks → report to user via `sessions_send`.
+5. If nothing to report: reply with only `HEARTBEAT_OK` — nothing else.
+
+## Core Principle
+Only report if something is wrong — errors, blocked tasks, warnings.
+Silence (HEARTBEAT_OK) = everything is fine.
+
+## Proactive Messages
+Use `sessions_send` to notify the user if action is needed.

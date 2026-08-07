@@ -1,0 +1,37 @@
+
+# Task: Set up recommended cron jobs
+
+**Priority:** Normal
+**Created by:** installer
+
+## What to do
+
+Run this command once to activate the automated gateway health check.
+Crons must be set via CLI — they cannot be defined in openclaw.json.
+
+### Gateway Health Check
+
+Runs every 2 hours, triggers a gateway health check:
+
+```bash
+openclaw cron add --name "Gateway Health Check" \\
+  --cron "0 */2 * * *" \\
+  --session main \\
+  --system-event "HEARTBEAT: gateway health check"
+```
+
+## Verify
+
+```bash
+openclaw cron list
+```
+
+The job should appear as active.
+
+> **Note:** No daily digest cron needed. OpenClaw indexes all `.md` files in
+> `memory/topics/` recursively and automatically — `memory_search` always finds
+> the latest topics without a separate digest step.
+
+## Docs
+
+https://docs.openclaw.ai/cron

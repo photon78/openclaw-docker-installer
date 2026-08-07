@@ -1,0 +1,31 @@
+
+# TOOLS.md — {{ state.agent_name }}
+
+<!-- INSTALLER NOTE: Document the tools, scripts, and skills available to this agent.
+ Update this file as you add new skills or workflows. -->
+
+## Skills
+
+| Skill | Command | Purpose |
+|-------|---------|--------|
+| **web-search** | `python3 {{ skills_dir }}/web-search/search.py "<query>"` | DuckDuckGo search |
+| **docs-summarize** | `python3 {{ skills_dir }}/docs-summarize/summarize.py <url>` | Summarize docs/URLs |
+{{ mistral_block }}
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `python3 {{ scripts_dir }}/check_tasks.py` | List open tasks |
+| `python3 {{ scripts_dir }}/health_check.py` | Gateway health check |
+| `python3 {{ scripts_dir }}/shared/safe_exec_check.py "<cmd>"` | Pre-flight exec safety check |
+| `python3 {{ scripts_dir }}/shared/scan_scripts.py` | Scan SCRIPT-META headers → registry.json |
+| `python3 {{ scripts_dir }}/shared/sync_allowlist.py` | Check allowlist gaps (--apply to fix) |
+
+## Git
+
+<!-- INSTALLER NOTE: Add your repo remotes and SSH config here. -->
+
+## Deployment
+
+<!-- INSTALLER NOTE: Add your deployment targets and workflows here. -->

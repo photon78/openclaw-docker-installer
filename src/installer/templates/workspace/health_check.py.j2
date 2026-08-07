@@ -1,0 +1,215 @@
+
+#!/usr/bin/env python3
+"""
+OpenClaw Health Check
+Usage: python3 health_check.py [--silent]
+--silent: Nur ausgeben wenn Probleme oder relevante Ereignisse
+"""
+
+import sys
+import subprocess
+import pathlib
+import datetime
+import re
+import json
+
+try:
+    import psutil
+except ImportError:
+    print("ERROR: psutil nicht installiert. pip install psutil", file=sys.stderr)
+    sys.exit(1)
+
+SILENT = "--silent" in sys.argv
+BACKUP_LOG = pathlib.Path("{{ openclaw_dir }}") / "logs" / "daily-backup.log"
+EXEC_APPROVALS = pathlib.Path("{{ openclaw_dir }}") / "exec-approvals.json"
+
+report = []
+has_alert = False
+has_info = False
+now = datetime.datetime.now()
+date_str = now.strftime("%d.%m.%Y %H:%M")
+
+
+def add(line):
+    report.append(line)
+
+
+def flag_alert():
+    global has_alert
+    has_alert = True
+
+
+def flag_info():
+    global has_info
+    has_info = True
+
+
+# 1. Disk
+disk = psutil.disk_usage("/")
+pct = disk.percent
+free_gb = disk.free / (1024 ** 3)
+if pct > 85:
+    add(f"⚠️ Disk: {{pct:.0f}}% belegt, {{free_gb:.1f}}GB frei — ALARM >85%")
+    flag_alert()
+else:
+    add(f"✅ Disk: {{pct:.0f}}% belegt, {{free_gb:.1f}}GB frei")
+
+
+# 2. Gateway (via session_status tool, not HTTP)
+try:
+    result = subprocess.run(
+        ["openclaw", "session_status"],
+        capture_output=True, text=True, timeout=5
+    )
+    if result.returncode == 0:
+        # Parse JSON output for "healthy: true"
+        data = json.loads(result.stdout)
+        if data.get("healthy", False):
+            add("✅ Gateway: Healthy (via session_status)")
+        else:
+            add("⚠️ Gateway: Unhealthy (via session_status)")
+            flag_alert()
+    else:
+        add(f"⚠️ Gateway: session_status failed — {{result.stderr.strip()}}")
+        flag_alert()
+except Exception as e:
+    add(f"⚠️ Gateway: session_status nicht verfügbar — {{e}}")
+    flag_alert()
+
+
+# 3. Backup
+if BACKUP_LOG.exists():
+    lines = BACKUP_LOG.read_text(encoding="utf-8").splitlines()
+    last_ts = None
+    last_date_str = None
+    for line in reversed(lines):
+        m = re.search(r'(\\d{{4}}-\\d{{2}}-\\d{{2}} \\d{{2}}:\\d{{2}}:\\d{{2}})', line)
+        if m:
+            last_ts = datetime.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
+            break
+        m2 = re.search(r'Backup Ende: (\\d{{4}}-\\d{{2}}-\\d{{2}})', line)
+        if m2:
+            last_date_str = m2.group(1)
+            break
+    last_line = lines[-1] if lines else ""
+    if last_ts:
+        diff_h = (now - last_ts).total_seconds() / 3600
+        if diff_h > 26:
+            add(f"⚠️ Backup: Letzter Run vor {{diff_h:.0f}}h — ALARM")
+            flag_alert()
+        elif re.search(r'error|fail', last_line, re.IGNORECASE):
+            add("⚠️ Backup: Fehler im Log")
+            flag_alert()
+        else:
+            add(f"✅ Backup: Letzter Run vor {{diff_h:.0f}}h — OK")
+    elif last_date_str:
+        if last_date_str == now.strftime("%Y-%m-%d"):
+            add(f"✅ Backup: Heute — OK (kein Zeit-Timestamp im Log)")
+        else:
+            add(f"ℹ️ Backup: Letzter Run {{last_date_str}} (kein Zeit-Timestamp)")
+            flag_info()
+    else:
+        add("⚠️ Backup: Kein Timestamp im Log")
+        flag_alert()
+else:
+    add("ℹ️ Backup: Noch kein Log (erster Lauf ausstehend)")
+
+
+# 4. Gateway-Restarts
+GATEWAY_LOG = pathlib.Path("{{ openclaw_dir }}") / "logs" / "gateway.log"
+if GATEWAY_LOG.exists():
+    lines = GATEWAY_LOG.read_text(encoding="utf-8").splitlines()
+    restarts = sum(1 for l in lines if "Gateway started" in l)
+    if restarts > 1:
+        add(f"⚠️ Gateway-Restarts: {{restarts}} — erhöht")
+        flag_alert()
+    else:
+        add("✅ Gateway-Restarts: 0")
+else:
+    add("ℹ️ Gateway-Restarts: Log nicht gefunden")
+
+
+# 5. Container-Uptime (psutil)
+boot_time = datetime.datetime.fromtimestamp(psutil.boot_time())
+since_boot_h = (now - boot_time).total_seconds() / 3600
+if since_boot_h < 24:
+    add(f"ℹ️ Uptime: Letzter Boot vor {{since_boot_h:.1f}}h ({{boot_time.strftime('%d.%m %H:%M')}})")
+    flag_info()
+else:
+    add(f"✅ Uptime: {{since_boot_h:.0f}}h")
+
+
+# 6. Integrity Audit (exec-approvals + Scripts)
+AUDIT_SCRIPT = pathlib.Path("{{ openclaw_dir }}") / "scripts" / "audit_integrity.py"
+if AUDIT_SCRIPT.exists():
+    try:
+        audit_result = subprocess.run(
+            ["python3", str(AUDIT_SCRIPT), "--silent"],
+            capture_output=True, text=True, timeout=10
+        )
+        audit_output = audit_result.stdout.strip()
+        if audit_result.returncode == 1:
+            for line in audit_output.splitlines():
+                line = line.strip()
+                if line and not line.startswith("🔒"):
+                    add(line)
+            flag_alert()
+        elif audit_result.returncode == 2:
+            add("🚨 Integrity Audit: Kritischer Fehler")
+            if audit_output:
+                for line in audit_output.splitlines():
+                    line = line.strip()
+                    if line and not line.startswith("🔒"):
+                        add(line)
+            flag_alert()
+        elif audit_output:
+            for line in audit_output.splitlines():
+                line = line.strip()
+                if line and not line.startswith("🔒"):
+                    add(line)
+            flag_info()
+        else:
+            add("✅ Integrity Audit: Alles OK")
+    except Exception as e:
+        add(f"⚠️ Integrity Audit: Fehler — {{e}}")
+        flag_alert()
+else:
+    add("ℹ️ Integrity Audit: audit_integrity.py nicht gefunden")
+
+
+# 7. exec-approvals autoAllowSkills check
+if EXEC_APPROVALS.exists():
+    try:
+        data = json.loads(EXEC_APPROVALS.read_text(encoding="utf-8"))
+        agents = data.get("agents", {{}})
+        violations = [name for name, cfg in agents.items() if cfg.get("autoAllowSkills", False)]
+        if violations:
+            add(f"🚨 exec-approvals: autoAllowSkills=true bei: {{', '.join(violations)}} — SOFORT DEAKTIVIEREN")
+            flag_alert()
+        else:
+            add("✅ exec-approvals: autoAllowSkills=false bei allen Agents")
+    except Exception as e:
+        add(f"⚠️ exec-approvals: Audit-Fehler — {{e}}")
+        flag_alert()
+else:
+    add("ℹ️ exec-approvals: Datei nicht gefunden")
+
+
+# 8. .env file permissions
+env_file = pathlib.Path("{{ openclaw_dir }}") / ".env"
+if env_file.exists():
+    perms = oct(env_file.stat().st_mode)[-3:]
+    if perms != "600":
+        add(f"⚠️ .env Permissions: {{perms}} — sollte 600 sein!")
+        flag_alert()
+    else:
+        add("✅ .env Permissions: 600 — OK")
+else:
+    add("ℹ️ .env: Datei nicht gefunden")
+
+
+
+# Ausgabe
+if not SILENT or has_alert or has_info:
+    print(f"📊 System Health — {{date_str}}\\n")
+    print("\\n".join(report))
