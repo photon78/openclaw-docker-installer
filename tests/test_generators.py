@@ -20,7 +20,6 @@ def state(tmp_path: Path) -> WizardState:
     s.telegram_bot_token = "123456:TEST-TOKEN"
     s.channel = "telegram"
     s.channel_allow_from = ["123456789"]
-    s.security_profile = "strict"
     s.llm_standard = "anthropic/claude-sonnet-4-6"
     s.llm_power = "anthropic/claude-opus-4-6"
     s.llm_budget = "mistral/mistral-large-latest"

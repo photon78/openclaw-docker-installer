@@ -51,7 +51,6 @@ class WizardState:
     persona_style: str = "direct"   # "direct" | "formal" | "friendly" | "skip"
 
     # Security
-    security_profile: str = "strict"   # "strict" | "standard" | "custom"
     auto_allow_skills: bool = False    # autoAllowSkills in exec-approvals.json (default: off for security)
 
     # Backup

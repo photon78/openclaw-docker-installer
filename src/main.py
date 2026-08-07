@@ -99,8 +99,8 @@ def install(
         raise typer.Exit(code=1)
 
     state.dry_run = dry_run
-    log.info("Wizard complete — channel=%s security=%s backup=%s dry_run=%s",
-             state.channel, state.security_profile, state.backup_mount_path, dry_run)
+    log.info("Wizard complete — channel=%s backup=%s dry_run=%s",
+             state.channel, state.backup_mount_path, dry_run)
 
     result = run_generator(state)
     if not result.success:

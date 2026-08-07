@@ -35,7 +35,7 @@ def _defaults_allowlist(state: WizardState) -> list[dict]:
     ]
 
 
-def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
+def _main_allowlist(state: WizardState) -> list[dict]:
     """Allowlist for the main agent (elevated tier).
 
     Shell tools (ls, cat, grep, find, head, tail, wc, sort, bash …) are
@@ -96,7 +96,7 @@ def generate(state: WizardState) -> dict:
                 "ask": "on-miss",
                 "askFallback": "deny",
                 "autoAllowSkills": state.auto_allow_skills,
-                "allowlist": _main_allowlist(state.security_profile, state),
+                "allowlist": _main_allowlist(state),
             }
         },
     }

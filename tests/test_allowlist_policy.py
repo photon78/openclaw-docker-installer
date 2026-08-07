@@ -22,7 +22,6 @@ def _state(tmp_path: Path) -> WizardState:
     s = WizardState()
     s.home_dir = tmp_path
     s.openclaw_dir = tmp_path / ".openclaw"
-    s.security_profile = "standard"
     s.auto_allow_skills = False
     return s
 
@@ -69,6 +68,13 @@ class TestAllowlistForbiddenBins:
         assert "curl" in FORBIDDEN_ALLOWLIST_BASES
         assert "rsync" in FORBIDDEN_ALLOWLIST_BASES
         assert "ln" in FORBIDDEN_ALLOWLIST_BASES
+
+
+class TestSecurityProfileRemoved:
+    """The security_profile tier concept must no longer exist in code or state."""
+
+    def test_no_security_profile_in_state(self) -> None:
+        assert not hasattr(WizardState, "security_profile")
 
 
 class TestAllowlistContainsOnlyExpectedEntries:
