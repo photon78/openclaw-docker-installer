@@ -27,7 +27,7 @@ python3 vision.py --image test_images/rechnung.jpg --output text
   "text": "Rechnung Nr. 2026-4711\nBetrag: 1.200 CHF\nDatum: 11.04.2026",
   "metadata": {
     "document_type": "Rechnung",
-    "description": "Rechnung für Zimmerrenovierung Alpenblick",
+    "description": "Rechnung für Renovierungsarbeiten",
     "confidence": 0.95
   }
 }

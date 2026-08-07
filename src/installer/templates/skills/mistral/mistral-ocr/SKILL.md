@@ -12,7 +12,7 @@
 | `--extract-images` | nein | Eingebettete Bilder via Bounding-Box aus Original croppen und speichern |
 | `--output-dir` | nein | Ausgabeverzeichnis für extrahierte Bilder (default: shared-output/) |
 | `--send` | nein | Extrahierte Bilder via Telegram senden |
-| `--target` | nein | Telegram Chat-ID (default: 8620748747) |
+| `--target` | ja (mit `--send`) | Telegram Chat-ID — keine Default-ID, muss explizit gesetzt werden |
 | `--pages` | nein | Anzahl Seiten (für PDFs) |
 | `--debug` | nein | Rohe API-Response ausgeben |
 
