@@ -6,6 +6,7 @@ All paths use Path.home() — no hardcoded usernames.
 import json
 import secrets
 from pathlib import Path
+from shared.security_policy import FORBIDDEN_ALLOWLIST_BASES
 from wizard.state import WizardState
 
 def _script(name: str, state: "WizardState") -> str:
@@ -21,14 +22,12 @@ def _skill(path: str, state: "WizardState") -> str:
 def _defaults_allowlist(state: WizardState) -> list[dict]:
     """Minimal allowlist for cron/isolated sessions.
 
-    Shell tools (ls, cat, grep, find, head, tail, wc, sort …) are intentionally
-    excluded. Agents use read/edit/write tools instead of shell commands.
-    Shell tools in the allowlist are an unnecessary attack surface.
+    Shell tools (ls, cat, grep, find, head, tail, wc, sort …) and generic
+    interpreters / network tools (python3, curl, ssh, rsync …) are intentionally
+    excluded. Agents use read/edit/write tools and registered scripts instead.
     """
     return [
-        {"pattern": "/usr/bin/python3",      "id": "d-python3-01"},
         {"pattern": "/usr/bin/df",            "id": "d-df-01"},
-        {"pattern": "/usr/bin/curl",          "id": "d-curl-01"},
         {"pattern": _script("health_check.py", state),    "id": "d-health-check-01"},
         {"pattern": _script("morning_briefing.py", state),"id": "d-morning-briefing-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "d-audit-integrity-01"},
@@ -44,20 +43,14 @@ def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
     Bash in the allowlist is a shell-injection risk.
     """
     base = [
-        {"pattern": "/usr/bin/python3",   "id": "m-python3-01"},
         {"pattern": "/usr/bin/git",       "id": "m-git-01"},
         {"pattern": "/usr/bin/df",        "id": "m-df-01"},
         {"pattern": "/usr/bin/du",        "id": "m-du-01"},
         {"pattern": "/usr/bin/free",      "id": "m-free-01"},
         {"pattern": "/usr/bin/ps",        "id": "m-ps-01"},
         {"pattern": "/usr/bin/uptime",    "id": "m-uptime-01"},
-        {"pattern": "/usr/bin/curl",      "id": "m-curl-01"},
-        {"pattern": "/usr/bin/systemctl", "id": "m-systemctl-01"},
-        {"pattern": "/usr/bin/journalctl","id": "m-journalctl-01"},
-        {"pattern": "/usr/bin/rsync",     "id": "m-rsync-01"},
         {"pattern": "/usr/bin/trash",     "id": "m-trash-01"},
         {"pattern": "/usr/bin/mkdir",     "id": "m-mkdir-01"},
-        {"pattern": "/usr/bin/ln",        "id": "m-ln-01"},
         {"pattern": "/usr/bin/jq",        "id": "m-jq-01"},
         {"pattern": _script("health_check.py", state),    "id": "m-health-check-01"},
         {"pattern": _script("audit_integrity.py", state), "id": "m-audit-integrity-01"},
@@ -68,6 +61,15 @@ def _main_allowlist(profile: str, state: WizardState) -> list[dict]:
         {"pattern": _skill("docs-summarize/summarize.py", state), "id": "m-docs-summarize-01"},
     ]
     return base
+
+
+def _validate_allowlist(entries: list[dict], label: str) -> None:
+    """Raise ValueError if a forbidden binary appears in an allowlist."""
+    for entry in entries:
+        pattern = entry.get("pattern", "")
+        basename = Path(pattern).name
+        if basename in FORBIDDEN_ALLOWLIST_BASES:
+            raise ValueError(f"{label} allowlist contains forbidden pattern: {pattern!r}")
 
 
 def generate(state: WizardState) -> dict:
@@ -98,6 +100,10 @@ def generate(state: WizardState) -> dict:
             }
         },
     }
+
+    _validate_allowlist(config["defaults"]["allowlist"], "defaults")
+    for name, agent_config in config["agents"].items():
+        _validate_allowlist(agent_config["allowlist"], f"agent:{name}")
 
     return config
 
