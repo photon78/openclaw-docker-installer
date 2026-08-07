@@ -63,3 +63,12 @@ class TestComposeGen:
         content = compose_gen.generate(state, IMAGE)
         assert "127.0.0.1:18789" in content
         assert "0.0.0.0" not in content
+
+    def test_capabilities_minimal(self, state: WizardState) -> None:
+        # Capability set should be as small as possible. SETUID/SETGID were
+        # removed because the official image drops privileges via USER node.
+        content = compose_gen.generate(state, IMAGE)
+        assert "cap_add:" in content
+        assert "  - CHOWN" in content
+        assert "  - SETUID" not in content
+        assert "  - SETGID" not in content

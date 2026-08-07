@@ -3,9 +3,13 @@ compose_gen.py — Generate docker-compose.yml from WizardState.
 Fetches the current OpenClaw release version from GitHub API and pins it.
 Scripts are mounted read-only. Workspace is read-write. .env is read-only.
 """
+import logging
 from pathlib import Path
+
 import httpx
 from wizard.state import WizardState
+
+logger = logging.getLogger("installer")
 
 GITHUB_RELEASES_URL = "https://api.github.com/repos/openclaw/openclaw/releases/latest"
 FALLBACK_IMAGE = "ghcr.io/openclaw/openclaw:latest"
@@ -29,13 +33,18 @@ def fetch_latest_version() -> str:
             follow_redirects=True,
         )
         resp.raise_for_status()
-        tag = resp.json().get("tag_name", "")
-        if tag:
-            # Normalise: strip leading 'v' if present
-            version = tag.lstrip("v")
-            return f"ghcr.io/openclaw/openclaw:{version}"
-    except Exception:
-        pass
+        data = resp.json()
+        tag = data.get("tag_name", "")
+        if not tag:
+            logger.warning("GitHub release tag_name missing; falling back to %s", FALLBACK_IMAGE)
+            return FALLBACK_IMAGE
+        # Normalise: strip leading 'v' if present
+        version = tag.lstrip("v")
+        return f"ghcr.io/openclaw/openclaw:{version}"
+    except httpx.HTTPError as exc:
+        logger.warning("Could not fetch latest OpenClaw release: %s; falling back to %s", exc, FALLBACK_IMAGE)
+    except (ValueError, KeyError) as exc:
+        logger.warning("Unexpected GitHub release payload: %s; falling back to %s", exc, FALLBACK_IMAGE)
 
     # Fallback: :latest
     return FALLBACK_IMAGE
@@ -87,8 +96,11 @@ services:
       - ALL
     cap_add:
       - CHOWN
-      - SETUID
-      - SETGID
+
+    # NOTE: SETUID/SETGID were removed after review. The official OpenClaw
+    # image drops privileges at container start via the node user; retaining
+    # SETUID/SETGID is unnecessary and widens the attack surface. If a custom
+    # image needs them, override in docker-compose.override.yml.
 
     # Resource limits — prevent container from starving the host
     deploy:

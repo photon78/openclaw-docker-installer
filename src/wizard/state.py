@@ -11,7 +11,7 @@ def _default_username() -> str:
     """Return the current OS username (cross-platform)."""
     try:
         return getpass.getuser()
-    except Exception:
+    except (OSError, KeyError):
         return Path.home().name
 
 
