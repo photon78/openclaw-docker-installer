@@ -1,7 +1,8 @@
 """
 compose_gen.py — Generate docker-compose.yml from WizardState.
 Fetches the current OpenClaw release version from GitHub API and pins it.
-Scripts are mounted read-only. Workspace is read-write. .env is read-only.
+Scripts are mounted read-only. Workspace is read-write. .env is referenced
+via env_file, not mounted as a volume.
 """
 import logging
 from pathlib import Path

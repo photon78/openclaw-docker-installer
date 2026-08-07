@@ -1,6 +1,6 @@
 # Workspace File Management — OpenClaw Multi-Agent Setup
 
-**Datum:** 2026-04-08 | **Quelle:** Produktionserfahrung (Alpenblick Pi, 2 Wochen Betrieb)
+**Datum:** 2026-04-08 | **Quelle:** Produktionserfahrung (Raspberry Pi, 2 Wochen Betrieb)
 
 ---
 
@@ -71,7 +71,7 @@ Wenn gemeinsame Inhalte (z.B. `USER.md`, geteilte Regeln in `AGENTS.md`) geände
 
 ---
 
-## Aktueller Stand (Alpenblick Pi, 2026-04-08)
+## Aktueller Stand (Raspberry Pi, 2026-04-08)
 
 | Workspace | AGENTS.md | USER.md | SOUL.md | HEARTBEAT.md |
 |-----------|-----------|---------|---------|--------------|

@@ -79,6 +79,15 @@ bash run_tests.sh
 - No `subprocess` with `shell=True`
 - No hardcoded paths — use `platformdirs` or pass paths as arguments
 
+## Language policy
+
+Everything that is shipped with the installer or read by external users is in
+**English**. This includes source code, comments, `README.md`, `SECURITY.md`,
+generated `SOUL.md`/`AGENTS.md` templates, and skill documentation.
+
+Internal notes may remain in German, but they must be placed under `docs/de/`
+so it is obvious that they are not part of the shipped product.
+
 ---
 
 ## Branching
