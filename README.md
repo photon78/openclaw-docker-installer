@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.4-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.5.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Version | Status | What works |
 |---------|--------|------------|
-| **v0.3.4** | ✅ Stable | LLM providers: Kimi K2.6, Ollama, GPT-5.5 Codex; Gateway token auth; BOOTSTRAP.md fix |
+| **v0.5.0** | ✅ Stable | Security review fixes: hardened allowlists, template extraction, atomic .env permissions |
 | v0.3.1 | ✅ Stable | Startup timeout, backup validation, skill deduplication |
 | v0.3.0 | ✅ Stable | Multi-agent system, sub-agent hardening, skills bundled, dynamic provider config, systemd autostart, `--dry-run` |
 | v0.2.1 | ✅ Stable | Windows 11 compatibility fixes, UTF-8 encoding, permission handling |
@@ -23,7 +23,7 @@
 
 Install the latest stable release:
 ```bash
-git clone --branch v0.3.4 https://github.com/photon78/openclaw-docker-installer.git
+git clone --branch v0.5.0 https://github.com/photon2078/openclaw-docker-installer.git
 ```
 
 ---
