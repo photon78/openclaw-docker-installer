@@ -15,24 +15,24 @@ pip install -r requirements.txt
 ## Nutzung
 ```bash
 # JSON-Ausgabe (OCR + Metadaten)
-python3 vision.py --image test_images/rechnung.jpg --output json
+python3 vision.py --image test_images/document.jpg --output json
 
 # Nur Text
-python3 vision.py --image test_images/rechnung.jpg --output text
+python3 vision.py --image test_images/document.jpg --output text
 ```
 
 ## Beispielausgabe (JSON)
 ```json
 {
-  "text": "Rechnung Nr. 2026-4711\nBetrag: 1.200 CHF\nDatum: 11.04.2026",
+  "text": "Invoice No. 2026-4711\nAmount: 1,200 USD\nDate: 2026-04-11",
   "metadata": {
-    "document_type": "Rechnung",
-    "description": "Rechnung für Zimmerrenovierung Alpenblick",
+    "document_type": "invoice",
+    "description": "Sample invoice for a renovation project",
     "confidence": 0.95
   }
 }
 ```
 
 ## Testbilder
-- `test_images/rechnung.jpg`: Beispiel-Rechnung (fiktiv).
+- `test_images/document.jpg`: Beispiel-Dokument (fiktiv).
 - `test_images/formular.png`: Beispiel-Formular.

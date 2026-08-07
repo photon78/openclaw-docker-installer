@@ -12,7 +12,7 @@ um direkt aus dem Original-Scan zu croppen → immer valides JPEG.
 Usage:
   python3 ocr.py --input <pfad_oder_url>
   python3 ocr.py --input <pfad> --extract-images [--output-dir /pfad/]
-  python3 ocr.py --input <pfad> --extract-images --send [--target 8620748747]
+  python3 ocr.py --input <pfad> --extract-images --send --target <chat_id>
   python3 ocr.py --input <pfad> --debug   # Rohe API-Response ausgeben
 """
 
@@ -41,7 +41,7 @@ def is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
-def send_telegram(image_path: str, target: str = "8620748747") -> bool:
+def send_telegram(image_path: str, target: str) -> bool:
     """Bild via openclaw message send an Telegram schicken."""
     SHARED_OUTPUT.mkdir(parents=True, exist_ok=True)
     dest = SHARED_OUTPUT / Path(image_path).name
@@ -102,7 +102,7 @@ def crop_from_original(input_path: str, bbox: dict, page_dims: dict, out_path: s
 
 
 def ocr(input_path, pages=None, extract_images=False, output_dir=None,
-        send=False, target="8620748747", debug=False):
+        send=False, target=None, debug=False):
     if not API_KEY:
         print("ERROR: MISTRAL_API_KEY nicht gesetzt", file=sys.stderr)
         sys.exit(1)
@@ -210,10 +210,13 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", help="Ausgabeverzeichnis (default: shared-output)")
     parser.add_argument("--send", action="store_true",
                         help="Extrahierte Bilder via Telegram senden")
-    parser.add_argument("--target", default="8620748747", help="Telegram Chat-ID")
+    parser.add_argument("--target", default=None, help="Telegram Chat-ID (required with --send)")
     parser.add_argument("--debug", action="store_true",
                         help="Rohe API-Response ausgeben (für Debugging)")
     args = parser.parse_args()
+
+    if args.send and not args.target:
+        parser.error("--target is required when --send is used")
 
     ocr(
         args.input,

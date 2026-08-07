@@ -169,8 +169,11 @@ def main():
     parser.add_argument("--image", type=str, required=True, help="Pfad zum Scan (JPG/PNG)")
     parser.add_argument("--output", type=str, default=None, help="Ausgabepfad (default: extracted_<input>.jpg)")
     parser.add_argument("--send", action="store_true", help="Extrahiertes Foto via Telegram senden")
-    parser.add_argument("--target", type=str, default="8620748747", help="Telegram Chat-ID (default: 8620748747)")
+    parser.add_argument("--target", type=str, default=None, help="Telegram Chat-ID (required with --send)")
     args = parser.parse_args()
+
+    if args.send and not args.target:
+        parser.error("--target is required when --send is used")
 
     if not MISTRAL_API_KEY:
         print("❌ MISTRAL_API_KEY nicht gesetzt!", file=sys.stderr)

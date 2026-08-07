@@ -30,7 +30,7 @@ def is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
-def send_telegram(image_path: str, target: str = "8620748747") -> bool:
+def send_telegram(image_path: str, target: str) -> bool:
     """Bild via openclaw message send an Telegram schicken."""
     SHARED_OUTPUT.mkdir(parents=True, exist_ok=True)
     shared_path = SHARED_OUTPUT / Path(image_path).name
