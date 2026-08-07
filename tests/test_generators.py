@@ -57,6 +57,17 @@ class TestEnvGen:
         path = env_gen.write(state)
         assert oct(path.stat().st_mode)[-3:] == "600"
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not supported on Windows")
+    def test_file_permissions_respect_umask(self, state: WizardState) -> None:
+        # Even with a permissive umask, the file must be created as 0o600 atomically.
+        import os
+        old_umask = os.umask(0o022)
+        try:
+            path = env_gen.write(state)
+            assert oct(path.stat().st_mode)[-3:] == "600"
+        finally:
+            os.umask(old_umask)
+
 
 class TestOpenClawJsonGen:
     def test_model_primary_uses_env_var_ref(self, state: WizardState) -> None:

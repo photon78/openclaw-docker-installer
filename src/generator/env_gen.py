@@ -2,6 +2,7 @@
 env_gen.py — Generate .env file from WizardState.
 Secrets live here only. Never in config files, Docker images, or logs.
 """
+import os
 from pathlib import Path
 from wizard.state import WizardState
 
@@ -37,10 +38,6 @@ def generate(state: WizardState) -> str:
     if state.signal_number:
         lines.append(f"SIGNAL_NUMBER={state.signal_number}")
 
-    # Gateway auth token (required for Docker container)
-    if state.gateway_token:
-        lines.append(f"OPENCLAW_GATEWAY_TOKEN={state.gateway_token}")
-
     lines += [
         "",
         f"LLM_BUDGET={state.llm_budget}",
@@ -59,12 +56,25 @@ def generate(state: WizardState) -> str:
 
 
 def write(state: WizardState) -> Path:
-    """Write .env to openclaw_dir. Returns path."""
+    """Write .env to openclaw_dir with restrictive permissions from creation.
+
+    Using os.open with mode 0o600 guarantees the file is never world-readable,
+    even between creation and the chmod call (which is vulnerable to umask).
+    write_bytes forces LF endings (Docker reads .env on Linux/WSL2).
+    """
     env_file = state.env_file
     env_file.parent.mkdir(parents=True, exist_ok=True)
-    # write_bytes: forces LF endings (Docker reads .env on Linux/WSL2)
-    env_file.write_bytes(generate(state).encode("utf-8"))
-    env_file.chmod(0o600)  # owner read/write only
+    data = generate(state).encode("utf-8")
+    fd = os.open(env_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+    except Exception:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        raise
     return env_file
 
 
