@@ -112,7 +112,7 @@ health_check.py → audit_integrity.py --silent → Alert via Telegram
 - **Secrets nur in `.env`** — nie in openclaw.json, nie im Service-File
 - **systemd:** `EnvironmentFile=%h/.openclaw/.env` — nie `Environment=KEY=...`
 - **Health-Check:** erkennt API-Keys im Service-File (passiert nach `openclaw update`)
-- **Docker:** `.env` read-only gemountet (`:ro`)
+- **Docker:** `.env` liegt im read-write OpenClaw-Datenverzeichnis (kein einzelnes `:ro`-Mount; Gateway braucht Schreibzugriff für `exec-approvals.json` und Runtime-State)
 - **Workspace-Dateien:** `.gitignore` enthält `.env`
 
 ```
@@ -129,17 +129,20 @@ health_check.py → audit_integrity.py --silent → Alert via Telegram
 
 ```yaml
 volumes:
-  # Read-Write (Agent braucht Schreibzugriff)
+  # Read-Write (Gateway braucht Schreibzugriff für Runtime-State)
+  - ${OPENCLAW_DATA}:/home/node/.openclaw
   - ${OPENCLAW_DATA}/workspace:/data/workspace
   - ${OPENCLAW_DATA}/logs:/data/logs
 
   # Read-Only (Agent darf nicht ändern)
   - ${OPENCLAW_DATA}/scripts:/data/scripts:ro
-  - ${OPENCLAW_DATA}/.env:/data/.env:ro
-  - ${OPENCLAW_DATA}/openclaw.json:/data/openclaw.json:ro
 ```
 
+**Warum das gesamte OpenClaw-Datenverzeichnis read-write?** Der Gateway schreibt bei jedem Start `socket.token` in `exec-approvals.json` und aktualisiert bei jedem Allowlist-Match `lastUsedAt`, `lastUsedCommand` und `lastResolvedPath`. `openclaw.json` wird ebenfalls für Runtime-State beschrieben. Ein `:ro`-Mount auf diese Dateien bricht Gateway-Start und laufenden Betrieb. Siehe `docs/s-03-gateway-research-report.md`.
+
 **Warum scripts read-only?** Agent könnte sonst neues Script anlegen und ausführen → Allowlist wäre wertlos.
+
+**`.env` und `openclaw.json` werden NICHT einzeln gemountet.** Sie liegen innerhalb des read-write OpenClaw-Datenverzeichnisses. Der Host bleibt über Backups und Restore-Scripts Quelle der Wahrheit.
 
 **Warum Bind Mounts?** Backup, Migration (`openclaw-installer migrate`), manuelle Inspektion ohne Docker-Umwege.
 
@@ -229,7 +232,7 @@ Task-Files statt Message-Kanäle.
 [ ] systemd ExecStartPost / Docker ENTRYPOINT konfiguriert
 [ ] audit_integrity.py installiert + Baselines gesetzt
 [ ] health_check.py mit Audit-Integration
-[ ] .env angelegt + read-only gemountet (Docker)
+[ ] OpenClaw-Datenverzeichnis read-write gemountet (Docker) — nötig für Runtime-Schreibzugriffe auf exec-approvals.json
 [ ] scripts/ read-only gemountet (Docker)
 [ ] Service-File ohne API-Keys
 [ ] sudoers-Eintrag (spezifische Commands, kein Wildcard)

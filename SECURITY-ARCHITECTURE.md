@@ -145,12 +145,14 @@ Runs daily at 07:45 via crontab. On changes: alert via Telegram.
 
 ### Docker Context
 
+`.env` lives inside the read-write OpenClaw data directory. It is **not** mounted individually as read-only, because the Gateway needs write access to `exec-approvals.json` and runtime state files that share the same volume.
+
 ```yaml
 volumes:
-  - ${OPENCLAW_DATA}/.env:/data/.env:ro    # ← read-only!
+  - ${OPENCLAW_DATA}:/home/node/.openclaw
 ```
 
-`.env` is mounted read-only. The agent can read secrets (needs them for API calls) but cannot overwrite them.
+The container can read secrets and write runtime config. The host remains the source of truth via backups and restore scripts.
 
 ---
 
@@ -160,18 +162,21 @@ volumes:
 
 ```yaml
 volumes:
-  # Read-Write (agent needs write access)
+  # Read-Write (gateway needs write access for runtime state)
+  - ${OPENCLAW_DATA}:/home/node/.openclaw
   - ${OPENCLAW_DATA}/workspace:/data/workspace
   - ${OPENCLAW_DATA}/logs:/data/logs
   - ${OPENCLAW_DATA}/memory:/data/memory
 
   # Read-Only (agent must not modify)
   - ${OPENCLAW_DATA}/scripts:/data/scripts:ro
-  - ${OPENCLAW_DATA}/.env:/data/.env:ro
-  - ${OPENCLAW_DATA}/openclaw.json:/data/openclaw.json:ro
 ```
 
+**Why the full openclaw dir read-write?** The Gateway writes to `exec-approvals.json` at start (socket token) and on every allowlist match (`lastUsedAt`, `lastUsedCommand`, `lastResolvedPath`). It also updates `openclaw.json` for runtime state. A read-only mount breaks the Gateway start and normal operation. See [S-03 Gateway Write Access Research Report](docs/s-03-gateway-research-report.md) for evidence from source code.
+
 **Why scripts read-only?** If the agent could create a new script and it were in the allowlist, the allowlist would be worthless. Scripts are only modified by the installer or the user — never by the agent at runtime.
+
+**`.env` and `openclaw.json` are NOT mounted individually.** They live inside the read-write openclaw data directory. The container can read secrets and write runtime config; the host remains the source of truth via backups and the restore scripts.
 
 ### Native Installation (Linux)
 
@@ -350,7 +355,7 @@ Rules in `AGENTS.md` help, but they fight against training. The more reliable ap
 [ ] audit_integrity.py installed + baselines set
 [ ] health_check.py with audit integration
 [ ] .env created (secrets, LLM tiers)
-[ ] .env mounted read-only (Docker)
+[ ] OpenClaw data dir mounted read-write (Docker) — required for exec-approvals.json runtime writes
 [ ] scripts/ mounted read-only (Docker)
 [ ] Service file without API keys
 [ ] sudoers entry (only specific commands via NOPASSWD)

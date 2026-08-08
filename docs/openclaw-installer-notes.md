@@ -325,7 +325,7 @@ Siehe `SECURITY-ARCHITECTURE.md` für vollständiges Threat Model.
 - `trash` statt `rm`
 - API-Keys nur in `.env`
 - sudoers: spezifische Befehle, kein Wildcard
-- Docker: `.env`, `scripts/`, `openclaw.json` read-only gemountet
+- Docker: `scripts/` read-only gemountet; `.env` und `openclaw.json` liegen im read-write OpenClaw-Datenverzeichnis (Gateway braucht Schreibzugriff)
 
 ---
 
