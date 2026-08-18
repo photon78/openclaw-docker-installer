@@ -32,7 +32,7 @@
 | `.env` | API keys, LLM tier assignments |
 | `openclaw.json` | Gateway + agent configuration |
 | `exec-approvals.json` | Security allowlist (which scripts the agent may run) |
-| `docker-compose.yml` | Container definition, pinned to latest release |
+| `docker-compose.yml` | Container definition, pinned to extended-stable release |
 | `scripts/restore_exec_approvals.py` | Restores allowlist if gateway overwrites it |
 | `scripts/restore_config.py` | Restores openclaw.json after gateway update |
 | `scripts/daily_backup.py` | Backup script (if backup enabled) |
@@ -57,7 +57,7 @@
 
 | What | Details |
 |------|---------|
-| Image | `ghcr.io/openclaw/openclaw:<latest-release>` |
+| Image | `ghcr.io/openclaw/openclaw:extended-stable` |
 | Container name | `openclaw-gateway` |
 | Port | `18789` (localhost only by default) |
 | Restart policy | `unless-stopped` |

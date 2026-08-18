@@ -357,7 +357,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Interactive TUI wizard (questionary + rich): Welcome, API Keys, Channel, Persona, Security, Backup, Completion steps
 - Persona step: agent name, emoji, style preset (direct / formal / friendly)
-- `docker-compose.yml` generator — pins release tag via GitHub Releases API, fallback to `:latest`
+- `docker-compose.yml` generator — resolves `extended-stable` tag via GitHub Tags API, fallback to `:extended-stable`
 - `.env` generator — API keys, LLM tiers, USER_NAME
 - `openclaw.json` generator — ENV-based config, no hardcoded models
 - `exec-approvals.json` generator — Security Allowlist with permission tiers (Restricted / Standard / Elevated / Cron)
