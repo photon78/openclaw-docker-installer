@@ -80,8 +80,8 @@ def run(state: WizardState) -> GenerationResult:
         return GenerationResult(env_path, json_path, Path(), success=False)
 
     # Fetch version + generate docker-compose.yml
-    console.print("[dim]Fetching current OpenClaw release...[/dim]")
-    image = compose_gen.fetch_latest_version()
+    console.print("[dim]Resolving OpenClaw extended-stable release...[/dim]")
+    image = compose_gen.fetch_extended_stable_version()
     console.print(f"[dim]Pinning image: {image}[/dim]\n")
 
     try:

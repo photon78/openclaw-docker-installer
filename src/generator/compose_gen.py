@@ -7,37 +7,38 @@ from pathlib import Path
 import httpx
 from wizard.state import WizardState
 
-GITHUB_RELEASES_URL = "https://api.github.com/repos/openclaw/openclaw/releases/latest"
-FALLBACK_IMAGE = "ghcr.io/openclaw/openclaw:latest"
+GITHUB_TAGS_URL = "https://api.github.com/repos/openclaw/openclaw/tags"
+EXTENDED_STABLE_TAG = "extended-stable"
+FALLBACK_IMAGE = f"ghcr.io/openclaw/openclaw:{EXTENDED_STABLE_TAG}"
 
 
-def fetch_latest_version() -> str:
-    """Fetch the latest OpenClaw release version.
+def fetch_extended_stable_version() -> str:
+    """Resolve the OpenClaw extended-stable image tag.
 
-    Strategy (hybrid):
-    1. GitHub Releases API — authoritative, always reflects the latest release.
-       Constructs image tag from release tag_name (e.g. v2026.4.8 → 2026.4.8).
-    2. Fallback: ghcr.io/openclaw/openclaw:latest — always pulls newest image,
-       less reproducible but never stale.
+    Strategy:
+    1. GitHub Tags API — look up the commit/tag object pointed to by the
+       ``extended-stable`` tag. This tag is OpenClaw's stable release pointer;
+       the installer deliberately avoids ``latest``.
+    2. Fallback: ghcr.io/openclaw/openclaw:extended-stable — always safe,
+       tracks the current extended-stable image on the registry.
     """
-    # Primary: GitHub Releases API
+    # Primary: GitHub Tags API for the extended-stable reference
     try:
         resp = httpx.get(
-            GITHUB_RELEASES_URL,
+            GITHUB_TAGS_URL,
             headers={"Accept": "application/vnd.github+json"},
             timeout=10,
             follow_redirects=True,
         )
         resp.raise_for_status()
-        tag = resp.json().get("tag_name", "")
-        if tag:
-            # Normalise: strip leading 'v' if present
-            version = tag.lstrip("v")
-            return f"ghcr.io/openclaw/openclaw:{version}"
+        tags = resp.json()
+        for tag in tags:
+            if tag.get("name") == EXTENDED_STABLE_TAG:
+                return f"ghcr.io/openclaw/openclaw:{EXTENDED_STABLE_TAG}"
     except Exception:
         pass
 
-    # Fallback: :latest
+    # Fallback: extended-stable alias on the registry
     return FALLBACK_IMAGE
 
 
