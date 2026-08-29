@@ -372,17 +372,16 @@ def _detect_vram_mb() -> tuple[int | None, str | None]:
 def _recommend_max_model_len(vram_mb: int | None) -> int:
     """Recommend a safe --max-model-len based on detected VRAM.
 
-    Conservative defaults derived from real-world test on RTX 5090 32 GB:
-    - 32768 with Qwen3.8-27B-NVFP4 OOM'd
-    - 16384 fit comfortably (28.6/32.6 GiB)
+    Defaults derived from real-world tests on RTX 5090 32 GB with
+    Qwen3.8-27B-NVFP4, fp8 KV-cache and --enforce-eager enabled:
+    - <24 GiB: 8192
+    - >=24 GiB: 32768
     """
     if vram_mb is None:
         return 8192
     vram_gb = vram_mb / 1024
     if vram_gb < 24:
         return 8192
-    if vram_gb <= 32:
-        return 16384
     return 32768
 
 
