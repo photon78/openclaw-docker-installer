@@ -21,6 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] — 2026-08-29 "vLLM Local GPU"
+
+### Added
+- **vLLM local GPU provider support** — run a local LLM inside Docker with NVIDIA GPU passthrough.
+  - Wizard step: "vLLM (local GPU)" provider option with VRAM detection via `nvidia-smi`.
+  - VRAM-based `--max-model-len` recommendation (conservative defaults from RTX 5090 32 GB test).
+  - Configurable HuggingFace cache path (default: `~/.cache/huggingface`).
+  - NVIDIA Container Toolkit smoke test (`docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi`).
+  - Docker Compose service `vllm-qwen` using `vllm/vllm-openai:nightly` with memory-optimising flags:
+    `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`, `--kv-cache-dtype fp8`, `--enforce-eager`,
+    `--gpu-memory-utilization 0.90`.
+  - OpenClaw provider config `vllm-local` pointing at `http://vllm-qwen:8000/v1`.
+  - Qwen3 thinking mode toggle (default disabled).
+- **`src/checks/check_nvidia_ctk.py`** — verify NVIDIA Container Toolkit installation and Docker GPU access.
+- **`src/checks/check_vllm_ready.py`** — probe `http://localhost:8000/v1/models` to confirm vLLM is live.
+
+### Changed
+- Bumped version to `v0.4.0`.
+
+---
+
 ## [0.5.1] — 2026-07-01 "Dedicated Update Cron"
 
 ### Changed
