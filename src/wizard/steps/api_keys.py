@@ -408,6 +408,20 @@ def _run_vllm_setup(state: WizardState, provider: dict) -> bool | str:
         console.print(f"[yellow]⚠[/yellow] GPU detection failed: {vram_error}")
         console.print("[dim]Continuing with conservative defaults. You can adjust values later in .env[/dim]")
 
+    console.print()
+    console.print(
+        Panel(
+            "[bold]Throughput note[/bold]\n\n"
+            "vLLM is configured with [cyan]--enforce-eager[/cyan] to prevent OOM on GPUs like the "
+            "RTX 5090 32 GB. This disables CUDA Graphs and lowers throughput to roughly "
+            "[bold]~20 tok/s[/bold] instead of the theoretical ~82 tok/s.\n\n"
+            "You can remove --enforce-eager in docker-compose.yml later, but be prepared for OOM "
+            "with large context windows.",
+            border_style="yellow",
+            padding=(1, 2),
+        )
+    )
+
     # NVIDIA Container Toolkit quick check
     console.print()
     console.print("[dim]Testing NVIDIA Container Toolkit via Docker...[/dim]")
