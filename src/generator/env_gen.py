@@ -80,6 +80,23 @@ def generate(state: WizardState) -> str:
         f"LLM_GEMMA4={state.llm_gemma4}",
         f"LLM_QWEN3={state.llm_qwen3}",
         f"LLM_CODEX={state.llm_codex}",
+        f"LLM_VLLM={state.llm_vllm}",
+    ]
+
+    if state.vllm_enabled:
+        hf_cache = state.vllm_hf_cache or str(state.home_dir / ".cache" / "huggingface")
+        lines += [
+            "",
+            "# vLLM local GPU provider",
+            f"VLLM_MODEL={state.vllm_model}",
+            f"VLLM_MAX_MODEL_LEN={state.vllm_max_model_len}",
+            f"HF_CACHE={hf_cache}",
+            f"VLLM_GPU_MEMORY_UTILIZATION={state.vllm_gpu_memory_utilization}",
+            f"VLLM_KV_CACHE_DTYPE={state.vllm_kv_cache_dtype}",
+            f"VLLM_ENABLE_THINKING={'true' if state.vllm_enable_thinking else 'false'}",
+        ]
+
+    lines += [
         "",
         "# Script Registry",
         f"INSTALLER_SCRIPT_REGISTRY_ENABLED={'true' if state.script_registry_enabled else 'false'}",

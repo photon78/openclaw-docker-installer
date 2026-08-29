@@ -72,6 +72,16 @@ class WizardState:
     # Dry-run mode — write to tempdir, skip Docker and systemd
     dry_run: bool = False
 
+    # vLLM local GPU provider
+    vllm_enabled: bool = False
+    vllm_model: str = "unsloth/Qwen3.8-27B-NVFP4"
+    vllm_max_model_len: int = 16384
+    vllm_hf_cache: str = ""
+    vllm_gpu_memory_utilization: float = 0.90
+    vllm_kv_cache_dtype: str = "fp8"
+    vllm_enforce_eager: bool = True
+    vllm_enable_thinking: bool = False
+
     # LLM tiers
     llm_budget: str = "mistral/mistral-large-latest"
     llm_standard: str = "anthropic/claude-sonnet-4-6"
@@ -81,6 +91,7 @@ class WizardState:
     llm_gemma4: str = "ollama/gemma4_26_Q5KS"
     llm_qwen3: str = "ollama/qwen3.6_27b"
     llm_codex: str = "openai/gpt-5.5"
+    llm_vllm: str = "vllm-local"
 
     # Gateway auth (generated during install, written to .env)
     gateway_token: str = ""

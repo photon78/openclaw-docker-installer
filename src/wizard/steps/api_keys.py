@@ -5,7 +5,12 @@ Follows the OpenClaw onboarding approach: pick a provider, authenticate,
 then configure model tiers. Mistral is recommended as a second provider
 for skills (translate, OCR, transcribe) and budget/media tasks.
 """
+from __future__ import annotations
+
+import shutil
+import subprocess
 from typing import Any
+
 import questionary
 from rich.console import Console
 from wizard.ui import confirm_select
@@ -75,6 +80,16 @@ PROVIDERS: list[dict[str, Any]] = [
         "default_model": "ollama/gemma4_26_Q5KS",
     },
     {
+        "id": "vllm",
+        "label": "vLLM (local GPU)",
+        "key_hint": "No API key needed — runs inside Docker on a local NVIDIA GPU",
+        "key_prefix": None,
+        "models": [
+            ("unsloth/Qwen3.8-27B-NVFP4", "Qwen 3.8 27B NVFP4 — recommended"),
+        ],
+        "default_model": "unsloth/Qwen3.8-27B-NVFP4",
+    },
+    {
         "id": "custom",
         "label": "Other / Custom provider",
         "key_hint": "Enter model ID manually (format: provider/model)",
@@ -136,7 +151,9 @@ def run(state: WizardState) -> bool | str:
 
     provider = next(p for p in PROVIDERS if p["id"] == provider_choice)
 
-    # API key or host (skip for Ollama)
+    # API key or host (skip for Ollama / vLLM)
+    if provider["id"] == "vllm":
+        return _run_vllm_setup(state, provider)
     if provider["id"] == "ollama":
         console.print()
         console.print("[yellow]⚠ Ollama runs externally — not inside the Docker container.[/yellow]")
@@ -313,12 +330,172 @@ def run(state: WizardState) -> bool | str:
         table.add_row("[dim]OpenAI[/dim]", "[bold]GPT-5.5[/bold] [green]✓[/green]")
     if state.ollama_host:
         table.add_row("[dim]Ollama[/dim]", f"[bold]{state.ollama_host}[/bold] [green]✓[/green]")
+    if state.vllm_enabled:
+        table.add_row("[dim]vLLM[/dim]", f"[bold]{state.vllm_model}[/bold] [green]✓[/green]")
     if state.aki_api_key:
         table.add_row("[dim]Coding provider[/dim]", "[bold]Aki/Kimi[/bold] [green]✓[/green]")
     if state.brave_web_search_api_key:
         table.add_row("[dim]Web search[/dim]", "[bold]Brave[/bold] [green]✓[/green]")
     console.print(table)
     console.print()
+
+    return True
+
+
+def _detect_vram_mb() -> tuple[int | None, str | None]:
+    """Detect total VRAM in MiB via nvidia-smi.
+
+    Returns (vram_mb, error_message). vram_mb is None if nvidia-smi is
+    unavailable or the query fails.
+    """
+    if not shutil.which("nvidia-smi"):
+        return None, "nvidia-smi not found in PATH."
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return None, result.stderr.strip() or "nvidia-smi returned non-zero."
+        # Use the first GPU's total memory
+        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        if not lines:
+            return None, "nvidia-smi returned empty memory info."
+        vram_mb = int(float(lines[0].strip()))
+        return vram_mb, None
+    except Exception as exc:  # pragma: no cover
+        return None, f"VRAM detection failed: {exc}"
+
+
+def _recommend_max_model_len(vram_mb: int | None) -> int:
+    """Recommend a safe --max-model-len based on detected VRAM.
+
+    Conservative defaults derived from real-world test on RTX 5090 32 GB:
+    - 32768 with Qwen3.8-27B-NVFP4 OOM'd
+    - 16384 fit comfortably (28.6/32.6 GiB)
+    """
+    if vram_mb is None:
+        return 8192
+    vram_gb = vram_mb / 1024
+    if vram_gb < 24:
+        return 8192
+    if vram_gb <= 32:
+        return 16384
+    return 32768
+
+
+def _run_vllm_setup(state: WizardState, provider: dict) -> bool | str:
+    """Configure the local vLLM provider.
+
+    Runs GPU detection, NVIDIA Container Toolkit smoke test, model selection,
+    HF cache path, and max-model-len recommendation.
+    """
+    console.print(Panel(
+        "[bold]vLLM (local GPU) setup[/bold] [dim](optional NVIDIA GPU required)[/dim]\n\n"
+        "vLLM runs inside Docker with GPU passthrough.\n"
+        "Make sure NVIDIA drivers and the NVIDIA Container Toolkit are installed.",
+        border_style="blue",
+        padding=(1, 2),
+    ))
+
+    # GPU + VRAM detection
+    vram_mb, vram_error = _detect_vram_mb()
+    if vram_mb is not None:
+        vram_gb = vram_mb / 1024
+        console.print(f"[green]✓[/green] NVIDIA GPU detected — [bold]{vram_gb:.1f} GiB[/bold] VRAM")
+    else:
+        console.print(f"[yellow]⚠[/yellow] GPU detection failed: {vram_error}")
+        console.print("[dim]Continuing with conservative defaults. You can adjust values later in .env[/dim]")
+
+    # NVIDIA Container Toolkit quick check
+    console.print()
+    console.print("[dim]Testing NVIDIA Container Toolkit via Docker...[/dim]")
+    if shutil.which("docker"):
+        try:
+            result = subprocess.run(
+                [
+                    "docker", "run", "--rm", "--gpus", "all",
+                    "nvidia/cuda:12.8.0-base-ubuntu24.04", "nvidia-smi",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if result.returncode == 0:
+                console.print("[green]✓[/green] NVIDIA Container Toolkit is working")
+            else:
+                console.print("[yellow]⚠[/yellow] NVIDIA Container Toolkit test failed:")
+                console.print(result.stderr.strip() or result.stdout.strip())
+        except Exception as exc:  # pragma: no cover
+            console.print(f"[yellow]⚠[/yellow] Could not run Docker GPU test: {exc}")
+    else:
+        console.print("[yellow]⚠[/yellow] docker not found — skipping Container Toolkit test")
+
+    # Model selection
+    console.print()
+    console.print("[bold]vLLM model[/bold] [dim](HuggingFace model ID)[/dim]")
+    vllm_model = _ask_model(provider)
+    if not vllm_model:
+        return False
+
+    # Max model length recommendation
+    recommended = _recommend_max_model_len(vram_mb)
+    console.print()
+    console.print(
+        f"[dim]Recommended --max-model-len for your GPU: [bold]{recommended}[/bold][/dim]"
+    )
+    if vram_mb and vram_mb / 1024 > 32:
+        console.print(
+            "[dim]Note: even with >32 GiB, 32768 may OOM depending on the model.\n"
+            "The conservative default is used.[/dim]"
+        )
+    max_len_input = questionary.text(
+        "Max model length:",
+        default=str(recommended),
+        validate=lambda v: v.isdigit() and int(v) > 0 or "Must be a positive integer",
+    ).ask()
+    if max_len_input is None:
+        return False
+    if max_len_input.strip().lower() == "back":
+        return BACK
+    max_model_len = int(max_len_input.strip())
+
+    # HuggingFace cache path
+    console.print()
+    default_hf_cache = state.vllm_hf_cache
+    hf_cache = questionary.text(
+        "HuggingFace cache path on the host:",
+        default=default_hf_cache,
+    ).ask()
+    if hf_cache is None:
+        return False
+    if hf_cache.strip().lower() == "back":
+        return BACK
+
+    # Enable thinking? Default off for normal usage
+    console.print()
+    console.print(
+        "[dim]Qwen3 models support a thinking mode. Disable it for normal chat.[/dim]"
+    )
+    enable_thinking = confirm_select("Enable thinking mode?", default=False)
+    if enable_thinking is None:
+        return False
+
+    # Persist state
+    state.vllm_enabled = True
+    state.vllm_model = vllm_model
+    state.vllm_max_model_len = max_model_len
+    state.vllm_hf_cache = hf_cache.strip()
+    state.vllm_enable_thinking = bool(enable_thinking)
+
+    # vLLM becomes the primary local provider
+    state.llm_standard = "vllm-local"
+    state.llm_power = "vllm-local"
+    state.llm_budget = "vllm-local"
+    state.llm_media = "vllm-local"
+    state.llm_vllm = vllm_model
 
     return True
 
