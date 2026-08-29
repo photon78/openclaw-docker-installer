@@ -411,12 +411,12 @@ def _run_vllm_setup(state: WizardState, provider: dict) -> bool | str:
     console.print()
     console.print(
         Panel(
-            "[bold]Throughput note[/bold]\n\n"
-            "vLLM is configured with [cyan]--enforce-eager[/cyan] to prevent OOM on GPUs like the "
-            "RTX 5090 32 GB. This disables CUDA Graphs and lowers throughput to roughly "
-            "[bold]~20 tok/s[/bold] instead of the theoretical ~82 tok/s.\n\n"
-            "You can remove --enforce-eager in docker-compose.yml later, but be prepared for OOM "
-            "with large context windows.",
+            "[bold]vLLM runtime note[/bold]\n\n"
+            "[cyan]--enforce-eager[/cyan] is required for this setup (not optional). "
+            "Without it, CUDA Graph capture OOMs with [bold]torch.OutOfMemoryError[/bold] "
+            "regardless of --gpu-memory-utilization.\n\n"
+            "Trade-off: CUDA Graphs are disabled, so throughput drops to roughly "
+            "[bold]~20 tok/s[/bold] instead of the theoretical ~82 tok/s.",
             border_style="yellow",
             padding=(1, 2),
         )

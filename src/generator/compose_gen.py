@@ -65,6 +65,9 @@ def _vllm_service(state: WizardState) -> str:
       --max-model-len ${{VLLM_MAX_MODEL_LEN}}
       --kv-cache-dtype ${{VLLM_KV_CACHE_DTYPE}}
       --enforce-eager
+      --reasoning-parser qwen3
+      --enable-auto-tool-choice
+      --tool-call-parser qwen3_coder
       --chat-template-kwargs '{{"enable_thinking": ${{VLLM_ENABLE_THINKING}}}}'
     deploy:
       resources:
