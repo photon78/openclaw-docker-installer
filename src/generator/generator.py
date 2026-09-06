@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from wizard.state import WizardState
-from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen, script_registry_gen
+from generator import env_gen, openclaw_json_gen, exec_approvals_gen, compose_gen, restore_gen, backup_gen, workspace_bootstrap_gen, restore_config_gen, script_registry_gen, update_gen
 from installer import systemd_gen
 
 console = Console()
@@ -80,9 +80,13 @@ def run(state: WizardState) -> GenerationResult:
         return GenerationResult(env_path, json_path, Path(), success=False)
 
     # Fetch version + generate docker-compose.yml
-    console.print("[dim]Resolving OpenClaw extended-stable release...[/dim]")
-    image = compose_gen.fetch_extended_stable_version()
-    console.print(f"[dim]Pinning image: {image}[/dim]\n")
+    if state.openclaw_image_override:
+        image = state.openclaw_image_override
+        console.print(f"[dim]Using image override: {image}[/dim]\n")
+    else:
+        console.print("[dim]Resolving OpenClaw extended-stable release...[/dim]")
+        image = compose_gen.fetch_extended_stable_version()
+        console.print(f"[dim]Pinning image: {image}[/dim]\n")
 
     try:
         compose_path = compose_gen.write(state, image)
@@ -152,6 +156,13 @@ def run(state: WizardState) -> GenerationResult:
         return GenerationResult(env_path, json_path, approvals_path, success=False)
 
     # systemd user service (Linux only, non-fatal, skipped in dry-run)
+    # UPDATE.md — update flow documentation
+    try:
+        update_path = update_gen.write(state)
+        results.append(("[green]\u2713[/green]", "UPDATE.md", str(update_path), "update + rollback flow"))
+    except Exception as e:
+        console.print(f"[yellow]\u26a0[/yellow] UPDATE.md: {e} (non-fatal)")
+
     systemd_path = None if state.dry_run else systemd_gen.write(state)
     if systemd_path:
         enabled = systemd_gen.try_enable(systemd_path)

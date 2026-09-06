@@ -79,6 +79,17 @@ def _vllm_service(state: WizardState) -> str:
 """
 
 
+def _auth_profile_secret_mount(state: WizardState) -> str:
+    """Return the auth-profile-secrets volume line (or a commented placeholder)."""
+    secret_dir = state.auth_profile_secret_dir or str(
+        state.home_dir / ".openclaw-auth-profile-secrets"
+    )
+    return (
+        f"      # Auth profile secrets (OAuth/legacy encrypted credentials) — read-only\n"
+        f"      - {secret_dir}:/home/node/.config/openclaw:ro"
+    )
+
+
 def generate(state: WizardState, image: str) -> str:
     """Return docker-compose.yml content as string."""
     openclaw_dir = state.openclaw_dir
@@ -109,6 +120,8 @@ services:
 
       # Scripts: read-only (agent cannot modify its own tools)
       - {scripts_dir}:/home/node/.openclaw/scripts:ro
+
+{_auth_profile_secret_mount(state)}
 
 {_backup_mount_line(state)}
     healthcheck:

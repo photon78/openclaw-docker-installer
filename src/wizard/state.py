@@ -69,6 +69,19 @@ class WizardState:
     allowlist_auto_apply: bool = True
     safe_exec_check_enabled: bool = True
 
+    # Auth profile secrets directory (OAuth credentials, legacy encrypted profiles)
+    # Mounted separately from openclaw_dir into /home/node/.config/openclaw/ in the container.
+    # Default resolves to $HOME/.openclaw-auth-profile-secrets at install time.
+    auth_profile_secret_dir: str = ""
+
+    # Image override — empty = use extended-stable (default).
+    # Accepts full image ref, e.g. "ghcr.io/openclaw/openclaw:latest"
+    openclaw_image_override: str = ""
+
+    # APT packages to bake into the OpenClaw image at container start.
+    # Space-separated list, e.g. "wacli git-lfs ffmpeg".
+    apt_packages: list[str] = field(default_factory=list)
+
     # Dry-run mode — write to tempdir, skip Docker and systemd
     dry_run: bool = False
 

@@ -32,6 +32,20 @@ def generate(state: WizardState) -> str:
         "",
         f"OPENCLAW_GATEWAY_AUTH_TOKEN={state.gateway_auth_token}",
         "",
+        # Auth profile secrets directory (OAuth / legacy encrypted credentials).
+        # Must be separate from openclaw_dir. Mounted into /home/node/.config/openclaw/.
+        # Set by the wizard; uncomment and fill if you skipped the auth-secrets step.
+        *([
+            f"OPENCLAW_AUTH_PROFILE_SECRET_DIR={state.auth_profile_secret_dir}"
+        ] if state.auth_profile_secret_dir else [
+            "# OPENCLAW_AUTH_PROFILE_SECRET_DIR=~/.openclaw-auth-profile-secrets"
+        ]),
+        "",
+        # Gateway network binding — must be 'lan' inside Docker.
+        # 'loopback' binds to the container's own loopback only → port publish
+        # on the host would be unreachable even with 18789:18789 in compose.
+        "OPENCLAW_GATEWAY_BIND=lan",
+        "",
     ]
 
     # LLM provider API keys
@@ -82,6 +96,15 @@ def generate(state: WizardState) -> str:
         f"LLM_CODEX={state.llm_codex}",
         f"LLM_VLLM={state.llm_vllm}",
     ]
+
+    # APT packages baked into the container at start time (optional)
+    if state.apt_packages:
+        pkg_str = " ".join(state.apt_packages)
+        lines += [
+            "",
+            "# Extra APT packages installed into the container at start time",
+            f"OPENCLAW_IMAGE_APT_PACKAGES={pkg_str}",
+        ]
 
     if state.vllm_enabled:
         hf_cache = state.vllm_hf_cache or str(state.home_dir / ".cache" / "huggingface")
