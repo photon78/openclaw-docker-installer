@@ -42,6 +42,54 @@ def fetch_extended_stable_version() -> str:
     return FALLBACK_IMAGE
 
 
+def _vllm_service(state: WizardState) -> str:
+    """Return the vLLM Docker Compose service block, or empty string if disabled."""
+    if not state.vllm_enabled:
+        return ""
+
+    return """
+  vllm-qwen:
+    image: vllm/vllm-openai:nightly
+    container_name: openclaw-vllm-qwen
+    runtime: nvidia
+    restart: unless-stopped
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - ${{HF_CACHE}}:/root/.cache/huggingface
+    ports:
+      - "127.0.0.1:8000:8000"
+    command: >
+      --model ${{VLLM_MODEL}}
+      --gpu-memory-utilization ${{VLLM_GPU_MEMORY_UTILIZATION}}
+      --max-model-len ${{VLLM_MAX_MODEL_LEN}}
+      --kv-cache-dtype ${{VLLM_KV_CACHE_DTYPE}}
+      --enforce-eager
+      --reasoning-parser qwen3
+      --enable-auto-tool-choice
+      --tool-call-parser qwen3_coder
+      --chat-template-kwargs '{{"enable_thinking": ${{VLLM_ENABLE_THINKING}}}}'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+"""
+
+
+def _auth_profile_secret_mount(state: WizardState) -> str:
+    """Return the auth-profile-secrets volume line (or a commented placeholder)."""
+    secret_dir = state.auth_profile_secret_dir or str(
+        state.home_dir / ".openclaw-auth-profile-secrets"
+    )
+    return (
+        f"      # Auth profile secrets (OAuth/legacy encrypted credentials) — read-only\n"
+        f"      - {secret_dir}:/home/node/.config/openclaw:ro"
+    )
+
+
 def generate(state: WizardState, image: str) -> str:
     """Return docker-compose.yml content as string."""
     openclaw_dir = state.openclaw_dir
@@ -72,6 +120,8 @@ services:
 
       # Scripts: read-only (agent cannot modify its own tools)
       - {scripts_dir}:/home/node/.openclaw/scripts:ro
+
+{_auth_profile_secret_mount(state)}
 
 {_backup_mount_line(state)}
     healthcheck:
@@ -117,6 +167,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+{_vllm_service(state)}
 """
     return compose
 

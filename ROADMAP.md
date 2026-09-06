@@ -1,6 +1,6 @@
 # OpenClaw Installer — Roadmap
 
-> Last updated: 2026-07-24
+> Last updated: 2026-08-29
 
 ## Principles
 
@@ -86,6 +86,20 @@
 - Sub-agent bootstrap context documented in AGENTS.md + BOOTSTRAP.md templates
 - `restore_gen.py`: stale `daily_digest.py` / `memory_digest.py` entries removed
 - `openclaw.json`: `compaction.model: "${LLM_BUDGET}"` + `logging.redactSensitive: "tools"`
+
+---
+
+## Released
+
+### v0.4.0 — "vLLM Local GPU" ✅
+*Local NVIDIA GPU LLM provider via vLLM in Docker.*
+
+- vLLM provider option in the installer wizard
+- GPU VRAM detection and `--max-model-len` recommendation
+- NVIDIA Container Toolkit readiness check
+- Docker Compose service for `vllm/vllm-openai:nightly`
+- OpenClaw `vllm-local` provider config (`http://vllm-qwen:8000/v1`)
+- `check_nvidia_ctk.py` and `check_vllm_ready.py` diagnostics
 
 ---
 

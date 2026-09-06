@@ -147,7 +147,15 @@ def show(state: WizardState, image: str) -> None:
   [cyan]docker compose exec openclaw-gateway \\
     python3 /home/node/.openclaw/scripts/restore_exec_approvals.py[/cyan]
 
-[bold]7. Restart / stop[/bold]
+[bold]7. Device approval (if Control UI is blocked)[/bold]
+
+  After updates or fresh installs, the gateway may require device approval.
+  If you can't log in via the Control UI, approve from the CLI:
+
+  [cyan]docker compose -f {compose_file} run --rm openclaw-cli devices list[/cyan]
+  [cyan]docker compose -f {compose_file} run --rm openclaw-cli devices approve <requestId>[/cyan]
+
+[bold]8. Restart / stop[/bold]
 
   [cyan]docker compose -f {compose_file} restart[/cyan]
   [cyan]docker compose -f {compose_file} down[/cyan]

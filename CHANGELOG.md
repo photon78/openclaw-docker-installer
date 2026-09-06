@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.2] — 2026-09-06 "Docker VM Runtime Gaps"
+
+### Added
+- **`OPENCLAW_GATEWAY_BIND=lan`** in `env_gen.py` (P0 fix) — without this the gateway
+  binds only to the container-local loopback; the host port `18789:18789` would be
+  unreachable. Comment explains the loopback-vs-lan distinction from the official docs.
+- **`OPENCLAW_AUTH_PROFILE_SECRET_DIR`** — new field in `WizardState`; written to `.env`;
+  mounted read-only into the container at `/home/node/.config/openclaw/`. Stores OAuth
+  credentials and legacy encrypted profile data separately from `openclaw_dir`.
+  New wizard step `auth_secrets.py` prompts for the path (default:
+  `~/.openclaw-auth-profile-secrets`), creates the directory with `chmod 700`.
+- **`OPENCLAW_IMAGE` override** — `WizardState.openclaw_image_override` field; new wizard
+  step `advanced.py` lets users choose between `extended-stable` (default), `latest`, or
+  a custom image ref. `generator.py` uses the override when set, otherwise falls back to
+  `fetch_extended_stable_version()`.
+- **`OPENCLAW_IMAGE_APT_PACKAGES`** — `WizardState.apt_packages` field; `env_gen.py`
+  writes `OPENCLAW_IMAGE_APT_PACKAGES=<space-separated>` when packages are specified.
+  Collected in the new `advanced.py` wizard step.
+- **`update_gen.py`** — new generator producing `UPDATE.md` at install time. Documents
+  the full update flow: backup → pull → `OPENCLAW_SKIP_ONBOARDING=1` restart → doctor
+  → restore config/exec-approvals → verify. Also includes device-approval CLI commands
+  and rollback instructions.
+- **Device-approval hint** in `completion.py` (Page 2, step 7) — shows the
+  `openclaw-cli devices list` / `devices approve <requestId>` commands for cases where
+  the Control UI is blocked after install or update.
+
+### Changed
+- `wizard.py`: added two new steps — `Auth Secrets` (step 9) and `Advanced` (step 10).
+- `compose_gen.py`: auth-profile-secrets directory mounted as a separate read-only volume
+  (`/home/node/.config/openclaw:ro`).
+- `generator.py`: imports and calls `update_gen.write(state)`; image selection respects
+  `state.openclaw_image_override`.
+- VERSION bumped `0.4.0` → `0.5.2` (aligns with changelog head at `0.5.1`).
+
+---
+
 ## [Unreleased]
 
 ### Notes
@@ -18,6 +54,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - v1.0.0 target defined: **"The Trinity"** — Main, Coding, and Research
   (subagent) setup modeled on our production configuration.
   See `ROADMAP.md` for scope and exclusions.
+
+---
+
+## [0.4.0] — 2026-08-29 "vLLM Local GPU"
+
+### Added
+- **vLLM local GPU provider support** — run a local LLM inside Docker with NVIDIA GPU passthrough.
+  - Wizard step: "vLLM (local GPU)" provider option with VRAM detection via `nvidia-smi`.
+  - VRAM-based `--max-model-len` recommendation (conservative defaults from RTX 5090 32 GB test).
+  - Configurable HuggingFace cache path (default: `~/.cache/huggingface`).
+  - NVIDIA Container Toolkit smoke test (`docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi`).
+  - Docker Compose service `vllm-qwen` using `vllm/vllm-openai:nightly` with memory-optimising flags:
+    `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`, `--kv-cache-dtype fp8`, `--enforce-eager`,
+    `--gpu-memory-utilization 0.90`.
+  - OpenClaw provider config `vllm-local` pointing at `http://vllm-qwen:8000/v1`.
+  - Qwen3 thinking mode toggle (default disabled).
+- **`src/checks/check_nvidia_ctk.py`** — verify NVIDIA Container Toolkit installation and Docker GPU access.
+- **`src/checks/check_vllm_ready.py`** — probe `http://localhost:8000/v1/models` to confirm vLLM is live.
+
+### Changed
+- Bumped version to `v0.4.0`.
 
 ---
 

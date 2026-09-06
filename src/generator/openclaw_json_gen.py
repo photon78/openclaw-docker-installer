@@ -155,6 +155,30 @@ def _plugins_config(state: WizardState) -> dict:
     }
 
 
+def _models_config(state: WizardState) -> dict:
+    """Return the models/providers block for openclaw.json.
+
+    Adds a vLLM-local provider entry when vLLM is enabled. vLLM exposes an
+    OpenAI-compatible API, so we use api: openai-chat with a custom baseUrl.
+    """
+    providers: dict = {}
+    if state.vllm_enabled:
+        providers["vllm-local"] = {
+            "baseUrl": "http://vllm-qwen:8000/v1",
+            "api": "openai-chat",
+            "models": [
+                {
+                    "id": state.vllm_model,
+                    "name": "vLLM Local",
+                    "contextWindow": state.vllm_max_model_len,
+                    "maxTokens": 4096,
+                    "input": ["text"],
+                }
+            ],
+        }
+    return providers
+
+
 def generate(state: WizardState) -> dict:
     """Return openclaw.json content as dict."""
     config: dict = {
@@ -173,7 +197,7 @@ def generate(state: WizardState) -> dict:
                 # Model refs via env vars — change models by editing .env only
                 "model": {
                     "primary": "${LLM_BUDGET}",
-                    "fallbacks": ["${LLM_STANDARD}", "${LLM_KIMI}", "${LLM_POWER}"],
+                    "fallbacks": ["${LLM_STANDARD}", "${LLM_KIMI}", "${LLM_VLLM}", "${LLM_POWER}"],
                 },
                 "heartbeat": {
                     "every": "30m",
@@ -237,6 +261,9 @@ def generate(state: WizardState) -> dict:
         "logging": {
             # Best-effort masking of sensitive values in logs and transcripts
             "redactSensitive": "tools",
+        },
+        "models": {
+            "providers": _models_config(state),
         },
         "tools": {
             "profile": "coding",
