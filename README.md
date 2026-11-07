@@ -1,5 +1,17 @@
 # openclaw-docker-installer
 
+> **Archived (November 2026) — no longer maintained.**
+>
+> **Read this before relying on anything below:**
+>
+> The generated exec allowlist includes `/usr/bin/python3`. That makes the shell-tool restrictions ineffective, because `python3 -c` can run anything. The claim “no interpreter paths in the allowlist” further down is wrong.
+>
+> `add_agent.py` writes an outdated agent config format (`agents.list`; current OpenClaw uses `agents.entries`).
+>
+> **Why archived:** With agent sandboxes enabled, a containerized gateway needs the host Docker socket. That is root-equivalent access to the host, which makes the container hardening in this repo largely cosmetic. Running the gateway on the host (ideally in a dedicated VM) with Docker used only for sandboxes is the cleaner model.
+>
+> **Use instead:** `openclaw security audit --fix` for configuration hardening, and the official [openclaw-ansible](https://docs.openclaw.ai/install/ansible) installer for host setup.
+
 > Set up a secure, production-ready [OpenClaw](https://openclaw.ai) agent in minutes - not hours.
 
 [![CI](https://github.com/photon78/openclaw-docker-installer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/photon78/openclaw-docker-installer/actions)
